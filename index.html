@@ -49,6 +49,14 @@
   --input-bg:rgba(255,255,255,.06);
   --mow:rgba(255,255,255,.021);
   --pitch-line:rgba(255,255,255,.045);
+  --glow-a:rgba(30,120,70,.35);
+  --glow-b:rgba(10,60,35,.5);
+  --bg-deep:#020c07;
+  --flood:rgba(200,255,215,.17);
+  --vig:rgba(0,0,0,.7);
+  --grass-a:rgba(255,255,255,.04);
+  --grass-b:rgba(0,0,0,.14);
+  --sw-line:rgba(255,255,255,.26);
   --chrome-a:rgba(7,22,15,.82);
   --chrome-b:rgba(7,22,15,.62);
   --chrome-nav:rgba(11,30,20,.86);
@@ -94,24 +102,82 @@ button{cursor:pointer;border:none;background:none;}
 :focus-visible{outline:2px solid rgba(48,209,88,.55);outline-offset:2px;}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
 
-/* ============ SFONDO: CAMPO ============ */
-.pitch-bg{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
+/* ============ SFONDI SELEZIONABILI ============ */
+.pitch-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.pitch-bg svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120%;height:100%;opacity:.62;display:none;color:var(--pitch-line);}
+
+/* 1 · Campo (predefinito) */
+html[data-bg="campo"] .pitch-bg, .sw[data-bg="campo"]{
   background:
-    radial-gradient(120% 80% at 50% -10%, rgba(30,120,70,.35), transparent 60%),
-    radial-gradient(100% 60% at 50% 110%, rgba(10,60,35,.5), transparent 65%),
+    radial-gradient(120% 80% at 50% -10%, var(--glow-a), transparent 60%),
+    radial-gradient(100% 60% at 50% 110%, var(--glow-b), transparent 65%),
     repeating-linear-gradient(97deg, var(--mow) 0 46px, rgba(0,0,0,0) 46px 92px),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, #020c07 100%);
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, var(--bg-deep) 100%);
 }
-.pitch-bg::after{ /* cerchio di centrocampo appena accennato */
+html[data-bg="campo"] .pitch-bg::after{
   content:"";position:absolute;left:50%;top:28%;
   width:min(78vw,420px);aspect-ratio:1;transform:translate(-50%,-50%);
   border:1px solid var(--pitch-line);border-radius:50%;
 }
-.pitch-bg::before{ /* linea di meta campo */
-  content:"";position:absolute;left:0;right:0;top:28%;height:1px;
-  background:var(--pitch-line);
+html[data-bg="campo"] .pitch-bg::before{
+  content:"";position:absolute;left:0;right:0;top:28%;height:1px;background:var(--pitch-line);
 }
+
+/* 2 · Dall'alto */
+html[data-bg="alto"] .pitch-bg, .sw[data-bg="alto"]{
+  background:
+    radial-gradient(130% 70% at 50% 0%, var(--glow-a), transparent 58%),
+    linear-gradient(175deg, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+}
+html[data-bg="alto"] .pitch-bg svg{display:block;}
+
+/* 3 · Notturna */
+html[data-bg="notturna"] .pitch-bg, .sw[data-bg="notturna"]{
+  background:
+    radial-gradient(55% 42% at 10% -8%, var(--flood), transparent 62%),
+    radial-gradient(55% 42% at 90% -8%, var(--flood), transparent 62%),
+    radial-gradient(130% 100% at 50% 55%, rgba(0,0,0,0) 30%, var(--vig) 100%),
+    repeating-linear-gradient(97deg, var(--mow) 0 60px, rgba(0,0,0,0) 60px 120px),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-deep) 100%);
+}
+
+/* 4 · Erba */
+html[data-bg="erba"] .pitch-bg, .sw[data-bg="erba"]{
+  background:
+    repeating-linear-gradient(118deg, var(--grass-a) 0 14px, rgba(0,0,0,0) 14px 28px),
+    repeating-linear-gradient(118deg, var(--grass-b) 0 56px, rgba(0,0,0,0) 56px 112px),
+    radial-gradient(110% 70% at 50% 0%, var(--glow-a), transparent 62%),
+    linear-gradient(165deg, var(--bg-2), var(--bg-0));
+}
+
+/* 5 · Pulito */
+html[data-bg="pulito"] .pitch-bg, .sw[data-bg="pulito"]{
+  background:
+    radial-gradient(90% 55% at 50% 8%, var(--glow-a), transparent 70%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0) 70%, var(--bg-deep));
+}
+
+/* miniature nelle impostazioni */
+.sw-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px;}
+.sw-cell{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.sw{
+  width:100%;aspect-ratio:9/16;border-radius:12px;border:1.5px solid var(--stroke);
+  background-size:cover;position:relative;overflow:hidden;box-shadow:var(--inner-hi);
+  transition:border-color .2s,transform .14s;
+}
+.sw:active{transform:scale(.94);}
+.sw-cell.on .sw{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent);}
+.sw[data-bg="campo"]::before{content:"";position:absolute;left:0;right:0;top:38%;height:1px;background:var(--sw-line);}
+.sw[data-bg="campo"]::after{content:"";position:absolute;left:50%;top:38%;width:62%;aspect-ratio:1;transform:translate(-50%,-50%);border:1px solid var(--sw-line);border-radius:50%;}
+.sw[data-bg="alto"]::before{content:"";position:absolute;inset:9% 12%;border:1px solid var(--sw-line);}
+.sw[data-bg="alto"]::after{
+  content:"";position:absolute;left:50%;top:50%;width:38%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border:1px solid var(--sw-line);border-radius:50%;
+  box-shadow:0 -1px 0 0 var(--sw-line), 0 0 0 0 transparent;
+}
+.sw[data-bg="alto"] .mid{position:absolute;left:12%;right:12%;top:50%;height:1px;background:var(--sw-line);}
+.sw-cell .lbl{font-size:9.5px;color:var(--dim-2);white-space:nowrap;}
+.sw-cell.on .lbl{color:var(--accent);font-weight:700;}
 
 /* ============ HEADER ============ */
 header{
@@ -531,6 +597,14 @@ html[data-theme="light"]{
   --input-bg:rgba(255,255,255,.7);
   --mow:rgba(12,60,32,.028);
   --pitch-line:rgba(12,60,32,.09);
+  --glow-a:rgba(26,154,73,.16);
+  --glow-b:rgba(26,120,64,.13);
+  --bg-deep:#e9f3ea;
+  --flood:rgba(255,244,200,.6);
+  --vig:rgba(20,60,35,.09);
+  --grass-a:rgba(26,120,64,.07);
+  --grass-b:rgba(255,255,255,.5);
+  --sw-line:rgba(12,60,32,.32);
 
   --chrome-a:rgba(246,251,246,.86);
   --chrome-b:rgba(246,251,246,.62);
@@ -547,13 +621,6 @@ html[data-theme="light"]{
   --al-d-bg:rgba(212,56,45,.1);  --al-d-br:rgba(212,56,45,.3);  --al-d-fg:#8d2018;
   --al-o-bg:rgba(26,154,73,.1);  --al-o-br:rgba(26,154,73,.3);  --al-o-fg:#0f6b33;
   --al-w-bg:rgba(168,99,0,.1);   --al-w-br:rgba(168,99,0,.3);   --al-w-fg:#7a4700;
-}
-html[data-theme="light"] .pitch-bg{
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(26,154,73,.16), transparent 60%),
-    radial-gradient(100% 60% at 50% 110%, rgba(26,120,64,.13), transparent 65%),
-    repeating-linear-gradient(97deg, var(--mow) 0 46px, rgba(0,0,0,0) 46px 92px),
-    linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 55%, var(--bg-0) 100%);
 }
 html[data-theme="light"] .bar-fill{background:linear-gradient(90deg,var(--accent),#e0a72c);}
 html[data-theme="light"] .tab.active,
@@ -632,7 +699,28 @@ html.theme-transitioning .sheet{
 </style>
 </head>
 <body>
-<div class="pitch-bg" aria-hidden="true"></div>
+<div class="pitch-bg" aria-hidden="true">
+  <svg viewBox="0 0 68 105" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" stroke-width=".32">
+    <defs>
+      <clipPath id="outT"><rect x="0" y="16.5" width="68" height="88.5"/></clipPath>
+      <clipPath id="outB"><rect x="0" y="0" width="68" height="88.5"/></clipPath>
+    </defs>
+    <rect x="1" y="1" width="66" height="103"/>
+    <line x1="1" y1="52.5" x2="67" y2="52.5"/>
+    <circle cx="34" cy="52.5" r="9.15"/>
+    <circle cx="34" cy="52.5" r=".5" fill="currentColor" stroke="none"/>
+    <rect x="13.84" y="1" width="40.32" height="16.5"/>
+    <rect x="24.84" y="1" width="18.32" height="5.5"/>
+    <circle cx="34" cy="11.5" r=".5" fill="currentColor" stroke="none"/>
+    <g clip-path="url(#outT)"><circle cx="34" cy="11.5" r="9.15"/></g>
+    <rect x="13.84" y="87.5" width="40.32" height="16.5"/>
+    <rect x="24.84" y="98.5" width="18.32" height="5.5"/>
+    <circle cx="34" cy="93.5" r=".5" fill="currentColor" stroke="none"/>
+    <g clip-path="url(#outB)"><circle cx="34" cy="93.5" r="9.15"/></g>
+    <path d="M1 3 A2 2 0 0 0 3 1"/><path d="M65 1 A2 2 0 0 0 67 3"/>
+    <path d="M1 102 A2 2 0 0 1 3 104"/><path d="M67 102 A2 2 0 0 0 65 104"/>
+  </svg>
+</div>
 </div>
 
 <header>
@@ -1481,7 +1569,7 @@ function openMenu(){
       <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
       <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
       <button onclick="importFile()"><i>↥</i><div>Importa file<small>ricarica un backup salvato</small></div></button>
-      <button onclick="openSettings()"><i>⚙</i><div>Impostazioni lega<small>budget ${CFG.budget} · ${totalSlots()} slot · riserva ${CFG.reserve}</small></div></button>
+      <button onclick="openSettings()"><i>⚙</i><div>Impostazioni<small>budget ${CFG.budget} · ${totalSlots()} slot · riserva ${CFG.reserve}</small></div></button>
       <button onclick="toggleWake()"><i>☀</i><div>Schermo sempre acceso<small>utile durante l'asta</small></div><span class="switch ${wakeOn?"on":""}">${wakeOn?"ON":"OFF"}</span></button>
       <button class="danger" onclick="askReset()"><i>⟲</i><div>Azzera l'asta<small>rimette tutti i giocatori liberi</small></div></button>
     </div>
@@ -1631,8 +1719,14 @@ function importFile(){
 function openSettings(){
   const f = (k,l,v,extra="") => `<div class="field"><label>${l}</label><input type="number" inputmode="numeric" id="${k}" value="${v}" ${extra}></div>`;
   openSheet(`
-    <h3>Impostazioni lega</h3>
-    <div class="sub">Adatta l'app alle regole della tua asta.</div>
+    <h3>Impostazioni</h3>
+    <div class="sub">Aspetto dell'app e regole della tua asta.</div>
+
+    <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:2px 0 9px">Sfondo</div>
+    ${bgPickerHtml()}
+    <div class="note" style="font-size:11px;margin-bottom:16px">Ogni sfondo ha la sua versione giorno e notte: cambia da solo quando premi sole/luna.</div>
+
+    <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Regole della lega</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
       ${f("cfgBudget","Crediti totali",CFG.budget)}
       ${f("cfgReserve","Riserva da tenere",CFG.reserve)}
@@ -1916,6 +2010,32 @@ function renderRoster0(){ if(!$("rosterOverlay").classList.contains("hidden")) r
 
 $("search").addEventListener("input", renderList);
 $("browseSearch").addEventListener("input", renderBrowseList);
+
+/* ================== SFONDI ================== */
+const BGS = [
+  {k:"campo",    n:"Campo"},
+  {k:"alto",     n:"Dall'alto"},
+  {k:"notturna", n:"Notturna"},
+  {k:"erba",     n:"Erba"},
+  {k:"pulito",   n:"Pulito"}
+];
+const BG_KEY = "asta-bg";
+let bg = "campo";
+function applyBg(k, save){
+  bg = BGS.some(b=>b.k===k) ? k : "campo";
+  document.documentElement.setAttribute("data-bg", bg);
+  if(save){ try{ localStorage.setItem(BG_KEY, bg); }catch(e){} }
+  document.querySelectorAll(".sw-cell").forEach(c=>c.classList.toggle("on", c.dataset.bg===bg));
+}
+function pickBg(k){ applyBg(k, true); buzz(6); }
+function bgPickerHtml(){
+  return `<div class="sw-grid">` + BGS.map(b=>`
+    <div class="sw-cell ${b.k===bg?"on":""}" data-bg="${b.k}" onclick="pickBg('${b.k}')">
+      <div class="sw" data-bg="${b.k}">${b.k==="alto"?'<span class="mid"></span>':""}</div>
+      <span class="lbl">${b.n}</span>
+    </div>`).join("") + `</div>`;
+}
+(function(){ let k=null; try{ k = localStorage.getItem(BG_KEY); }catch(e){} applyBg(k||"campo", false); })();
 
 /* ================== TEMA CHIARO / SCURO ================== */
 const THEME_KEY = "asta-theme";
