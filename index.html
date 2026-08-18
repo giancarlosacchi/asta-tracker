@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#04170e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Asta">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a2a1a'/%3E%3Ccircle cx='90' cy='90' r='46' fill='none' stroke='%23c3f04e' stroke-width='6'/%3E%3Cpath d='M90 58v64M58 90h64' stroke='%23c3f04e' stroke-width='6' stroke-linecap='round' opacity='.35'/%3E%3Ccircle cx='90' cy='90' r='14' fill='%23f6c65b'/%3E%3C/svg%3E">
+<title>Asta Tracker — Fantacalcio</title>
+<style>
+:root{
+  /* --- superficie: verde campo molto desaturato --- */
+  --bg-0:#07160f;
+  --bg-1:#0b2318;
+  --bg-2:#0e2c1f;
+
+  /* --- vetro --- */
+  --g-1:rgba(255,255,255,.055);
+  --g-2:rgba(255,255,255,.085);
+  --g-3:rgba(255,255,255,.13);
+  --stroke:rgba(255,255,255,.11);
+  --stroke-2:rgba(255,255,255,.2);
+  --inner-hi:inset 0 1px 0 rgba(255,255,255,.14);
+  --shadow:0 8px 30px -12px rgba(0,0,0,.6);
+
+  --text:#f2f7f4;
+  --dim:rgba(242,247,244,.62);
+  --dim-2:rgba(242,247,244,.38);
+
+  --accent:#30d158;      /* verde iOS */
+  --gold:#ffd160;        /* crediti */
+  --danger:#ff5f57;
+  --warn:#ff9f0a;
+
+  --r-P:#ff9f0a;
+  --r-D:#64d2ff;
+  --r-C:#30d158;
+  --r-A:#ff6b6b;
+
+  --dim-3:rgba(255,255,255,.18);
+  --on-accent:#06210f;
+  --danger-fg:#ffb4ae;
+  --track:rgba(255,255,255,.07);
+  --input-bg:rgba(255,255,255,.06);
+  --mow:rgba(255,255,255,.021);
+  --pitch-line:rgba(255,255,255,.045);
+  --chrome-a:rgba(7,22,15,.82);
+  --chrome-b:rgba(7,22,15,.62);
+  --chrome-nav:rgba(11,30,20,.86);
+  --chrome-sheet:rgba(16,40,28,.72);
+  --chrome-toast:rgba(16,40,28,.85);
+  --chrome-full-a:rgba(14,44,31,.86);
+  --chrome-full-b:rgba(7,22,15,.9);
+  --chrome-fullhdr:rgba(7,22,15,.5);
+  --scrim:rgba(0,0,0,.45);
+  --tint-gold:rgba(255,209,96,.055);   --tint-gold-b:rgba(255,209,96,.22);
+  --tint-mine:rgba(48,209,88,.11);     --tint-mine-b:rgba(48,209,88,.32);
+  --al-d-bg:rgba(255,95,87,.13);  --al-d-br:rgba(255,95,87,.32);  --al-d-fg:#ffb4ae;
+  --al-o-bg:rgba(48,209,88,.12);  --al-o-br:rgba(48,209,88,.3);   --al-o-fg:#96eeb2;
+  --al-w-bg:rgba(255,159,10,.13); --al-w-br:rgba(255,159,10,.32); --al-w-fg:#ffd49a;
+
+  --radius:20px;
+  --radius-lg:26px;
+  --tap:44px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --nav-h:60px;
+  --nav-gap:12px;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+[hidden]{display:none!important;}
+html{-webkit-text-size-adjust:100%;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-0);
+  min-height:100svh;
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  font-size:15px;line-height:1.35;letter-spacing:-.01em;
+  overscroll-behavior-y:none;
+  padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--nav-gap) + 26px);
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;-webkit-appearance:none;appearance:none;border-radius:0;}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=search]::-webkit-search-decoration,input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;}
+header,.bottom-nav,.tabs,.card,.li,.seg,.chips,.money,.rb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+textarea,input{-webkit-user-select:text;user-select:text;}
+button{cursor:pointer;border:none;background:none;}
+:focus-visible{outline:2px solid rgba(48,209,88,.55);outline-offset:2px;}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
+
+/* ============ SFONDO: CAMPO ============ */
+.pitch-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(30,120,70,.35), transparent 60%),
+    radial-gradient(100% 60% at 50% 110%, rgba(10,60,35,.5), transparent 65%),
+    repeating-linear-gradient(97deg, var(--mow) 0 46px, rgba(0,0,0,0) 46px 92px),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, #020c07 100%);
+}
+.pitch-bg::after{ /* cerchio di centrocampo appena accennato */
+  content:"";position:absolute;left:50%;top:28%;
+  width:min(78vw,420px);aspect-ratio:1;transform:translate(-50%,-50%);
+  border:1px solid var(--pitch-line);border-radius:50%;
+}
+.pitch-bg::before{ /* linea di meta campo */
+  content:"";position:absolute;left:0;right:0;top:28%;height:1px;
+  background:var(--pitch-line);
+}
+
+/* ============ HEADER ============ */
+header{
+  position:sticky;top:0;z-index:30;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 14px 0;
+  background:linear-gradient(180deg, var(--chrome-a), var(--chrome-b));
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-bottom:.5px solid var(--stroke);
+}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:36px;}
+.hdr-right{display:flex;align-items:center;gap:7px;}
+.save-chip{
+  font-size:10.5px;font-weight:600;color:var(--accent);background:rgba(48,209,88,.14);
+  border:.5px solid rgba(48,209,88,.3);border-radius:999px;padding:4px 9px;
+  opacity:0;transition:opacity .25s;white-space:nowrap;
+}
+.icon-btn{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background:var(--g-1);border:.5px solid var(--stroke);color:var(--dim);font-size:16px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--inner-hi);
+}
+.icon-btn:active{background:var(--g-3);}
+.icon-btn svg{width:17px;height:17px;}
+#themeBtn .ic-sun{display:none;}
+html[data-theme="light"] #themeBtn .ic-sun{display:block;}
+html[data-theme="light"] #themeBtn .ic-moon{display:none;}
+
+/* --- crediti --- */
+.money{
+  display:grid;grid-template-columns:1fr 1fr;
+  margin-top:6px;padding:12px 6px 11px;
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:var(--inner-hi);
+  backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+}
+.money-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;position:relative;}
+.money-cell+.money-cell::before{content:"";position:absolute;left:0;top:12%;bottom:12%;width:.5px;background:var(--stroke);}
+.money-cell .lbl{font-size:10.5px;color:var(--dim-2);white-space:nowrap;letter-spacing:0;font-weight:500;}
+.money-cell .val{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.03em;}
+.money-cell.hero .val{font-size:30px;font-weight:700;color:var(--gold);}
+.money-cell.hero .lbl{color:rgba(255,209,96,.7);}
+.val.alert{color:var(--danger)!important;}
+
+.bar-track{height:5px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:11px;}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .4s cubic-bezier(.3,.9,.3,1);}
+.bar-fill.hot{background:linear-gradient(90deg,var(--warn),var(--danger));}
+.bar-legend{display:flex;justify-content:flex-end;font-size:11px;color:var(--dim-2);margin-top:6px;}
+.bar-legend b{color:var(--dim);font-weight:600;}
+
+.role-budgets{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:7px;
+  max-height:0;opacity:0;overflow:hidden;margin-top:0;padding-bottom:0;
+  transition:max-height .36s cubic-bezier(.22,1,.32,1), opacity .26s ease, margin-top .36s, padding-bottom .36s;
+}
+.role-budgets.open{max-height:140px;opacity:1;margin-top:2px;padding-bottom:10px;}
+.rb{
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:15px;padding:9px 6px;text-align:center;
+  box-shadow:var(--inner-hi);
+}
+.rb .rb-l{font-size:9.5px;color:var(--dim-2);letter-spacing:.02em;}
+.rb .rb-l::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--rc);margin-right:4px;vertical-align:middle;}
+.rb .rb-n{font-size:14px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.rb .rb-n small{font-weight:400;color:var(--dim-2);font-size:10px;}
+.rb .rb-n .over{color:var(--danger);}
+.rb-track{height:3px;border-radius:99px;background:var(--track);margin-top:6px;overflow:hidden;}
+.rb-fill{height:100%;background:var(--rc);border-radius:99px;opacity:.85;}
+.rb-fill.over{background:var(--danger);}
+.rb .rb-s{font-size:9px;color:var(--dim-2);margin-top:4px;}
+
+/* --- segmented control reparti --- */
+.tabs{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:3px;
+  background:var(--track);border-radius:14px;padding:3px;margin:8px 0 10px;
+  transition:background .25s ease, margin-bottom .3s ease;
+}
+.tabs[aria-expanded="true"]{background:var(--g-2);margin-bottom:2px;}
+.tab{
+  padding:7px 2px 8px;border-radius:11px;text-align:center;color:var(--dim);
+  font-size:12.5px;font-weight:600;letter-spacing:0;
+  transition:background .22s ease,color .22s ease,box-shadow .22s ease;
+}
+.tab .tn{display:block;font-size:9.5px;font-weight:500;color:var(--dim-2);margin-top:1px;white-space:nowrap;}
+.tab.active{background:var(--g-3);color:var(--tc);box-shadow:0 2px 8px -2px rgba(0,0,0,.5), var(--inner-hi);}
+.tab.active .tn{color:var(--dim);}
+.tab.full{opacity:.5;}
+
+/* ============ MAIN ============ */
+main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 auto;}
+.tools{display:flex;gap:8px;margin-bottom:12px;}
+.search{
+  flex:1;min-width:0;padding:12px 14px;border-radius:15px;font-size:16px;
+  border:.5px solid var(--stroke);background:var(--g-1);color:var(--text);
+  box-shadow:var(--inner-hi);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.search::placeholder{color:var(--dim-2);}
+.search:focus{border-color:rgba(48,209,88,.5);background:var(--g-2);}
+.sort-btn{
+  flex-shrink:0;padding:0 14px;border-radius:15px;border:.5px solid var(--stroke);
+  background:var(--g-1);color:var(--dim);font-size:12px;font-weight:600;white-space:nowrap;
+  box-shadow:var(--inner-hi);
+}
+
+.warn-bar{
+  font-size:12px;line-height:1.5;padding:12px 14px;margin-bottom:12px;border-radius:16px;
+  background:var(--al-w-bg);border:.5px solid var(--al-w-br);color:var(--al-w-fg);
+}
+.warn-bar b{display:block;font-weight:700;margin-bottom:2px;}
+
+.sec-title{
+  display:flex;align-items:center;gap:9px;
+  font-size:12px;color:var(--dim);margin:20px 4px 9px;font-weight:600;letter-spacing:-.01em;
+}
+.sec-title:first-child{margin-top:4px;}
+.sec-title::after{content:"";flex:1;height:.5px;background:var(--stroke);}
+
+/* ============ CARD ============ */
+.card{
+  position:relative;display:flex;align-items:stretch;gap:6px;
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:var(--radius);
+  margin-bottom:8px;overflow:hidden;box-shadow:var(--inner-hi);
+  transition:background .2s,border-color .2s,opacity .2s,transform .14s;
+}
+.card:active{transform:scale(.985);}
+.card.fixed{background:var(--tint-gold);border-color:var(--tint-gold-b);}
+.card.mine{background:var(--tint-mine);border-color:var(--tint-mine-b);}
+.card.taken{opacity:.4;}
+.card.taken .p-name{text-decoration:line-through;text-decoration-color:var(--dim-2);}
+
+.c-fav{width:34px;flex-shrink:0;display:grid;place-items:center;font-size:14px;color:var(--dim-3);}
+.c-fav.on{color:var(--gold);}
+.c-body{flex:1;min-width:0;padding:12px 2px 12px 0;text-align:left;display:flex;flex-direction:column;gap:4px;}
+.p-name{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p-meta{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p-meta>*{flex-shrink:0;}
+.p-meta .hint{flex-shrink:1;overflow:hidden;text-overflow:ellipsis;}
+.pill{
+  font-size:9.5px;font-weight:600;letter-spacing:.03em;
+  padding:2.5px 7px;border-radius:999px;
+  background:color-mix(in srgb, currentColor 16%, transparent);
+}
+.pill.role{color:var(--rc);}
+.pill.new{color:var(--accent);}
+.pill.mine{color:var(--accent);}
+.hint{font-size:11.5px;color:var(--dim);}
+.hint b{color:var(--gold);font-weight:600;}
+.hint.warn,.hint.warn b{color:var(--warn);font-weight:500;}
+
+.c-right{display:flex;align-items:center;gap:7px;padding:7px 9px 7px 0;flex-shrink:0;}
+.pricebox{min-width:46px;text-align:right;}
+.price{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:-.03em;line-height:1.05;}
+.price small{display:block;font-size:9px;font-weight:500;color:var(--dim-2);letter-spacing:.02em;}
+.price.paid{color:var(--accent);}
+.sug{font-size:10.5px;font-weight:500;color:var(--dim);margin-top:3px;white-space:nowrap;}
+.sug.warn{color:var(--warn);}
+.act{
+  width:var(--tap);height:var(--tap);border-radius:50%;display:grid;place-items:center;
+  border:.5px solid var(--stroke);background:var(--g-1);color:var(--dim);font-size:16px;font-weight:500;
+  box-shadow:var(--inner-hi);transition:transform .14s,background .2s;
+}
+.act:active{transform:scale(.88);}
+.act.buy{color:var(--accent);}
+.card.mine .act.buy{background:var(--accent);border-color:transparent;color:var(--on-accent);}
+.card.taken .act.out{background:var(--g-3);color:var(--text);}
+
+.ghost-row{
+  text-align:center;font-size:12px;color:var(--dim-2);padding:12px 0;
+  border:.5px dashed var(--stroke-2);border-radius:16px;margin:2px 0 10px;
+}
+.empty{text-align:center;color:var(--dim);font-size:14px;padding:40px 16px;line-height:1.6;}
+.empty .big{font-size:38px;display:block;margin-bottom:10px;opacity:.35;}
+.btn-inline{
+  display:inline-block;margin-top:14px;padding:12px 20px;border-radius:999px;
+  background:var(--accent);color:var(--on-accent);font-weight:600;font-size:14px;
+}
+
+/* ============ TAB BAR FLOTTANTE ============ */
+.bottom-nav{
+  position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:40;
+  display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);
+  max-width:520px;margin:0 auto;
+  background:var(--chrome-nav);
+  backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:.5px solid var(--stroke-2);border-radius:24px;
+  box-shadow:0 14px 40px -14px rgba(0,0,0,.75), var(--inner-hi);
+  overflow:hidden;
+}
+.bottom-nav button{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--dim-2);font-size:10px;font-weight:500;
+}
+.bottom-nav button i{font-style:normal;font-size:18px;line-height:1;}
+.bottom-nav button svg{width:22px;height:22px;}
+.bottom-nav button:disabled{opacity:.3;}
+.bottom-nav button.accent{color:var(--accent);}
+.bottom-nav button:active{background:var(--g-1);}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .full{background:linear-gradient(175deg,#0e2c1f,#07160f);}
+  .bottom-nav{background:rgba(8,24,16,.97);}
+  header{background:rgba(7,22,15,.97);}
+  .sheet{background:rgba(14,36,25,.98);}
+  .full-hdr{background:rgba(7,22,15,.97);}
+}
+
+/* ============ SHEET ============ */
+.overlay{
+  position:fixed;inset:0;z-index:60;background:var(--scrim);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:flex-end;justify-content:center;
+  overscroll-behavior:contain;padding:0 8px calc(var(--kb,0px) + 8px);transition:padding-bottom .2s;
+}
+.overlay.hidden,.full.hidden{display:none;}
+.sheet{
+  width:100%;max-width:520px;max-height:var(--sheet-max,88svh);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  background:var(--chrome-sheet);
+  backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+  border:.5px solid var(--stroke-2);border-radius:var(--radius-lg);
+  padding:8px 18px calc(20px + var(--safe-b));
+  box-shadow:0 -18px 60px -18px rgba(0,0,0,.8), var(--inner-hi);
+  animation:up .34s cubic-bezier(.22,1,.32,1);
+}
+@keyframes up{from{transform:translateY(26px);opacity:0}to{transform:none;opacity:1}}
+.sheet .grab{width:36px;height:5px;border-radius:99px;background:var(--stroke-2);margin:0 auto 15px;}
+.sheet h3{margin:0 0 5px;font-size:19px;font-weight:600;letter-spacing:-.03em;}
+.sheet .sub{font-size:12.5px;color:var(--dim);margin-bottom:15px;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11.5px;color:var(--dim-2);margin-bottom:7px;font-weight:500;}
+.field input,.field select,.field textarea{
+  width:100%;padding:13px 14px;border-radius:15px;border:.5px solid var(--stroke);
+  background:var(--input-bg);color:var(--text);font-size:16px;box-shadow:var(--inner-hi);
+}
+.field input:focus{border-color:rgba(48,209,88,.45);outline:none;}
+.stepper input:focus{border-color:rgba(48,209,88,.45);}
+.field textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;resize:vertical;}
+.note{font-size:13px;color:var(--dim);line-height:1.55;}
+
+.stepper{display:flex;align-items:center;gap:9px;}
+.stepper button{
+  width:50px;height:50px;flex-shrink:0;border-radius:50%;background:var(--g-2);
+  border:.5px solid var(--stroke);font-size:22px;font-weight:500;color:var(--text);box-shadow:var(--inner-hi);
+}
+.stepper button:active{background:var(--g-3);}
+.stepper input{text-align:center;font-size:28px!important;font-weight:600;font-variant-numeric:tabular-nums;padding:11px 4px!important;letter-spacing:-.03em;}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+.chip{
+  padding:9px 14px;border-radius:999px;background:var(--g-1);border:.5px solid var(--stroke);
+  font-size:12.5px;font-weight:500;color:var(--dim);box-shadow:var(--inner-hi);
+}
+.chip.gold{color:var(--gold);border-color:rgba(255,209,96,.35);background:rgba(255,209,96,.1);}
+.bid-info{display:flex;gap:8px;margin:12px 0 2px;}
+.bid-info>div{flex:1;background:var(--g-1);border:.5px solid var(--stroke);border-radius:15px;padding:10px 6px;text-align:center;box-shadow:var(--inner-hi);}
+.bid-info>div .k{font-size:10px;color:var(--dim-2);}
+.bid-info>div .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px;letter-spacing:-.02em;}
+.alertbox{
+  font-size:12.5px;font-weight:500;border-radius:14px;padding:11px 13px;margin-top:12px;line-height:1.45;
+  background:var(--al-d-bg);border:.5px solid var(--al-d-br);color:var(--al-d-fg);
+}
+.alertbox.ok{background:var(--al-o-bg);border-color:var(--al-o-br);color:var(--al-o-fg);}
+.alertbox.warn{background:var(--al-w-bg);border-color:var(--al-w-br);color:var(--al-w-fg);}
+
+.sheet-actions{display:flex;gap:10px;margin-top:18px;}
+.sheet-actions button{flex:1;padding:15px 0;border-radius:16px;font-size:15px;font-weight:600;letter-spacing:-.01em;}
+.btn-cancel{background:var(--g-2);color:var(--text);border:.5px solid var(--stroke);box-shadow:var(--inner-hi);}
+.btn-confirm{background:var(--accent);color:var(--on-accent);}
+.btn-confirm:active{background:#28b84c;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-wide{width:100%;padding:15px 0;border-radius:16px;font-weight:600;font-size:14.5px;}
+
+.menu-list{display:flex;flex-direction:column;gap:8px;}
+.menu-list button{
+  display:flex;align-items:center;gap:13px;text-align:left;
+  padding:15px 15px;border-radius:17px;background:var(--g-1);border:.5px solid var(--stroke);
+  font-size:15px;font-weight:500;box-shadow:var(--inner-hi);
+}
+.menu-list button:active{background:var(--g-2);}
+.menu-list button i{font-style:normal;font-size:17px;width:24px;text-align:center;color:var(--dim-2);}
+.menu-list button.danger i{color:var(--danger-fg);}
+.menu-list button small{display:block;font-size:11.5px;color:var(--dim-2);font-weight:400;margin-top:2px;}
+.menu-list button.danger{color:var(--danger-fg);}
+.switch{margin-left:auto;font-size:11px;font-weight:600;color:var(--dim-2);}
+.switch.on{color:var(--accent);}
+
+/* ============ SCHERMATE FULL ============ */
+.full{
+  position:fixed;inset:0;height:100svh;z-index:70;display:flex;flex-direction:column;
+  overscroll-behavior:contain;
+  background:linear-gradient(175deg, var(--chrome-full-a), var(--chrome-full-b));
+  backdrop-filter:blur(34px) saturate(170%);-webkit-backdrop-filter:blur(34px) saturate(170%);
+  animation:fullIn .3s cubic-bezier(.22,1,.32,1);
+}
+@keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
+.full::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 55% at 50% 0%, rgba(48,209,88,.07), transparent 60%);
+}
+.full>*{position:relative;z-index:1;}
+.full-hdr{
+  padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;
+  border-bottom:.5px solid var(--stroke);
+  background:var(--chrome-fullhdr);
+  backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);
+}
+.full-hdr .fh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.full-hdr h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.035em;}
+.full-hdr .fh-sub{font-size:12px;color:var(--dim);margin-top:3px;}
+.full-close{
+  width:34px;height:34px;border-radius:50%;background:var(--g-2);border:.5px solid var(--stroke);
+  font-size:15px;color:var(--dim);flex-shrink:0;box-shadow:var(--inner-hi);
+}
+.full-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(24px + var(--safe-b));}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;background:var(--track);padding:3px;border-radius:14px;}
+.seg button{padding:9px 4px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--dim);transition:background .22s,color .22s;}
+.seg button.active{background:var(--g-3);color:var(--text);box-shadow:0 2px 8px -2px rgba(0,0,0,.5), var(--inner-hi);}
+.seg.roles button.active{color:var(--tc);}
+
+.li{
+  display:flex;align-items:center;gap:11px;padding:12px 13px;margin-bottom:7px;
+  border-radius:18px;border:.5px solid var(--stroke);background:var(--g-1);box-shadow:var(--inner-hi);
+}
+.li .li-main{flex:1;min-width:0;}
+.li .li-n{font-size:15px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.li .li-t{font-size:11.5px;color:var(--dim);margin-top:2px;display:flex;align-items:center;gap:6px;}
+.li .li-t::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--rc);flex-shrink:0;}
+.li .li-v{text-align:right;flex-shrink:0;}
+.li .li-v .q{font-size:17px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.li .li-v .f{font-size:10px;color:var(--dim-2);}
+.li .li-add{
+  width:var(--tap);height:var(--tap);border-radius:50%;background:var(--accent);color:var(--on-accent);
+  font-size:20px;font-weight:600;flex-shrink:0;display:grid;place-items:center;
+}
+.li.added{opacity:.42;}
+.li.added .li-add{background:var(--g-2);color:var(--accent);border:.5px solid var(--stroke);}
+
+#rosterOverlay .full-hdr h3{color:#64d2ff;}
+.ros-stats{display:flex;gap:8px;margin-top:12px;}
+.ros-stat{flex:1;background:var(--g-1);border:.5px solid var(--stroke);border-radius:16px;padding:10px 6px;text-align:center;box-shadow:var(--inner-hi);}
+.ros-stat .k{font-size:10px;color:var(--dim-2);}
+.ros-stat .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px;letter-spacing:-.03em;}
+.ros-sec{margin:20px 0 6px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.ros-sec .rs-l{font-size:14px;font-weight:600;letter-spacing:-.02em;color:var(--rc);display:flex;align-items:center;gap:7px;}
+.ros-sec .rs-l::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--rc);}
+.ros-sec .rs-r{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dim);}
+.ros-sec .rs-r .over{color:var(--danger);}
+.ros-note{font-size:11.5px;color:var(--dim-2);margin:0 0 9px;}
+.slots-free{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px;}
+.slots-free span{flex:1;min-width:46px;text-align:center;padding:8px 4px;border-radius:12px;border:.5px dashed var(--stroke);color:var(--dim-2);font-size:10px;}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + var(--nav-gap) + 16px);transform:translate(-50%,16px);
+  z-index:90;padding:13px 20px;border-radius:999px;font-size:13.5px;font-weight:500;
+  background:var(--chrome-toast);border:.5px solid var(--stroke-2);color:var(--text);
+  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  box-shadow:0 14px 40px -14px rgba(0,0,0,.8), var(--inner-hi);
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.22,1,.32,1);
+  max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.good{border-color:rgba(48,209,88,.4);}
+.toast.bad{border-color:rgba(255,95,87,.4);}
+
+
+/* ============ TEMA GIORNO ============ */
+html[data-theme="light"]{
+  --bg-0:#f2f7f2; --bg-1:#e6f0e7; --bg-2:#dcebde;
+
+  --g-1:rgba(255,255,255,.66);
+  --g-2:rgba(255,255,255,.85);
+  --g-3:rgba(255,255,255,1);
+  --stroke:rgba(12,40,25,.11);
+  --stroke-2:rgba(12,40,25,.2);
+  --inner-hi:inset 0 1px 0 rgba(255,255,255,.85);
+  --shadow:0 8px 26px -14px rgba(12,40,25,.4);
+
+  --text:#0d2418;
+  --dim:rgba(13,36,24,.6);
+  --dim-2:rgba(13,36,24,.42);
+  --dim-3:rgba(13,36,24,.22);
+
+  --accent:#1a9a49;
+  --on-accent:#ffffff;
+  --gold:#a06b00;
+  --danger:#d4382d;
+  --danger-fg:#8d2018;
+  --warn:#a86300;
+
+  --r-P:#c06a00; --r-D:#0d7ea8; --r-C:#1a9a49; --r-A:#cf4136;
+
+  --track:rgba(12,40,25,.09);
+  --input-bg:rgba(255,255,255,.7);
+  --mow:rgba(12,60,32,.028);
+  --pitch-line:rgba(12,60,32,.09);
+
+  --chrome-a:rgba(246,251,246,.86);
+  --chrome-b:rgba(246,251,246,.62);
+  --chrome-nav:rgba(252,254,252,.84);
+  --chrome-sheet:rgba(250,253,250,.82);
+  --chrome-toast:rgba(250,253,250,.92);
+  --chrome-full-a:rgba(240,248,241,.9);
+  --chrome-full-b:rgba(233,244,235,.92);
+  --chrome-fullhdr:rgba(250,253,250,.6);
+  --scrim:rgba(16,44,28,.3);
+
+  --tint-gold:rgba(200,140,0,.07);  --tint-gold-b:rgba(200,140,0,.3);
+  --tint-mine:rgba(26,154,73,.12);  --tint-mine-b:rgba(26,154,73,.4);
+  --al-d-bg:rgba(212,56,45,.1);  --al-d-br:rgba(212,56,45,.3);  --al-d-fg:#8d2018;
+  --al-o-bg:rgba(26,154,73,.1);  --al-o-br:rgba(26,154,73,.3);  --al-o-fg:#0f6b33;
+  --al-w-bg:rgba(168,99,0,.1);   --al-w-br:rgba(168,99,0,.3);   --al-w-fg:#7a4700;
+}
+html[data-theme="light"] .pitch-bg{
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(26,154,73,.16), transparent 60%),
+    radial-gradient(100% 60% at 50% 110%, rgba(26,120,64,.13), transparent 65%),
+    repeating-linear-gradient(97deg, var(--mow) 0 46px, rgba(0,0,0,0) 46px 92px),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 55%, var(--bg-0) 100%);
+}
+html[data-theme="light"] .bar-fill{background:linear-gradient(90deg,var(--accent),#e0a72c);}
+html[data-theme="light"] .tab.active,
+html[data-theme="light"] .seg button.active{box-shadow:0 2px 8px -3px rgba(12,40,25,.35), var(--inner-hi);}
+html[data-theme="light"] .bottom-nav{box-shadow:0 14px 36px -16px rgba(12,40,25,.5), var(--inner-hi);}
+html[data-theme="light"] .sheet{box-shadow:0 -16px 50px -18px rgba(12,40,25,.45), var(--inner-hi);}
+html[data-theme="light"] .toast{box-shadow:0 12px 34px -14px rgba(12,40,25,.5), var(--inner-hi);}
+html[data-theme="light"] #rosterOverlay .full-hdr h3{color:#0d7ea8;}
+html[data-theme="light"] .card.taken{opacity:.5;}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  html[data-theme="light"] .full{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
+  html[data-theme="light"] .bottom-nav,
+  html[data-theme="light"] header,
+  html[data-theme="light"] .full-hdr{background:rgba(250,253,250,.97);}
+  html[data-theme="light"] .sheet{background:rgba(250,253,250,.99);}
+}
+
+
+/* ============ TRANSIZIONE GIORNO/NOTTE ============
+   Il nuovo tema viene rivelato da una maschera radiale centrata sul pulsante:
+   parte da raggio 0 e si espande fino a coprire lo schermo, con il bordo
+   sfumato per una linea morbida tra giorno e notte. */
+@property --rip-r{ syntax:'<length>'; initial-value:0px; inherits:false; }
+
+::view-transition-old(root),
+::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+
+::view-transition-old(root){ animation:theme-old-fade 1.4s linear forwards; }
+
+::view-transition-new(root){
+  --rip-r:0px;
+  animation:theme-ripple 1.4s cubic-bezier(.65,0,.35,1) forwards;
+  -webkit-mask:radial-gradient(circle at var(--theme-x,50%) var(--theme-y,50%),
+    #000 calc(var(--rip-r) - 90px), #000 calc(var(--rip-r) - 60px), transparent var(--rip-r));
+  mask:radial-gradient(circle at var(--theme-x,50%) var(--theme-y,50%),
+    #000 calc(var(--rip-r) - 90px), #000 calc(var(--rip-r) - 60px), transparent var(--rip-r));
+  z-index:1;
+}
+@keyframes theme-ripple{ from{ --rip-r:0px; } to{ --rip-r:calc(var(--theme-r,1500px) + 100px); } }
+@keyframes theme-old-fade{ from{opacity:1} 80%{opacity:1} to{opacity:1} }
+
+/* Fallback per browser senza View Transitions: morph fluido dei colori */
+html.theme-transitioning,
+html.theme-transitioning body,
+html.theme-transitioning header,
+html.theme-transitioning .bottom-nav,
+html.theme-transitioning .card,
+html.theme-transitioning .li,
+html.theme-transitioning .money,
+html.theme-transitioning .rb,
+html.theme-transitioning .tabs,
+html.theme-transitioning .tab,
+html.theme-transitioning .seg,
+html.theme-transitioning .seg button,
+html.theme-transitioning .search,
+html.theme-transitioning .sort-btn,
+html.theme-transitioning .pitch-bg,
+html.theme-transitioning .full,
+html.theme-transitioning .full-hdr,
+html.theme-transitioning .sheet{
+  transition:background-color 1s ease, background-image 1s ease, color 1s ease, border-color 1s ease !important;
+}
+#themeBtn svg{transition:transform .5s cubic-bezier(.34,1.4,.5,1), opacity .3s;}
+#themeBtn:active svg{transform:rotate(35deg) scale(.9);}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;}
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important;-webkit-mask:none!important;mask:none!important;}
+}
+@media (max-height:700px){
+  .money{padding:9px 6px;margin-top:5px;}
+  .money-cell .val{font-size:20px;} .money-cell.hero .val{font-size:26px;}
+  .tabs{margin-bottom:8px;} .tab{padding:6px 2px 7px;}
+  .c-body{padding:10px 2px 10px 0;} .p-name{font-size:15px;}
+}
+</style>
+</head>
+<body>
+<div class="pitch-bg" aria-hidden="true"></div>
+</div>
+
+<header>
+  <div class="hdr-row">
+    <span class="save-chip" id="saveTag">✓ salvato</span>
+    <div class="hdr-right">
+      <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Cambia tema chiaro/scuro">
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>
+      </button>
+      <button class="icon-btn" onclick="openMenu()" aria-label="Menu e impostazioni">⋯</button>
+    </div>
+  </div>
+
+  <div class="money">
+    <div class="money-cell">
+      <span class="lbl">Residuo</span>
+      <span class="val num" id="residuoVal">500</span>
+    </div>
+    <div class="money-cell">
+      <span class="lbl">Slot liberi</span>
+      <span class="val num" id="slotsVal">25</span>
+    </div>
+  </div>
+
+  <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+  <div class="bar-legend">
+    <span id="reserveLabel">riserva <b>50</b></span>
+  </div>
+
+  <nav class="tabs" id="tabs" aria-controls="roleBudgets" aria-expanded="false"></nav>
+  <div class="role-budgets" id="roleBudgets"></div>
+</header>
+
+<main>
+  <div class="warn-bar" id="storageWarn" hidden>
+    <b>Attenzione: qui il salvataggio automatico non funziona.</b>
+    Apri il file con Safari (o Chrome) invece che dall'anteprima, oppure tieni un codice di backup dal menu ⋯ → Salva/Ripristina.
+  </div>
+  <div class="tools">
+    <input class="search" id="search" type="search" placeholder="Cerca in tutti i ruoli…" autocomplete="off" aria-label="Cerca giocatore">
+    <button class="sort-btn" id="sortBtn" onclick="cycleSort()">Valore ↓</button>
+  </div>
+  <div id="list"><div class="empty">Carico…</div></div>
+</main>
+
+<nav class="bottom-nav">
+  <button id="undoBtn" onclick="undo()" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h11a5 5 0 0 1 0 10h-3"/><path d="M8 5 4 9l4 4"/></svg>
+    <span>Annulla</span></button>
+  <button onclick="openBrowse()" class="accent">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <span>Listone</span></button>
+  <button onclick="openRoster()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M9 4 4.5 6.2 6 10l1.6-.6V20h8.8V9.4L18 10l1.5-3.8L15 4a3 3 0 0 1-6 0Z"/></svg>
+    <span>La mia rosa</span></button>
+  <button onclick="openSummary()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>
+    <span>Riepilogo</span></button>
+</nav>
+
+<div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<div class="full hidden" id="browseOverlay">
+  <div class="full-hdr">
+    <div class="fh-top">
+      <div>
+        <h3>Listone ufficiale</h3>
+        <div class="fh-sub" id="browseSub">501 giocatori</div>
+      </div>
+      <button class="full-close" onclick="closeBrowse()" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="seg roles" id="browseTabs" style="margin-bottom:8px;"></div>
+    <input class="search" id="browseSearch" type="search" placeholder="Nome o squadra…" autocomplete="off" style="margin-bottom:8px;">
+    <div class="seg" id="browseSort">
+      <button data-sort="q" onclick="setBrowseSort('q')">Quotazione</button>
+      <button data-sort="f" onclick="setBrowseSort('f')">Fantavalore</button>
+      <button data-sort="t" onclick="setBrowseSort('t')">Squadra</button>
+    </div>
+  </div>
+  <div class="full-body" id="browseList"></div>
+</div>
+
+<div class="full hidden" id="rosterOverlay">
+  <div class="full-hdr">
+    <div class="fh-top">
+      <div>
+        <h3>La mia rosa</h3>
+        <div class="fh-sub" id="rosterSub">0 giocatori</div>
+      </div>
+      <button class="full-close" onclick="closeRoster()" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="ros-stats">
+      <div class="ros-stat"><div class="k">Speso</div><div class="v num" id="rosSpent">0</div></div>
+      <div class="ros-stat"><div class="k">Residuo</div><div class="v num" id="rosLeft">500</div></div>
+      <div class="ros-stat"><div class="k">Completata</div><div class="v num" id="rosPct">0%</div></div>
+    </div>
+    <div class="seg" style="margin-top:10px;">
+      <button data-view="role" onclick="setRosterView('role')">Per reparto</button>
+      <button data-view="full" onclick="setRosterView('full')">Lista intera</button>
+    </div>
+  </div>
+  <div class="full-body" id="rosterBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LISTONE = [{"n": "Svilar", "r": "P", "t": "Roma", "q": 18, "f": 65}, {"n": "Martinez Jo.", "r": "P", "t": "Inter", "q": 17, "f": 63}, {"n": "Carnesecchi", "r": "P", "t": "Atalanta", "q": 16, "f": 52}, {"n": "Butez", "r": "P", "t": "Como", "q": 16, "f": 56}, {"n": "Maignan", "r": "P", "t": "Milan", "q": 15, "f": 50}, {"n": "De Gea", "r": "P", "t": "Fiorentina", "q": 13, "f": 45}, {"n": "Meret", "r": "P", "t": "Napoli", "q": 11, "f": 45}, {"n": "Skorupski", "r": "P", "t": "Bologna", "q": 10, "f": 37}, {"n": "Caprile", "r": "P", "t": "Cagliari", "q": 9, "f": 27}, {"n": "Di Gregorio", "r": "P", "t": "Juventus", "q": 9, "f": 40}, {"n": "Mandas", "r": "P", "t": "Lazio", "q": 9, "f": 30}, {"n": "Okoye", "r": "P", "t": "Udinese", "q": 9, "f": 29}, {"n": "Bijlow", "r": "P", "t": "Genoa", "q": 8, "f": 18}, {"n": "Falcone", "r": "P", "t": "Lecce", "q": 8, "f": 25}, {"n": "Daffara", "r": "P", "t": "Parma", "q": 7, "f": 5}, {"n": "Suzuki", "r": "P", "t": "Parma", "q": 7, "f": 20}, {"n": "Muric", "r": "P", "t": "Sassuolo", "q": 7, "f": 15}, {"n": "Perin", "r": "P", "t": "Juventus", "q": 6, "f": 10}, {"n": "Stankovic F.", "r": "P", "t": "Venezia", "q": 6, "f": 14}, {"n": "Thiam", "r": "P", "t": "Monza", "q": 5, "f": 12}, {"n": "Milinkovic-Savic V.", "r": "P", "t": "Napoli", "q": 5, "f": 10}, {"n": "Palmisani", "r": "P", "t": "Frosinone", "q": 4, "f": 8}, {"n": "Desplanches", "r": "P", "t": "Frosinone", "q": 2, "f": 8}, {"n": "Provedel", "r": "P", "t": "Inter", "q": 2, "f": 5}, {"n": "Sportiello", "r": "P", "t": "Atalanta", "q": 1, "f": 1}, {"n": "Happonen", "r": "P", "t": "Bologna", "q": 1, "f": 1}, {"n": "Pessina Mas.", "r": "P", "t": "Bologna", "q": 1, "f": 1}, {"n": "Sherri", "r": "P", "t": "Cagliari", "q": 1, "f": 1}, {"n": "Tornqvist", "r": "P", "t": "Como", "q": 1, "f": 1}, {"n": "Vigorito", "r": "P", "t": "Como", "q": 1, "f": 1}, {"n": "Christensen O.", "r": "P", "t": "Fiorentina", "q": 1, "f": 1}, {"n": "Lezzerini", "r": "P", "t": "Fiorentina", "q": 1, "f": 1}, {"n": "Lolic", "r": "P", "t": "Frosinone", "q": 1, "f": 1}, {"n": "Sommariva", "r": "P", "t": "Genoa", "q": 1, "f": 1}, {"n": "Stolz", "r": "P", "t": "Genoa", "q": 1, "f": 1}, {"n": "Di Gennaro", "r": "P", "t": "Inter", "q": 1, "f": 1}, {"n": "Pinsoglio", "r": "P", "t": "Juventus", "q": 1, "f": 1}, {"n": "Motta", "r": "P", "t": "Lazio", "q": 1, "f": 1}, {"n": "Renzetti", "r": "P", "t": "Lazio", "q": 1, "f": 1}, {"n": "Terracciano", "r": "P", "t": "Milan", "q": 1, "f": 1}, {"n": "Torriani", "r": "P", "t": "Milan", "q": 1, "f": 1}, {"n": "Pizzignacco", "r": "P", "t": "Monza", "q": 1, "f": 1}, {"n": "Strajnar", "r": "P", "t": "Monza", "q": 1, "f": 1}, {"n": "Contini", "r": "P", "t": "Napoli", "q": 1, "f": 1}, {"n": "Corvi", "r": "P", "t": "Parma", "q": 1, "f": 1}, {"n": "De Marzi", "r": "P", "t": "Roma", "q": 1, "f": 1}, {"n": "Gollini", "r": "P", "t": "Roma", "q": 1, "f": 1}, {"n": "Russo A.", "r": "P", "t": "Sassuolo", "q": 1, "f": 1}, {"n": "Turati", "r": "P", "t": "Sassuolo", "q": 1, "f": 3}, {"n": "Mascardi", "r": "P", "t": "Torino", "q": 1, "f": 1}, {"n": "Paleari", "r": "P", "t": "Torino", "q": 1, "f": 1}, {"n": "Siviero", "r": "P", "t": "Torino", "q": 1, "f": 1}, {"n": "Padelli", "r": "P", "t": "Udinese", "q": 1, "f": 1}, {"n": "Piana", "r": "P", "t": "Udinese", "q": 1, "f": 1}, {"n": "Grandi", "r": "P", "t": "Venezia", "q": 1, "f": 1}, {"n": "Pozzi", "r": "P", "t": "Venezia", "q": 1, "f": 1}, {"n": "Vismara", "r": "P", "t": "Atalanta", "q": 1, "f": 1}, {"n": "Satalino", "r": "P", "t": "Sassuolo", "q": 1, "f": 1}, {"n": "Penev", "r": "P", "t": "Lecce", "q": 1, "f": 1}, {"n": "Pisseri", "r": "P", "t": "Frosinone", "q": 1, "f": 1}, {"n": "Radunovic", "r": "P", "t": "Cagliari", "q": 1, "f": 1}, {"n": "Dimarco", "r": "D", "t": "Inter", "q": 32, "f": 265}, {"n": "Molina N.", "r": "D", "t": "Roma", "q": 18, "f": 87}, {"n": "Wesley", "r": "D", "t": "Roma", "q": 17, "f": 83}, {"n": "Akanji", "r": "D", "t": "Inter", "q": 16, "f": 55}, {"n": "Bremer", "r": "D", "t": "Juventus", "q": 15, "f": 50}, {"n": "Mancini", "r": "D", "t": "Roma", "q": 15, "f": 49}, {"n": "Bastoni", "r": "D", "t": "Inter", "q": 14, "f": 44}, {"n": "Pavlovic", "r": "D", "t": "Milan", "q": 14, "f": 48}, {"n": "Rrahmani", "r": "D", "t": "Napoli", "q": 14, "f": 47}, {"n": "Kalulu", "r": "D", "t": "Juventus", "q": 13, "f": 46}, {"n": "N'Dicka", "r": "D", "t": "Roma", "q": 13, "f": 44}, {"n": "Solet", "r": "D", "t": "Udinese", "q": 13, "f": 46}, {"n": "Stones", "r": "D", "t": "Inter", "q": 12, "f": 38}, {"n": "Gila", "r": "D", "t": "Milan", "q": 12, "f": 31}, {"n": "Di Lorenzo", "r": "D", "t": "Napoli", "q": 12, "f": 40}, {"n": "Spence", "r": "D", "t": "Inter", "q": 12, "f": 41}, {"n": "Ostigard", "r": "D", "t": "Genoa", "q": 11, "f": 40}, {"n": "Bisseck", "r": "D", "t": "Inter", "q": 11, "f": 33}, {"n": "Scalvini", "r": "D", "t": "Atalanta", "q": 10, "f": 28}, {"n": "Ramon", "r": "D", "t": "Como", "q": 10, "f": 32}, {"n": "Dodò", "r": "D", "t": "Fiorentina", "q": 10, "f": 30}, {"n": "Hermoso", "r": "D", "t": "Roma", "q": 10, "f": 26}, {"n": "Vasquez", "r": "D", "t": "Genoa", "q": 9, "f": 33}, {"n": "Cambiaso", "r": "D", "t": "Juventus", "q": 9, "f": 27}, {"n": "Chalobah T.", "r": "D", "t": "Como", "q": 9, "f": 26}, {"n": "Hien", "r": "D", "t": "Atalanta", "q": 8, "f": 16}, {"n": "Zappacosta", "r": "D", "t": "Atalanta", "q": 8, "f": 24}, {"n": "Lucumì", "r": "D", "t": "Bologna", "q": 8, "f": 18}, {"n": "Miranda J.", "r": "D", "t": "Bologna", "q": 8, "f": 24}, {"n": "Mina", "r": "D", "t": "Cagliari", "q": 8, "f": 20}, {"n": "Dragusin", "r": "D", "t": "Fiorentina", "q": 8, "f": 27}, {"n": "Jimenez A.", "r": "D", "t": "Fiorentina", "q": 8, "f": 23}, {"n": "Norton-Cuffy", "r": "D", "t": "Genoa", "q": 8, "f": 22}, {"n": "Celik", "r": "D", "t": "Juventus", "q": 8, "f": 13}, {"n": "Bartesaghi", "r": "D", "t": "Milan", "q": 8, "f": 25}, {"n": "Spinazzola", "r": "D", "t": "Napoli", "q": 8, "f": 24}, {"n": "Delprato", "r": "D", "t": "Parma", "q": 8, "f": 21}, {"n": "Valeri", "r": "D", "t": "Parma", "q": 8, "f": 24}, {"n": "Koulierakis", "r": "D", "t": "Roma", "q": 8, "f": 20}, {"n": "Vojvoda", "r": "D", "t": "Udinese", "q": 8, "f": 19}, {"n": "Couto", "r": "D", "t": "Como", "q": 8, "f": 27}, {"n": "Obert", "r": "D", "t": "Cagliari", "q": 7, "f": 14}, {"n": "Kaiki", "r": "D", "t": "Como", "q": 7, "f": 23}, {"n": "Carlos Augusto", "r": "D", "t": "Inter", "q": 7, "f": 27}, {"n": "Doekhi", "r": "D", "t": "Lazio", "q": 7, "f": 22}, {"n": "Romagnoli", "r": "D", "t": "Lazio", "q": 7, "f": 24}, {"n": "Tiago Gabriel", "r": "D", "t": "Lecce", "q": 7, "f": 17}, {"n": "Gabbia", "r": "D", "t": "Milan", "q": 7, "f": 25}, {"n": "Tomori", "r": "D", "t": "Milan", "q": 7, "f": 11}, {"n": "Buongiorno", "r": "D", "t": "Napoli", "q": 7, "f": 15}, {"n": "Idzes", "r": "D", "t": "Sassuolo", "q": 7, "f": 19}, {"n": "Coco", "r": "D", "t": "Torino", "q": 7, "f": 18}, {"n": "Ismajli", "r": "D", "t": "Torino", "q": 7, "f": 18}, {"n": "Kristensen T.", "r": "D", "t": "Atalanta", "q": 7, "f": 20}, {"n": "Ahanor", "r": "D", "t": "Atalanta", "q": 6, "f": 16}, {"n": "Bellanova", "r": "D", "t": "Atalanta", "q": 6, "f": 15}, {"n": "Bernasconi", "r": "D", "t": "Atalanta", "q": 6, "f": 17}, {"n": "Heggem", "r": "D", "t": "Bologna", "q": 6, "f": 15}, {"n": "Zortea", "r": "D", "t": "Bologna", "q": 6, "f": 19}, {"n": "Valle", "r": "D", "t": "Como", "q": 6, "f": 18}, {"n": "Valdepenas", "r": "D", "t": "Fiorentina", "q": 6, "f": 18}, {"n": "Viery", "r": "D", "t": "Fiorentina", "q": 6, "f": 19}, {"n": "Monterisi", "r": "D", "t": "Frosinone", "q": 6, "f": 14}, {"n": "Marcandalli", "r": "D", "t": "Genoa", "q": 6, "f": 13}, {"n": "Pavard", "r": "D", "t": "Inter", "q": 6, "f": 18}, {"n": "Tavares N.", "r": "D", "t": "Lazio", "q": 6, "f": 17}, {"n": "Marusic", "r": "D", "t": "Lazio", "q": 6, "f": 20}, {"n": "Gallo", "r": "D", "t": "Lecce", "q": 6, "f": 13}, {"n": "Mangas", "r": "D", "t": "Monza", "q": 6, "f": 15}, {"n": "Beukema", "r": "D", "t": "Napoli", "q": 6, "f": 13}, {"n": "Circati", "r": "D", "t": "Parma", "q": 6, "f": 18}, {"n": "Comuzzo", "r": "D", "t": "Torino", "q": 6, "f": 11}, {"n": "Kamara H.", "r": "D", "t": "Udinese", "q": 6, "f": 12}, {"n": "Bella-Kotchap", "r": "D", "t": "Venezia", "q": 6, "f": 13}, {"n": "Obrador", "r": "D", "t": "Sassuolo", "q": 6, "f": 15}, {"n": "Kolasinac", "r": "D", "t": "Atalanta", "q": 5, "f": 12}, {"n": "Vitik", "r": "D", "t": "Bologna", "q": 5, "f": 11}, {"n": "Holm", "r": "D", "t": "Bologna", "q": 5, "f": 13}, {"n": "Kofler", "r": "D", "t": "Cagliari", "q": 5, "f": 11}, {"n": "Zè Pedro", "r": "D", "t": "Cagliari", "q": 5, "f": 11}, {"n": "Kempf", "r": "D", "t": "Como", "q": 5, "f": 13}, {"n": "Parisi", "r": "D", "t": "Fiorentina", "q": 5, "f": 12}, {"n": "Bracaglia", "r": "D", "t": "Frosinone", "q": 5, "f": 11}, {"n": "Oyono A.", "r": "D", "t": "Frosinone", "q": 5, "f": 12}, {"n": "Martin", "r": "D", "t": "Genoa", "q": 5, "f": 15}, {"n": "Kelly L.", "r": "D", "t": "Juventus", "q": 5, "f": 10}, {"n": "Pedraza", "r": "D", "t": "Lazio", "q": 5, "f": 15}, {"n": "Gaspar K.", "r": "D", "t": "Lecce", "q": 5, "f": 12}, {"n": "Veiga D.", "r": "D", "t": "Lecce", "q": 5, "f": 11}, {"n": "Olivera", "r": "D", "t": "Napoli", "q": 5, "f": 13}, {"n": "Rensch", "r": "D", "t": "Roma", "q": 5, "f": 16}, {"n": "Pedersen", "r": "D", "t": "Torino", "q": 5, "f": 13}, {"n": "Moreno M.", "r": "D", "t": "Venezia", "q": 5, "f": 11}, {"n": "Haps", "r": "D", "t": "Venezia", "q": 5, "f": 11}, {"n": "Zappa", "r": "D", "t": "Cagliari", "q": 4, "f": 9}, {"n": "Smolcic I.", "r": "D", "t": "Como", "q": 4, "f": 10}, {"n": "Pongracic", "r": "D", "t": "Fiorentina", "q": 4, "f": 8}, {"n": "Calvani", "r": "D", "t": "Frosinone", "q": 4, "f": 10}, {"n": "Mitaj", "r": "D", "t": "Genoa", "q": 4, "f": 9}, {"n": "Gatti", "r": "D", "t": "Juventus", "q": 4, "f": 10}, {"n": "Siebert", "r": "D", "t": "Lecce", "q": 4, "f": 12}, {"n": "Delli Carri", "r": "D", "t": "Monza", "q": 4, "f": 11}, {"n": "Lucchesi", "r": "D", "t": "Monza", "q": 4, "f": 12}, {"n": "Birindelli", "r": "D", "t": "Monza", "q": 4, "f": 12}, {"n": "Valenti", "r": "D", "t": "Parma", "q": 4, "f": 10}, {"n": "Ghilardi", "r": "D", "t": "Roma", "q": 4, "f": 10}, {"n": "Walukiewicz", "r": "D", "t": "Sassuolo", "q": 4, "f": 10}, {"n": "Doig", "r": "D", "t": "Sassuolo", "q": 4, "f": 10}, {"n": "Comert", "r": "D", "t": "Torino", "q": 4, "f": 10}, {"n": "Kabasele", "r": "D", "t": "Udinese", "q": 4, "f": 9}, {"n": "Bertola", "r": "D", "t": "Udinese", "q": 4, "f": 10}, {"n": "Zanoli", "r": "D", "t": "Udinese", "q": 4, "f": 10}, {"n": "Arizala", "r": "D", "t": "Udinese", "q": 4, "f": 8}, {"n": "Halhal", "r": "D", "t": "Venezia", "q": 4, "f": 10}, {"n": "Correia T.", "r": "D", "t": "Venezia", "q": 4, "f": 12}, {"n": "Terzic", "r": "D", "t": "Frosinone", "q": 4, "f": 11}, {"n": "Kossounou", "r": "D", "t": "Atalanta", "q": 3, "f": 7}, {"n": "Casale", "r": "D", "t": "Bologna", "q": 3, "f": 6}, {"n": "Rodriguez Ju.", "r": "D", "t": "Cagliari", "q": 3, "f": 10}, {"n": "Idrissi R.", "r": "D", "t": "Cagliari", "q": 3, "f": 7}, {"n": "Ranieri L.", "r": "D", "t": "Fiorentina", "q": 3, "f": 7}, {"n": "Joao Mario", "r": "D", "t": "Fiorentina", "q": 3, "f": 7}, {"n": "Akpoguma", "r": "D", "t": "Frosinone", "q": 3, "f": 7}, {"n": "Cittadini", "r": "D", "t": "Frosinone", "q": 3, "f": 8}, {"n": "Provstgaard", "r": "D", "t": "Lazio", "q": 3, "f": 10}, {"n": "Floriani Mussolini", "r": "D", "t": "Lazio", "q": 3, "f": 12}, {"n": "De Winter", "r": "D", "t": "Milan", "q": 3, "f": 12}, {"n": "Estupinan", "r": "D", "t": "Milan", "q": 3, "f": 9}, {"n": "Kouadio", "r": "D", "t": "Monza", "q": 3, "f": 9}, {"n": "Carboni A.", "r": "D", "t": "Monza", "q": 3, "f": 9}, {"n": "Troilo", "r": "D", "t": "Parma", "q": 3, "f": 8}, {"n": "Britschgi", "r": "D", "t": "Parma", "q": 3, "f": 10}, {"n": "Candè", "r": "D", "t": "Sassuolo", "q": 3, "f": 12}, {"n": "Schingtienne", "r": "D", "t": "Venezia", "q": 3, "f": 7}, {"n": "Sverko", "r": "D", "t": "Venezia", "q": 3, "f": 7}, {"n": "Hainaut", "r": "D", "t": "Venezia", "q": 3, "f": 7}, {"n": "Helland", "r": "D", "t": "Bologna", "q": 2, "f": 5}, {"n": "Alhassane", "r": "D", "t": "Bologna", "q": 2, "f": 6}, {"n": "Van Der Brempt", "r": "D", "t": "Como", "q": 2, "f": 5}, {"n": "Otoa", "r": "D", "t": "Genoa", "q": 2, "f": 5}, {"n": "Puczka", "r": "D", "t": "Genoa", "q": 2, "f": 7}, {"n": "Sabelli", "r": "D", "t": "Genoa", "q": 2, "f": 5}, {"n": "Lazzari", "r": "D", "t": "Lazio", "q": 2, "f": 8}, {"n": "Pellegrini Lu.", "r": "D", "t": "Lazio", "q": 2, "f": 5}, {"n": "Jean", "r": "D", "t": "Lecce", "q": 2, "f": 4}, {"n": "Diawara S.", "r": "D", "t": "Milan", "q": 2, "f": 4}, {"n": "Marin R.", "r": "D", "t": "Napoli", "q": 2, "f": 6}, {"n": "Biraghi", "r": "D", "t": "Torino", "q": 2, "f": 5}, {"n": "Palma", "r": "D", "t": "Udinese", "q": 2, "f": 5}, {"n": "Ebosse", "r": "D", "t": "Udinese", "q": 2, "f": 4}, {"n": "Franjic", "r": "D", "t": "Venezia", "q": 2, "f": 4}, {"n": "Sagrado", "r": "D", "t": "Venezia", "q": 2, "f": 4}, {"n": "Aurelio", "r": "D", "t": "Cagliari", "q": 2, "f": 5}, {"n": "De Silvestri", "r": "D", "t": "Bologna", "q": 1, "f": 4}, {"n": "Goldaniga", "r": "D", "t": "Como", "q": 1, "f": 1}, {"n": "Cuenca A.", "r": "D", "t": "Como", "q": 1, "f": 8}, {"n": "Amey", "r": "D", "t": "Frosinone", "q": 1, "f": 1}, {"n": "Gelli J.", "r": "D", "t": "Frosinone", "q": 1, "f": 1}, {"n": "Oyono J.", "r": "D", "t": "Frosinone", "q": 1, "f": 3}, {"n": "Corrado", "r": "D", "t": "Frosinone", "q": 1, "f": 3}, {"n": "Matturro", "r": "D", "t": "Genoa", "q": 1, "f": 2}, {"n": "Rugani", "r": "D", "t": "Juventus", "q": 1, "f": 3}, {"n": "Cabal", "r": "D", "t": "Juventus", "q": 1, "f": 4}, {"n": "Patric", "r": "D", "t": "Lazio", "q": 1, "f": 4}, {"n": "Ndaba", "r": "D", "t": "Lecce", "q": 1, "f": 4}, {"n": "Antov", "r": "D", "t": "Monza", "q": 1, "f": 2}, {"n": "Bakoune", "r": "D", "t": "Monza", "q": 1, "f": 4}, {"n": "Marianucci", "r": "D", "t": "Napoli", "q": 1, "f": 3}, {"n": "Mazzocchi", "r": "D", "t": "Napoli", "q": 1, "f": 3}, {"n": "Ndiaye", "r": "D", "t": "Parma", "q": 1, "f": 4}, {"n": "Carboni F.", "r": "D", "t": "Parma", "q": 1, "f": 3}, {"n": "Ziolkowski", "r": "D", "t": "Roma", "q": 1, "f": 2}, {"n": "Missori", "r": "D", "t": "Sassuolo", "q": 1, "f": 2}, {"n": "Pieragnolo", "r": "D", "t": "Sassuolo", "q": 1, "f": 1}, {"n": "Mlacic", "r": "D", "t": "Udinese", "q": 1, "f": 3}, {"n": "Abankwah", "r": "D", "t": "Udinese", "q": 1, "f": 3}, {"n": "Gomes", "r": "D", "t": "Venezia", "q": 1, "f": 1}, {"n": "Paz N.", "r": "C", "t": "Como", "q": 30, "f": 250}, {"n": "McTominay", "r": "C", "t": "Napoli", "q": 28, "f": 240}, {"n": "Calhanoglu", "r": "C", "t": "Inter", "q": 27, "f": 230}, {"n": "Orsolini", "r": "C", "t": "Bologna", "q": 26, "f": 200}, {"n": "Pulisic", "r": "C", "t": "Milan", "q": 25, "f": 180}, {"n": "Rabiot", "r": "C", "t": "Milan", "q": 22, "f": 128}, {"n": "Baturina", "r": "C", "t": "Como", "q": 19, "f": 102}, {"n": "Da Cunha", "r": "C", "t": "Como", "q": 18, "f": 90}, {"n": "Zaniolo", "r": "C", "t": "Udinese", "q": 18, "f": 100}, {"n": "Atta", "r": "C", "t": "Fiorentina", "q": 17, "f": 87}, {"n": "Barella", "r": "C", "t": "Inter", "q": 17, "f": 80}, {"n": "McKennie", "r": "C", "t": "Juventus", "q": 17, "f": 68}, {"n": "Zaccagni", "r": "C", "t": "Lazio", "q": 16, "f": 91}, {"n": "De Bruyne", "r": "C", "t": "Napoli", "q": 15, "f": 98}, {"n": "Vlasic", "r": "C", "t": "Torino", "q": 14, "f": 80}, {"n": "Gudmundsson A.", "r": "C", "t": "Fiorentina", "q": 13, "f": 61}, {"n": "Taylor K.", "r": "C", "t": "Lazio", "q": 13, "f": 64}, {"n": "Ederson D.S.", "r": "C", "t": "Atalanta", "q": 12, "f": 45}, {"n": "Samardzic", "r": "C", "t": "Atalanta", "q": 12, "f": 42}, {"n": "Rodriguez Je.", "r": "C", "t": "Como", "q": 12, "f": 32}, {"n": "Alajbegovic", "r": "C", "t": "Juventus", "q": 12, "f": 56}, {"n": "Conceicao", "r": "C", "t": "Juventus", "q": 12, "f": 60}, {"n": "Modric", "r": "C", "t": "Milan", "q": 12, "f": 50}, {"n": "Mastantuono", "r": "C", "t": "Fiorentina", "q": 12, "f": 58}, {"n": "Rowe", "r": "C", "t": "Bologna", "q": 11, "f": 37}, {"n": "Baldanzi", "r": "C", "t": "Genoa", "q": 11, "f": 30}, {"n": "Zambo Anguissa", "r": "C", "t": "Napoli", "q": 11, "f": 54}, {"n": "Perrone", "r": "C", "t": "Como", "q": 10, "f": 38}, {"n": "Zielinski", "r": "C", "t": "Inter", "q": 10, "f": 41}, {"n": "Thuram K.", "r": "C", "t": "Juventus", "q": 10, "f": 41}, {"n": "Saelemaekers", "r": "C", "t": "Milan", "q": 10, "f": 43}, {"n": "Politano", "r": "C", "t": "Napoli", "q": 10, "f": 47}, {"n": "Konè M.", "r": "C", "t": "Roma", "q": 10, "f": 42}, {"n": "Thorstvedt", "r": "C", "t": "Sassuolo", "q": 10, "f": 41}, {"n": "Casadei", "r": "C", "t": "Torino", "q": 10, "f": 37}, {"n": "Ekkelenkamp", "r": "C", "t": "Udinese", "q": 10, "f": 41}, {"n": "Pellegrini Lo.", "r": "C", "t": "Roma", "q": 10, "f": 28}, {"n": "Pasalic", "r": "C", "t": "Atalanta", "q": 9, "f": 32}, {"n": "Bernardeschi", "r": "C", "t": "Bologna", "q": 9, "f": 21}, {"n": "Mandragora", "r": "C", "t": "Fiorentina", "q": 9, "f": 28}, {"n": "Cancellieri", "r": "C", "t": "Lazio", "q": 9, "f": 28}, {"n": "Isaksen", "r": "C", "t": "Lazio", "q": 9, "f": 25}, {"n": "Konè I.", "r": "C", "t": "Sassuolo", "q": 9, "f": 20}, {"n": "Odgaard", "r": "C", "t": "Bologna", "q": 8, "f": 22}, {"n": "Cambiaghi", "r": "C", "t": "Bologna", "q": 8, "f": 25}, {"n": "Fagioli", "r": "C", "t": "Fiorentina", "q": 8, "f": 23}, {"n": "Ndour", "r": "C", "t": "Fiorentina", "q": 8, "f": 25}, {"n": "Diouf", "r": "C", "t": "Inter", "q": 8, "f": 37}, {"n": "Sucic P.", "r": "C", "t": "Inter", "q": 8, "f": 26}, {"n": "Locatelli", "r": "C", "t": "Juventus", "q": 8, "f": 32}, {"n": "Colpani", "r": "C", "t": "Monza", "q": 8, "f": 25}, {"n": "Vergara", "r": "C", "t": "Napoli", "q": 8, "f": 34}, {"n": "Cristante", "r": "C", "t": "Roma", "q": 8, "f": 29}, {"n": "Schmid", "r": "C", "t": "Frosinone", "q": 8, "f": 30}, {"n": "Gaetano", "r": "C", "t": "Atalanta", "q": 7, "f": 24}, {"n": "Ferguson", "r": "C", "t": "Bologna", "q": 7, "f": 18}, {"n": "Fazzini", "r": "C", "t": "Cagliari", "q": 7, "f": 19}, {"n": "Calò", "r": "C", "t": "Frosinone", "q": 7, "f": 25}, {"n": "Frendrup", "r": "C", "t": "Genoa", "q": 7, "f": 19}, {"n": "Frattesi", "r": "C", "t": "Lazio", "q": 7, "f": 55}, {"n": "Pessina", "r": "C", "t": "Monza", "q": 7, "f": 15}, {"n": "Lobotka", "r": "C", "t": "Napoli", "q": 7, "f": 20}, {"n": "Bernabè", "r": "C", "t": "Parma", "q": 7, "f": 36}, {"n": "Volpato", "r": "C", "t": "Sassuolo", "q": 7, "f": 23}, {"n": "Oristanio", "r": "C", "t": "Torino", "q": 7, "f": 27}, {"n": "Unai Gomez", "r": "C", "t": "Udinese", "q": 7, "f": 23}, {"n": "Sow", "r": "C", "t": "Genoa", "q": 7, "f": 14}, {"n": "Zalewski", "r": "C", "t": "Atalanta", "q": 6, "f": 21}, {"n": "Pobega", "r": "C", "t": "Bologna", "q": 6, "f": 14}, {"n": "Adopo", "r": "C", "t": "Cagliari", "q": 6, "f": 13}, {"n": "Winks", "r": "C", "t": "Cagliari", "q": 6, "f": 14}, {"n": "Caqueret", "r": "C", "t": "Como", "q": 6, "f": 20}, {"n": "Liberali", "r": "C", "t": "Como", "q": 6, "f": 22}, {"n": "Oulai", "r": "C", "t": "Fiorentina", "q": 6, "f": 20}, {"n": "Ellertsson", "r": "C", "t": "Genoa", "q": 6, "f": 18}, {"n": "Zhegrova", "r": "C", "t": "Juventus", "q": 6, "f": 18}, {"n": "Rovella", "r": "C", "t": "Lazio", "q": 6, "f": 16}, {"n": "Coulibaly L.", "r": "C", "t": "Lecce", "q": 6, "f": 14}, {"n": "Pierotti", "r": "C", "t": "Lecce", "q": 6, "f": 19}, {"n": "Chukwueze", "r": "C", "t": "Milan", "q": 6, "f": 11}, {"n": "Akinsanmiro", "r": "C", "t": "Monza", "q": 6, "f": 16}, {"n": "Nicolussi Caviglia", "r": "C", "t": "Parma", "q": 6, "f": 18}, {"n": "Karlstrom", "r": "C", "t": "Udinese", "q": 6, "f": 20}, {"n": "Basic", "r": "C", "t": "Venezia", "q": 6, "f": 19}, {"n": "Amondarain", "r": "C", "t": "Bologna", "q": 5, "f": 12}, {"n": "Romano", "r": "C", "t": "Cagliari", "q": 5, "f": 12}, {"n": "Felici", "r": "C", "t": "Cagliari", "q": 5, "f": 10}, {"n": "Milla", "r": "C", "t": "Como", "q": 5, "f": 14}, {"n": "Addai", "r": "C", "t": "Como", "q": 5, "f": 10}, {"n": "Zerbin", "r": "C", "t": "Frosinone", "q": 5, "f": 13}, {"n": "Meichtry", "r": "C", "t": "Genoa", "q": 5, "f": 14}, {"n": "Traorè Hj.", "r": "C", "t": "Genoa", "q": 5, "f": 11}, {"n": "Mkhitaryan", "r": "C", "t": "Inter", "q": 5, "f": 19}, {"n": "Koopmeiners", "r": "C", "t": "Juventus", "q": 5, "f": 14}, {"n": "Dele-Bashiru", "r": "C", "t": "Lazio", "q": 5, "f": 13}, {"n": "Berisha M.", "r": "C", "t": "Lecce", "q": 5, "f": 16}, {"n": "Gandelman", "r": "C", "t": "Lecce", "q": 5, "f": 14}, {"n": "Fofana Y.", "r": "C", "t": "Milan", "q": 5, "f": 23}, {"n": "Keita M.", "r": "C", "t": "Parma", "q": 5, "f": 15}, {"n": "Pisilli", "r": "C", "t": "Roma", "q": 5, "f": 17}, {"n": "Matic", "r": "C", "t": "Sassuolo", "q": 5, "f": 15}, {"n": "Adzic", "r": "C", "t": "Sassuolo", "q": 5, "f": 16}, {"n": "Bakola", "r": "C", "t": "Sassuolo", "q": 5, "f": 14}, {"n": "Cacciamani", "r": "C", "t": "Torino", "q": 5, "f": 18}, {"n": "Gineitis", "r": "C", "t": "Torino", "q": 5, "f": 13}, {"n": "Piotrowski", "r": "C", "t": "Udinese", "q": 5, "f": 15}, {"n": "Busio", "r": "C", "t": "Venezia", "q": 5, "f": 14}, {"n": "Sohm", "r": "C", "t": "Venezia", "q": 5, "f": 14}, {"n": "Perez K.", "r": "C", "t": "Venezia", "q": 5, "f": 14}, {"n": "Grillitsch", "r": "C", "t": "Frosinone", "q": 5, "f": 14}, {"n": "De Roon", "r": "C", "t": "Atalanta", "q": 4, "f": 12}, {"n": "Moro N.", "r": "C", "t": "Bologna", "q": 4, "f": 10}, {"n": "Prati", "r": "C", "t": "Cagliari", "q": 4, "f": 7}, {"n": "Fabbian", "r": "C", "t": "Fiorentina", "q": 4, "f": 8}, {"n": "Cichella", "r": "C", "t": "Frosinone", "q": 4, "f": 11}, {"n": "Koutsoupias", "r": "C", "t": "Frosinone", "q": 4, "f": 12}, {"n": "Amorim", "r": "C", "t": "Genoa", "q": 4, "f": 11}, {"n": "Luis Henrique", "r": "C", "t": "Inter", "q": 4, "f": 13}, {"n": "Douglas Luiz", "r": "C", "t": "Juventus", "q": 4, "f": 12}, {"n": "Cataldi", "r": "C", "t": "Lazio", "q": 4, "f": 12}, {"n": "Ngom", "r": "C", "t": "Lecce", "q": 4, "f": 11}, {"n": "Ricci S.", "r": "C", "t": "Milan", "q": 4, "f": 11}, {"n": "Jashari", "r": "C", "t": "Milan", "q": 4, "f": 11}, {"n": "Loftus-Cheek", "r": "C", "t": "Milan", "q": 4, "f": 11}, {"n": "Folorunsho", "r": "C", "t": "Napoli", "q": 4, "f": 10}, {"n": "Almqvist", "r": "C", "t": "Parma", "q": 4, "f": 14}, {"n": "El Aynaoui", "r": "C", "t": "Roma", "q": 4, "f": 18}, {"n": "Fitz-Jim", "r": "C", "t": "Torino", "q": 4, "f": 13}, {"n": "Ilkhan", "r": "C", "t": "Torino", "q": 4, "f": 10}, {"n": "Njie", "r": "C", "t": "Torino", "q": 4, "f": 12}, {"n": "Sulemana I.", "r": "C", "t": "Atalanta", "q": 3, "f": 7}, {"n": "Dominguez B.", "r": "C", "t": "Sassuolo", "q": 3, "f": 12}, {"n": "Deiola", "r": "C", "t": "Cagliari", "q": 3, "f": 8}, {"n": "Brescianini", "r": "C", "t": "Fiorentina", "q": 3, "f": 7}, {"n": "Gelli F.", "r": "C", "t": "Frosinone", "q": 3, "f": 8}, {"n": "Fini", "r": "C", "t": "Frosinone", "q": 3, "f": 9}, {"n": "Messias", "r": "C", "t": "Genoa", "q": 3, "f": 8}, {"n": "Stankovic A.", "r": "C", "t": "Inter", "q": 3, "f": 10}, {"n": "Miretti", "r": "C", "t": "Juventus", "q": 3, "f": 11}, {"n": "Colombo L.", "r": "C", "t": "Monza", "q": 3, "f": 7}, {"n": "Gilmour", "r": "C", "t": "Napoli", "q": 3, "f": 9}, {"n": "Sorensen O.", "r": "C", "t": "Parma", "q": 3, "f": 12}, {"n": "Diallo O.", "r": "C", "t": "Parma", "q": 3, "f": 12}, {"n": "Aboukhlal", "r": "C", "t": "Torino", "q": 3, "f": 5}, {"n": "Miller L.", "r": "C", "t": "Udinese", "q": 3, "f": 12}, {"n": "Helgason", "r": "C", "t": "Venezia", "q": 3, "f": 7}, {"n": "El Azzouzi O.", "r": "C", "t": "Bologna", "q": 2, "f": 4}, {"n": "Fadera", "r": "C", "t": "Como", "q": 2, "f": 3}, {"n": "Hasa", "r": "C", "t": "Frosinone", "q": 2, "f": 5}, {"n": "Masini", "r": "C", "t": "Frosinone", "q": 2, "f": 4}, {"n": "Venturino", "r": "C", "t": "Genoa", "q": 2, "f": 6}, {"n": "Maleh", "r": "C", "t": "Lecce", "q": 2, "f": 5}, {"n": "Musah", "r": "C", "t": "Milan", "q": 2, "f": 6}, {"n": "Ciurria", "r": "C", "t": "Monza", "q": 2, "f": 6}, {"n": "Ordonez C.", "r": "C", "t": "Parma", "q": 2, "f": 5}, {"n": "Boloca", "r": "C", "t": "Sassuolo", "q": 2, "f": 5}, {"n": "Lipani", "r": "C", "t": "Sassuolo", "q": 2, "f": 5}, {"n": "Chakvetadze", "r": "C", "t": "Udinese", "q": 2, "f": 6}, {"n": "Duncan", "r": "C", "t": "Venezia", "q": 2, "f": 4}, {"n": "Liteta", "r": "C", "t": "Cagliari", "q": 1, "f": 1}, {"n": "Lahdo", "r": "C", "t": "Como", "q": 1, "f": 1}, {"n": "El Azzouzi A.", "r": "C", "t": "Frosinone", "q": 1, "f": 3}, {"n": "Kone B.", "r": "C", "t": "Frosinone", "q": 1, "f": 3}, {"n": "Belahyane", "r": "C", "t": "Lazio", "q": 1, "f": 5}, {"n": "Przyborek", "r": "C", "t": "Lazio", "q": 1, "f": 5}, {"n": "Gorter", "r": "C", "t": "Lecce", "q": 1, "f": 3}, {"n": "Kaba", "r": "C", "t": "Lecce", "q": 1, "f": 2}, {"n": "Fofana Sa.", "r": "C", "t": "Lecce", "q": 1, "f": 1}, {"n": "Cremaschi", "r": "C", "t": "Parma", "q": 1, "f": 3}, {"n": "Iannoni", "r": "C", "t": "Sassuolo", "q": 1, "f": 1}, {"n": "Ilic", "r": "C", "t": "Torino", "q": 1, "f": 4}, {"n": "Anjorin", "r": "C", "t": "Torino", "q": 1, "f": 4}, {"n": "Camara A.", "r": "C", "t": "Udinese", "q": 1, "f": 3}, {"n": "Zarraga", "r": "C", "t": "Udinese", "q": 1, "f": 4}, {"n": "Dagasso", "r": "C", "t": "Venezia", "q": 1, "f": 1}, {"n": "Martinez L.", "r": "A", "t": "Inter", "q": 35, "f": 370}, {"n": "Malen", "r": "A", "t": "Roma", "q": 34, "f": 365}, {"n": "Thuram", "r": "A", "t": "Inter", "q": 29, "f": 280}, {"n": "Hojlund", "r": "A", "t": "Napoli", "q": 28, "f": 271}, {"n": "Ramos G.", "r": "A", "t": "Milan", "q": 27, "f": 232}, {"n": "Kolo Muani", "r": "A", "t": "Juventus", "q": 26, "f": 225}, {"n": "Kean", "r": "A", "t": "Fiorentina", "q": 25, "f": 200}, {"n": "Yildiz", "r": "A", "t": "Juventus", "q": 23, "f": 192}, {"n": "Douvikas", "r": "A", "t": "Como", "q": 20, "f": 157}, {"n": "Scamacca", "r": "A", "t": "Atalanta", "q": 19, "f": 131}, {"n": "Davis K.", "r": "A", "t": "Udinese", "q": 19, "f": 122}, {"n": "Krstovic", "r": "A", "t": "Atalanta", "q": 18, "f": 95}, {"n": "Leao", "r": "A", "t": "Milan", "q": 18, "f": 120}, {"n": "Berardi", "r": "A", "t": "Sassuolo", "q": 18, "f": 115}, {"n": "De Ketelaere", "r": "A", "t": "Atalanta", "q": 17, "f": 106}, {"n": "Dovbyk", "r": "A", "t": "Bologna", "q": 16, "f": 73}, {"n": "Esposito F.P.", "r": "A", "t": "Inter", "q": 16, "f": 93}, {"n": "Pellegrino M.", "r": "A", "t": "Fiorentina", "q": 15, "f": 60}, {"n": "Laurientè", "r": "A", "t": "Sassuolo", "q": 15, "f": 88}, {"n": "Simeone", "r": "A", "t": "Torino", "q": 15, "f": 82}, {"n": "Santos A.", "r": "A", "t": "Napoli", "q": 14, "f": 57}, {"n": "Dybala", "r": "A", "t": "Roma", "q": 14, "f": 67}, {"n": "Castro S.", "r": "A", "t": "Roma", "q": 14, "f": 81}, {"n": "Raspadori", "r": "A", "t": "Atalanta", "q": 13, "f": 62}, {"n": "Esposito Se.", "r": "A", "t": "Cagliari", "q": 13, "f": 40}, {"n": "Nkunku", "r": "A", "t": "Milan", "q": 13, "f": 25}, {"n": "Pinamonti", "r": "A", "t": "Sassuolo", "q": 13, "f": 55}, {"n": "Kevin Carlos", "r": "A", "t": "Cagliari", "q": 13, "f": 47}, {"n": "Soulè", "r": "A", "t": "Roma", "q": 12, "f": 53}, {"n": "Adams A.", "r": "A", "t": "Venezia", "q": 12, "f": 51}, {"n": "Diao", "r": "A", "t": "Como", "q": 11, "f": 50}, {"n": "Colombo", "r": "A", "t": "Genoa", "q": 11, "f": 63}, {"n": "Tourè E.", "r": "A", "t": "Parma", "q": 11, "f": 43}, {"n": "Dia", "r": "A", "t": "Lazio", "q": 10, "f": 31}, {"n": "Ratkov", "r": "A", "t": "Lazio", "q": 10, "f": 32}, {"n": "Bowie", "r": "A", "t": "Sassuolo", "q": 10, "f": 39}, {"n": "Romero D.", "r": "A", "t": "Parma", "q": 10, "f": 38}, {"n": "Ghedjemis", "r": "A", "t": "Frosinone", "q": 9, "f": 30}, {"n": "David", "r": "A", "t": "Juventus", "q": 9, "f": 40}, {"n": "Geubbels", "r": "A", "t": "Lecce", "q": 9, "f": 25}, {"n": "Cutrone", "r": "A", "t": "Monza", "q": 9, "f": 33}, {"n": "Adams C.", "r": "A", "t": "Torino", "q": 9, "f": 32}, {"n": "Dallinga", "r": "A", "t": "Bologna", "q": 8, "f": 10}, {"n": "Piccoli", "r": "A", "t": "Bologna", "q": 8, "f": 31}, {"n": "Vitinha O.", "r": "A", "t": "Genoa", "q": 8, "f": 20}, {"n": "Yeboah J.", "r": "A", "t": "Venezia", "q": 8, "f": 28}, {"n": "Rrahmani Al.", "r": "A", "t": "Venezia", "q": 8, "f": 20}, {"n": "Raimondo", "r": "A", "t": "Frosinone", "q": 7, "f": 24}, {"n": "Bonny", "r": "A", "t": "Inter", "q": 7, "f": 21}, {"n": "Stulic", "r": "A", "t": "Lecce", "q": 7, "f": 18}, {"n": "Zapata D.", "r": "A", "t": "Torino", "q": 7, "f": 18}, {"n": "Sulemana K.", "r": "A", "t": "Atalanta", "q": 6, "f": 16}, {"n": "Mutandwa", "r": "A", "t": "Cagliari", "q": 6, "f": 15}, {"n": "Boga", "r": "A", "t": "Juventus", "q": 6, "f": 25}, {"n": "Noslin", "r": "A", "t": "Lazio", "q": 6, "f": 17}, {"n": "Gimenez", "r": "A", "t": "Milan", "q": 6, "f": 14}, {"n": "Neres", "r": "A", "t": "Napoli", "q": 6, "f": 22}, {"n": "Maldini", "r": "A", "t": "Cagliari", "q": 5, "f": 22}, {"n": "Camarda", "r": "A", "t": "Milan", "q": 5, "f": 20}, {"n": "Mota", "r": "A", "t": "Monza", "q": 5, "f": 18}, {"n": "Frigan", "r": "A", "t": "Parma", "q": 5, "f": 13}, {"n": "Adorante", "r": "A", "t": "Venezia", "q": 5, "f": 14}, {"n": "Borrelli", "r": "A", "t": "Cagliari", "q": 4, "f": 9}, {"n": "Mendy P.", "r": "A", "t": "Cagliari", "q": 4, "f": 9}, {"n": "Morata", "r": "A", "t": "Como", "q": 4, "f": 10}, {"n": "Kvernadze", "r": "A", "t": "Frosinone", "q": 4, "f": 15}, {"n": "Havel", "r": "A", "t": "Genoa", "q": 4, "f": 9}, {"n": "Giovane", "r": "A", "t": "Napoli", "q": 4, "f": 10}, {"n": "Kulenovic", "r": "A", "t": "Torino", "q": 4, "f": 9}, {"n": "Gueye", "r": "A", "t": "Udinese", "q": 4, "f": 7}, {"n": "Robinson J.", "r": "A", "t": "Monza", "q": 4, "f": 10}, {"n": "Kuhn", "r": "A", "t": "Como", "q": 3, "f": 5}, {"n": "Ekhator", "r": "A", "t": "Juventus", "q": 3, "f": 10}, {"n": "N'Dri", "r": "A", "t": "Lecce", "q": 3, "f": 9}, {"n": "Varela G.", "r": "A", "t": "Monza", "q": 3, "f": 7}, {"n": "Lang", "r": "A", "t": "Napoli", "q": 3, "f": 10}, {"n": "Lucca", "r": "A", "t": "Napoli", "q": 3, "f": 10}, {"n": "Elphege", "r": "A", "t": "Parma", "q": 3, "f": 11}, {"n": "Petagna", "r": "A", "t": "Monza", "q": 2, "f": 5}, {"n": "Buksa", "r": "A", "t": "Udinese", "q": 2, "f": 4}, {"n": "Albarracin", "r": "A", "t": "Cagliari", "q": 1, "f": 1}, {"n": "Trepy", "r": "A", "t": "Cagliari", "q": 1, "f": 2}, {"n": "Azon", "r": "A", "t": "Como", "q": 1, "f": 1}, {"n": "Vaz", "r": "A", "t": "Roma", "q": 1, "f": 4}, {"n": "Moro L.", "r": "A", "t": "Sassuolo", "q": 1, "f": 1}, {"n": "Bayo V.", "r": "A", "t": "Udinese", "q": 1, "f": 3}, {"n": "Lisman", "r": "A", "t": "Venezia", "q": 1, "f": 1}, {"n": "Lauberbach", "r": "A", "t": "Venezia", "q": 1, "f": 1}];
+const RAW_PLAYERS = [
+  // DIFENSORI
+  {n:"Mancini",r:"D",t:"Roma",p:28},{n:"Zappacosta",r:"D",t:"Atalanta",p:14},{n:"Spinazzola",r:"D",t:"Napoli",p:14},
+  {n:"Doekhi",r:"D",t:"Lazio",p:12,f:1},{n:"Molina",r:"D",t:"Roma",p:12},{n:"Hermoso",r:"D",t:"Roma",p:10},
+  {n:"Chalobah",r:"D",t:"Como",p:9},{n:"Miranda",r:"D",t:"Bologna",p:8},{n:"Jimenez",r:"D",t:"Fiorentina",p:8},{n:"Koulierakis",r:"D",t:"Roma",p:8},
+  {n:"Celik",r:"D",t:"Juventus",p:7},{n:"Obrador",r:"D",t:"Torino",p:7,f:1},{n:"Kaiki",r:"D",t:"Como",p:7},
+  {n:"Kamara",r:"D",t:"Udinese",p:6},{n:"Zortea",r:"D",t:"Bologna",p:6},{n:"Couto",r:"D",t:"Como",p:6},{n:"Ahanor",r:"D",t:"Atalanta",p:6},{n:"Valdepenas",r:"D",t:"Fiorentina",p:6},
+  {n:"Vojvoda",r:"D",t:"Udinese",p:4},{n:"Pedersen",r:"D",t:"Torino",p:5},{n:"Mangas",r:"D",t:"Monza",p:5},{n:"Rensch",r:"D",t:"Roma",p:5},
+  {n:"Wesley",r:"D",t:"Roma",p:14},
+  {n:"Bastoni",r:"D",t:"Inter",p:38},{n:"Akanji",r:"D",t:"Inter",p:20},{n:"Stones",r:"D",t:"Inter",p:12},{n:"Bartesaghi",r:"D",t:"Milan",p:10},
+
+  // CENTROCAMPISTI
+  {n:"Calhanoglu",r:"C",t:"Inter",p:65,f:1},{n:"De Bruyne",r:"C",t:"Napoli",p:52},{n:"McTominay",r:"C",t:"Napoli",p:55},
+  {n:"Zaccagni",r:"C",t:"Lazio",p:55},{n:"Baturina",r:"C",t:"Como",p:55,f:1},
+  {n:"Sucic",r:"C",t:"Inter",p:42,f:1},{n:"Zaniolo",r:"C",t:"Udinese",p:32},{n:"Vlasic",r:"C",t:"Torino",p:30},{n:"Zielinski",r:"C",t:"Inter",p:30},
+  {n:"Stankovic",r:"C",t:"Inter",p:26,f:1},{n:"Ederson",r:"C",t:"Atalanta",p:21},{n:"Politano",r:"C",t:"Napoli",p:20},{n:"Taylor",r:"C",t:"Lazio",p:18},
+  {n:"Casadei",r:"C",t:"Torino",p:16},{n:"Pisilli",r:"C",t:"Roma",p:15,f:1},{n:"Ekkelenkamp",r:"C",t:"Udinese",p:15},{n:"Bernabè",r:"C",t:"Parma",p:14},
+  {n:"Perrone",r:"C",t:"Como",p:17},{n:"Rowe",r:"C",t:"Bologna",p:11},{n:"Jesus Rodriguez",r:"C",t:"Como",p:12},{n:"Samardzic",r:"C",t:"Atalanta",p:12},
+  {n:"Calò",r:"C",t:"Frosinone",p:12},{n:"Cancellieri",r:"C",t:"Lazio",p:9},{n:"Schmid",r:"C",t:"Frosinone",p:1},{n:"Cacciamani",r:"C",t:"Torino",p:7,f:1},
+  {n:"Berisha",r:"C",t:"Lecce",p:8},{n:"Liberali",r:"C",t:"Como",p:10},{n:"Alajbegovic",r:"C",t:"Juventus",p:15},
+  {n:"Adzic",r:"C",t:"Sassuolo",p:5},{n:"Addai",r:"C",t:"Como",p:5},{n:"El Aynaoui",r:"C",t:"Roma",p:4},{n:"Diallo",r:"C",t:"Parma",p:4},
+  {n:"Gandelman",r:"C",t:"Lecce",p:3},{n:"Sohm",r:"C",t:"?",p:3},{n:"Busio",r:"C",t:"Venezia",p:3},
+  {n:"Atta",r:"C",t:"Fiorentina",p:30},{n:"Mastantuono",r:"C",t:"Fiorentina",p:32},{n:"Bernardeschi",r:"C",t:"?",p:12},
+  {n:"Saelemaekers",r:"C",t:"Milan",p:14},{n:"Loftus-Cheek",r:"C",t:"Milan",p:8},
+
+  // ATTACCANTI (tetti alzati per riflettere il premio reale di mercato sull'attacco: obiettivo reparto ~210)
+  {n:"Douvikas",r:"A",t:"Como",p:45,f:1},{n:"Davis",r:"A",t:"Udinese",p:42},{n:"De Ketelaere",r:"A",t:"Atalanta",p:40},{n:"Simeone",r:"A",t:"Torino",p:40},
+  {n:"Castro",r:"A",t:"Roma",p:38},{n:"Dovbyk",r:"A",t:"Bologna",p:34},{n:"Kuhn",r:"A",t:"Como",p:24},{n:"Esposito Pio",r:"A",t:"Inter",p:24},
+  {n:"Alison Santos",r:"A",t:"Napoli",p:22},{n:"Esposito Se.",r:"A",t:"Cagliari",p:20},{n:"Dia",r:"A",t:"Lazio",p:16},{n:"Bowie",r:"A",t:"Sassuolo",p:16},
+  {n:"Ghedjemis",r:"A",t:"Frosinone",p:15},{n:"Raimondo",r:"A",t:"Frosinone",p:12},{n:"Noslin",r:"A",t:"Lazio",p:10},{n:"Adams",r:"A",t:"Venezia",p:9},
+  {n:"Bilal Touré",r:"A",t:"Parma",p:8},{n:"Yeboha",r:"A",t:"Venezia",p:7},{n:"Mendy",r:"A",t:"Cagliari",p:7},{n:"Elphege",r:"A",t:"Parma",p:6},
+  {n:"Adorante",r:"A",t:"Venezia",p:6},{n:"Geubbels",r:"A",t:"Lecce",p:4},{n:"Azon",r:"A",t:"?",p:4},
+  {n:"Pellegrino",r:"A",t:"Fiorentina",p:8},{n:"Piccoli",r:"A",t:"Bologna",p:15},
+];
+
+/* ================== CONFIG & STATO ================== */
+const ROLES = {P:"Portieri", D:"Difensori", C:"Centrocampisti", A:"Attaccanti"};
+const ROLE_SHORT = {P:"POR", D:"DIF", C:"CEN", A:"ATT"};
+const ROLE_KEYS = ["P","D","C","A"];
+
+const DEFAULT_CFG = {
+  budget:500, reserve:50,
+  slots:{P:3,D:8,C:8,A:6},
+  roleBudget:{P:25,D:85,C:190,A:150}
+};
+let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
+
+const PLAYERS = RAW_PLAYERS.map((x,i)=>({
+  id:i, name:x.n, role:x.r, team:x.t||"?", price:x.p,
+  fixed:!!x.f, fav:false, status:"free", paid:x.p, added:false
+}));
+const BASE_PLAYERS = PLAYERS.map(p=>({...p}));
+
+let currentRole = "D";
+let nextId = PLAYERS.length;
+let deletedIds = [];
+let showTaken = false;
+let sortMode = "val";
+let detailsOpen = false;
+
+const SORTS = {val:"Valore ↓", name:"Nome A-Z", team:"Squadra"};
+
+/* ================== UTILITY ================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sum = a => a.reduce((x,y)=>x+y,0);
+function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+let toastTimer;
+function toast(msg, kind){
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (kind ? " "+kind : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className = "toast"; }, 2100);
+}
+
+/* base64 sicuro per UTF-8 (nomi con accenti) */
+function b64enc(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = ""; bytes.forEach(b=> bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function b64dec(b64){
+  const bin = atob(b64.replace(/\s+/g,""));
+  const bytes = Uint8Array.from(bin, c=>c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+/* ================== CALCOLI BUDGET ================== */
+function mineOf(r){ return PLAYERS.filter(p=>p.status==="mine" && (!r || p.role===r)); }
+function totalSpent(){ return sum(mineOf().map(p=>p.paid)); }
+function creditsLeft(){ return CFG.budget - totalSpent(); }
+function slotsLeft(r){ return Math.max(0, CFG.slots[r] - mineOf(r).length); }
+function slotsLeftTotal(){ return sum(ROLE_KEYS.map(slotsLeft)); }
+function totalSlots(){ return sum(ROLE_KEYS.map(r=>CFG.slots[r])); }
+
+/* Regola d'oro del fantacalcio: devi poter riempire ogni slot restante con almeno 1 credito. */
+function maxBid(){
+  const sl = slotsLeftTotal();
+  if(sl <= 0) return creditsLeft();
+  return Math.max(0, creditsLeft() - (sl - 1));
+}
+
+/* Riserva: sforamenti dei reparti, al netto dei risparmi già "chiusi" (reparto completo) */
+function reserveState(){
+  let over = 0, saved = 0;
+  ROLE_KEYS.forEach(r=>{
+    const mine = mineOf(r);
+    const spent = sum(mine.map(p=>p.paid));
+    const t = CFG.roleBudget[r];
+    if(spent > t) over += spent - t;
+    else if(mine.length >= CFG.slots[r]) saved += t - spent;
+  });
+  return {over, saved, left: CFG.reserve - over + saved};
+}
+
+function roleStats(r){
+  const items = PLAYERS.filter(p=>p.role===r);
+  const mine = items.filter(p=>p.status==="mine");
+  const spent = sum(mine.map(p=>p.paid));
+  const target = CFG.roleBudget[r];
+  const left = slotsLeft(r);
+  const budgetLeft = target - spent;
+
+  const free = items.filter(p=>p.status==="free").sort((a,b)=>b.price-a.price);
+  const plan = free.slice(0, left);
+  const plannedTotal = sum(plan.map(p=>p.price));
+  const scale = plannedTotal > 0 ? budgetLeft/plannedTotal : 1;
+
+  const res = Math.max(0, reserveState().left);
+  const roleMax = left > 0
+    ? Math.max(0, Math.min(maxBid(), budgetLeft + res - (left - 1)))
+    : 0;
+
+  return {items, mine, spent, target, slotsLeft:left, totalSlots:CFG.slots[r], budgetLeft, scale, plan, roleMax};
+}
+
+function suggested(p){
+  const s = roleStats(p.role);
+  const raw = Math.max(1, Math.round(p.price * s.scale));
+  return Math.min(raw, Math.max(1, s.roleMax || raw));
+}
+
+/* ================== STORICO / ANNULLA ================== */
+let HISTORY = [];
+function snapshot(){
+  return {
+    statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
+    extra: PLAYERS.filter(p=>p.added).map(p=>({...p})),
+    deletedIds:[...deletedIds], nextId, currentRole
+  };
+}
+function pushHistory(){
+  HISTORY.push(snapshot());
+  if(HISTORY.length > 40) HISTORY.shift();
+  updateUndo();
+}
+function updateUndo(){ const b=$("undoBtn"); if(b) b.disabled = HISTORY.length===0; }
+function undo(){
+  if(!HISTORY.length){ toast("Niente da annullare"); return; }
+  const s = HISTORY.pop();
+  PLAYERS.length = 0;
+  BASE_PLAYERS.forEach(bp=>{ if(!s.deletedIds.includes(bp.id)) PLAYERS.push({...bp}); });
+  s.extra.forEach(ep=>{ if(!s.deletedIds.includes(ep.id)) PLAYERS.push({...ep}); });
+  s.statuses.forEach(st=>{
+    const p = PLAYERS.find(x=>x.id===st.id);
+    if(p){
+      if(typeof st.price==="number") p.price = st.price;
+      p.status=st.status; p.paid=st.paid; p.fav=!!st.fav;
+      if(typeof st.fixed==="boolean") p.fixed = st.fixed;
+    }
+  });
+  nextId = s.nextId; deletedIds = [...s.deletedIds];
+  if(s.currentRole) currentRole = s.currentRole;
+  updateUndo(); renderAll(); save();
+  buzz(12); toast("Annullato", "good");
+}
+
+/* ================== SHEET ================== */
+function openSheet(html){
+  $("sheet").innerHTML = '<div class="grab"></div>' + html;
+  $("overlay").classList.remove("hidden");
+}
+function closeSheet(){ $("overlay").classList.add("hidden"); }
+$("overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") closeSheet(); });
+document.addEventListener("keydown", e=>{
+  if(e.key!=="Escape") return;
+  if(!$("overlay").classList.contains("hidden")) closeSheet();
+  else if(!$("browseOverlay").classList.contains("hidden")) closeBrowse();
+  else if(!$("rosterOverlay").classList.contains("hidden")) closeRoster();
+});
+
+/* ================== HEADER ================== */
+function setDetails(v){
+  detailsOpen = !!v;
+  $("roleBudgets").classList.toggle("open", detailsOpen);
+  $("tabs").setAttribute("aria-expanded", detailsOpen ? "true" : "false");
+  try{ localStorage.setItem("asta-details-open", detailsOpen?"1":"0"); }catch(e){}
+}
+/* Un tocco sulla banda dei reparti apre il dettaglio; ri-toccando lo stesso reparto si richiude. */
+function tapRole(r){
+  if(r === currentRole){
+    setDetails(!detailsOpen);
+    buzz(6);
+    return;
+  }
+  setRole(r);
+  if(!detailsOpen) setDetails(true);
+}
+
+function renderBudget(){
+  const spent = totalSpent();
+  const left = creditsLeft();
+  const mb = maxBid();
+  const sl = slotsLeftTotal();
+
+  $("residuoVal").textContent = left;
+  $("slotsVal").textContent = sl;
+  $("residuoVal").classList.toggle("alert", left < 0 || (mb <= 1 && sl > 0));
+
+  const pct = Math.min(100, Math.max(0,(spent/CFG.budget)*100));
+  const bf = $("barFill");
+  bf.style.width = pct + "%";
+  bf.classList.toggle("hot", left < CFG.budget*0.08);
+
+  const rs = reserveState();
+  const rcol = rs.left < 0 ? "var(--danger)" : (rs.left < CFG.reserve*0.3 ? "var(--warn)" : "var(--gold)");
+  $("reserveLabel").innerHTML = `riserva <b style="color:${rcol}">${rs.left}</b>${rs.over?` (−${rs.over} usati)`:""}`;
+
+  $("roleBudgets").innerHTML = ROLE_KEYS.map(r=>{
+    const s = roleStats(r);
+    const over = s.spent > s.target;
+    const pct = Math.min(100,(s.spent/Math.max(1,s.target))*100);
+    const foot = s.slotsLeft===0
+      ? "completo"
+      : (over ? `−${s.spent-s.target} riserva` : `max ${s.roleMax}`);
+    return `<div class="rb" style="--rc:var(--r-${r})">
+      <div class="rb-l">${ROLE_SHORT[r]} · ${s.mine.length}/${s.totalSlots}</div>
+      <div class="rb-n">${over?`<span class="over">${s.spent}</span>`:s.spent}<small>/${s.target}</small></div>
+      <div class="rb-track"><div class="rb-fill ${over?"over":""}" style="width:${pct}%"></div></div>
+      <div class="rb-s">${foot}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTabs(){
+  $("tabs").innerHTML = ROLE_KEYS.map(r=>{
+    const s = roleStats(r);
+    const freeCount = PLAYERS.filter(p=>p.role===r && p.status==="free").length;
+    return `<button class="tab ${r===currentRole?"active":""} ${s.slotsLeft===0?"full":""}"
+        style="--tc:var(--r-${r})" onclick="tapRole('${r}')" aria-pressed="${r===currentRole}">
+      ${ROLE_SHORT[r]}
+      <span class="tn">${s.mine.length}/${s.totalSlots} · ${freeCount}</span>
+    </button>`;
+  }).join("");
+}
+function setRole(r){ currentRole = r; renderTabs(); renderList(); }
+function cycleSort(){
+  const ks = Object.keys(SORTS);
+  sortMode = ks[(ks.indexOf(sortMode)+1) % ks.length];
+  $("sortBtn").textContent = SORTS[sortMode];
+  renderList();
+}
+function sortPlayers(arr){
+  const prio = p => (p.fixed||p.fav) ? 0 : 1;
+  if(sortMode==="name") return arr.sort((a,b)=> prio(a)-prio(b) || a.name.localeCompare(b.name));
+  if(sortMode==="team") return arr.sort((a,b)=> prio(a)-prio(b) || a.team.localeCompare(b.team) || b.price-a.price);
+  return arr.sort((a,b)=> prio(a)-prio(b) || b.price-a.price);
+}
+
+/* ================== LISTA PRINCIPALE ================== */
+function cardHtml(p, stats){
+  const cls = p.status==="mine" ? "mine" : p.status==="taken" ? "taken" : ((p.fixed||p.fav) ? "fixed" : "");
+  let hint = "", sugLine = "";
+  if(p.status==="free"){
+    const s = stats[p.role];
+    if(s.slotsLeft===0){
+      hint = `<span class="hint warn">reparto completo</span>`;
+      sugLine = `<div class="sug warn">stop</div>`;
+    } else if(p.price > s.roleMax){
+      hint = `<span class="hint warn">⚠ non puoi arrivarci</span>`;
+      sugLine = `<div class="sug warn">max ${s.roleMax}</div>`;
+    } else {
+      const sg = suggested(p);
+      sugLine = `<div class="sug">cons. ${sg}</div>`;
+    }
+  }
+  const priceBlock = p.status==="mine"
+    ? `<div class="pricebox"><div class="price paid num">${p.paid}<small>pagato</small></div></div>`
+    : `<div class="pricebox"><div class="price num">${p.price}<small>tetto</small></div>${sugLine}</div>`;
+
+  return `<article class="card ${cls}" style="--rc:var(--r-${p.role})">
+    <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
+      aria-label="Segna come obiettivo">★</button>
+    <button class="c-body" onclick="openBid(${p.id})">
+      <span class="p-name">${esc(p.name)}</span>
+      <span class="p-meta">
+        <span class="pill role">${ROLE_SHORT[p.role]}</span>
+        <span>${esc(p.team)}</span>
+        ${p.added?'<span class="pill new">nuovo</span>':""}
+        ${p.status==="mine"?'<span class="pill mine">tuo</span>':""}
+        ${hint}
+      </span>
+    </button>
+    <div class="c-right">
+      ${priceBlock}
+      <button class="act buy" onclick="openBid(${p.id},event)" aria-label="Preso da me">${p.status==="mine"?"✓":"$"}</button>
+      ${p.status==="mine"
+        ? `<button class="act out" onclick="releasePlayer(${p.id},event)" aria-label="Rimetti tra gli obiettivi">↩</button>`
+        : `<button class="act out" onclick="markTaken(${p.id},event)" aria-label="Preso da altri">${p.status==="taken"?"↺":"✕"}</button>`}
+    </div>
+  </article>`;
+}
+
+function renderList(){
+  const q = $("search").value.trim().toLowerCase();
+  const list = $("list");
+  const stats = {P:roleStats("P"),D:roleStats("D"),C:roleStats("C"),A:roleStats("A")};
+  let html = "";
+
+  if(q){
+    // ricerca GLOBALE su tutti i ruoli (al tavolo non sai in che scheda sta)
+    const hits = sortPlayers(PLAYERS.filter(p=>
+      p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)
+    ));
+    if(hits.length){
+      html += `<div class="sec-title">Nella tua lista · ${hits.length}</div>`;
+      html += hits.map(p=>cardHtml(p,stats)).join("");
+    }
+    const known = new Set(PLAYERS.map(p=>p.name.toLowerCase()));
+    const extra = LISTONE.filter(p=>
+      !known.has(p.n.toLowerCase()) &&
+      (p.n.toLowerCase().includes(q) || p.t.toLowerCase().includes(q))
+    ).sort((a,b)=>b.q-a.q).slice(0,12);
+    if(extra.length){
+      html += `<div class="sec-title">Dal listone · ${extra.length}</div>`;
+      html += extra.map(p=>`<div class="li" style="--rc:var(--r-${p.r})">
+        <div class="li-main">
+          <div class="li-n">${esc(p.n)}</div>
+          <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}</div>
+        </div>
+        <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
+        <button class="li-add" onclick="addFromListone(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" aria-label="Aggiungi">＋</button>
+      </div>`).join("");
+    }
+    if(!hits.length && !extra.length){
+      html = `<div class="empty"><span class="big">🔍</span>Nessun giocatore trovato per “${esc(q)}”.</div>`;
+    }
+    list.innerHTML = html;
+    return;
+  }
+
+  const items = PLAYERS.filter(p=>p.role===currentRole);
+  const free = sortPlayers(items.filter(p=>p.status==="free"));
+  const mine = items.filter(p=>p.status==="mine").sort((a,b)=>b.paid-a.paid);
+  const taken = items.filter(p=>p.status==="taken");
+  const s = stats[currentRole];
+
+  if(items.length===0){
+    list.innerHTML = `<div class="empty"><span class="big">${currentRole==="P"?"🧤":"⚽"}</span>
+      Non hai ancora nessun <b>${ROLES[currentRole].toLowerCase()}</b> nella tua lista.<br>
+      Pescali dal listone ufficiale e imposta il tuo tetto.
+      <br><button class="btn-inline" onclick="openBrowse('${currentRole}')">Apri il listone</button></div>`;
+    return;
+  }
+
+  html += `<div class="sec-title">Da prendere · ${free.length} <span style="color:var(--dim);letter-spacing:0;text-transform:none">·&nbsp;${s.slotsLeft} slot, max ${s.roleMax}/gioc.</span></div>`;
+  html += free.length ? free.map(p=>cardHtml(p,stats)).join("")
+                      : `<div class="ghost-row">Nessun obiettivo libero in questo reparto</div>`;
+
+  if(mine.length){
+    html += `<div class="sec-title">Presi da te · ${mine.length} <span style="color:var(--mine);letter-spacing:0;text-transform:none">·&nbsp;${sum(mine.map(p=>p.paid))} crediti</span></div>`;
+    html += mine.map(p=>cardHtml(p,stats)).join("");
+  }
+  if(taken.length){
+    html += `<div class="ghost-row" onclick="toggleShowTaken()" style="cursor:pointer;margin-top:14px;">
+      ${showTaken?"Nascondi":"Mostra"} i ${taken.length} presi dagli altri</div>`;
+    if(showTaken) html += taken.map(p=>cardHtml(p,stats)).join("");
+  }
+  list.innerHTML = html;
+}
+function toggleShowTaken(){ showTaken = !showTaken; renderList(); }
+
+/* ================== AZIONI ================== */
+function toggleFav(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  pushHistory();
+  if(p.fixed){ p.fixed=false; p.fav=false; } else { p.fav = !p.fav; }
+  buzz(8); renderList(); save();
+}
+function markTaken(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  pushHistory();
+  if(p.status==="taken"){ p.status="free"; toast(`${p.name} rimesso in lista`); }
+  else { p.status="taken"; p.paid=p.price; toast(`${p.name} → preso da altri`); }
+  buzz(10); renderAll(); save();
+}
+
+/* --- foglio offerta --- */
+function openBid(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  bidPlayerId = id;
+  const s = roleStats(p.role);
+  const start = p.status==="mine" ? p.paid : Math.min(suggested(p), Math.max(1,maxBid()));
+  const isEdit = p.status==="mine";
+
+  openSheet(`
+    <h3>${esc(p.name)}</h3>
+    <div class="sub">${ROLES[p.role]} · ${esc(p.team)} · tetto che ti eri dato: <b style="color:var(--gold)">${p.price}</b></div>
+
+    <div class="bid-info">
+      <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + (isEdit?p.paid:0)}</div></div>
+      <div><div class="k">Max offerta</div><div class="v num" style="color:var(--gold)">${maxBid() + (isEdit?p.paid:0)}</div></div>
+      <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.slotsLeft}/${s.totalSlots}</div></div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label>Crediti pagati</label>
+      <div class="stepper">
+        <button type="button" onclick="bump(-1)" aria-label="meno 1">−</button>
+        <input id="paidInput" type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="${start}">
+        <button type="button" onclick="bump(1)" aria-label="più 1">＋</button>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip" onclick="bump(-5)">−5</button>
+        <button type="button" class="chip" onclick="bump(5)">+5</button>
+        <button type="button" class="chip" onclick="bump(10)">+10</button>
+        <button type="button" class="chip gold" onclick="setBid(${suggested(p)})">consigliato ${suggested(p)}</button>
+        <button type="button" class="chip" onclick="setBid(${p.price})">tetto ${p.price}</button>
+      </div>
+    </div>
+    <div id="bidMsg"></div>
+
+    <div class="sheet-actions">
+      ${isEdit
+        ? `<button class="btn-cancel" onclick="releasePlayer(${id})">Non è più mio</button>`
+        : `<button class="btn-cancel" onclick="closeSheet()">Annulla</button>`}
+      <button class="btn-confirm" id="bidConfirm" onclick="confirmBid(${id})">${isEdit?"Aggiorna":"L'ho preso"}</button>
+    </div>
+    ${isEdit?'<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="closeSheet()">Chiudi</button>':""}
+    <div style="display:flex;gap:9px;margin-top:9px">
+      <button class="btn-wide" style="background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="editCeiling(${id})">✎ Cambia tetto</button>
+      <button class="btn-wide" style="background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="askDelete(${id})">🗑 Togli dalla lista</button>
+    </div>
+  `);
+
+  const inp = $("paidInput");
+  inp.addEventListener("input", ()=>checkBid(id));
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); confirmBid(id); } });
+  setTimeout(()=>{ inp.focus(); inp.select(); }, 60);
+  checkBid(id);
+}
+function bump(d){
+  const i = $("paidInput"); if(!i) return;
+  i.value = Math.max(0,(parseInt(i.value,10)||0) + d);
+  checkBid();
+}
+function setBid(v){ const i=$("paidInput"); if(i){ i.value=v; checkBid(); } }
+
+let bidOverride = false;
+let bidPlayerId = null;
+function checkBid(id){
+  if(id===undefined || id===null) id = bidPlayerId;
+  const i = $("paidInput"); const box = $("bidMsg"); const btn = $("bidConfirm");
+  if(!i || !box) return;
+  const v = parseInt(i.value,10);
+  const p = PLAYERS.find(x=>x.id===id);
+  const editBonus = (p && p.status==="mine") ? p.paid : 0;
+  const avail = creditsLeft() + editBonus;
+  const mb = maxBid() + editBonus;
+  const s = p ? roleStats(p.role) : null;
+  bidOverride = false; box.innerHTML = "";
+  if(btn){ btn.disabled = false; btn.style.opacity = 1; }
+  if(isNaN(v) || v < 0) return;
+
+  if(v > avail){
+    box.innerHTML = `<div class="alertbox">Non hai ${v} crediti: te ne restano ${avail}.</div>`;
+    if(btn){ btn.disabled = true; btn.style.opacity = .45; }
+    return;
+  }
+  if(v > mb){
+    bidOverride = true;
+    box.innerHTML = `<div class="alertbox">Spendendo ${v} non riesci più a riempire tutti gli slot (max sostenibile ${mb}). Confermi lo stesso?</div>`;
+    if(btn) btn.textContent = "Confermo comunque";
+    return;
+  }
+  if(s && s.slotsLeft===0 && (!p || p.status!=="mine")){
+    box.innerHTML = `<div class="alertbox warn">Il reparto ${ROLES[p.role].toLowerCase()} è già completo (${s.totalSlots}/${s.totalSlots}).</div>`;
+    return;
+  }
+  if(s && v > s.roleMax && s.slotsLeft>0){
+    box.innerHTML = `<div class="alertbox warn">Sfori il piano del reparto: attingi ${v - Math.max(0,s.budgetLeft)} dalla riserva.</div>`;
+    return;
+  }
+  if(p && v <= p.price){
+    box.innerHTML = `<div class="alertbox ok">Dentro il tetto che ti eri dato (${p.price}). Ottimo affare.</div>`;
+  }
+}
+function confirmBid(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  const v = parseInt($("paidInput").value,10);
+  if(isNaN(v) || v < 0){ toast("Inserisci un numero valido","bad"); return; }
+  const editBonus = p.status==="mine" ? p.paid : 0;
+  if(v > creditsLeft() + editBonus){ toast("Crediti insufficienti","bad"); return; }
+  pushHistory();
+  const was = p.status;
+  p.paid = v; p.status = "mine";
+  closeSheet(); buzz(18); renderAll(); save();
+  toast(was==="mine" ? `${p.name}: ora ${v}` : `✓ ${p.name} è tuo per ${v}`, "good");
+}
+function releasePlayer(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  pushHistory();
+  p.status = "free"; p.paid = p.price;
+  closeSheet(); renderAll(); save();
+  toast(`${p.name} rimesso tra gli obiettivi`);
+}
+function editCeiling(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  openSheet(`
+    <h3>Tetto per ${esc(p.name)}</h3>
+    <div class="sub">Il massimo che sei disposto a pagare. Da qui l'app calcola i consigli.</div>
+    <div class="field">
+      <div class="stepper">
+        <button type="button" onclick="bumpCeil(-1)">−</button>
+        <input id="ceilInput" type="number" inputmode="numeric" min="1" value="${p.price}">
+        <button type="button" onclick="bumpCeil(1)">＋</button>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="openBid(${id})">Indietro</button>
+      <button class="btn-confirm" onclick="saveCeiling(${id})">Salva tetto</button>
+    </div>`);
+  const i = $("ceilInput");
+  i.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); saveCeiling(id); } });
+  setTimeout(()=>{ i.focus(); i.select(); }, 60);
+}
+function bumpCeil(d){ const i=$("ceilInput"); if(i) i.value = Math.max(1,(parseInt(i.value,10)||0)+d); }
+function saveCeiling(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  const v = parseInt($("ceilInput").value,10);
+  if(isNaN(v)||v<1){ toast("Valore non valido","bad"); return; }
+  pushHistory();
+  p.price = v;
+  if(p.status!=="mine") p.paid = v;
+  closeSheet(); renderAll(); save(); toast(`Tetto di ${p.name}: ${v}`,"good");
+}
+
+function askDelete(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  openSheet(`
+    <h3>Togliere ${esc(p.name)}?</h3>
+    <div class="note">Sparisce dalla lista degli obiettivi. Puoi sempre riprenderlo dal listone.</div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Annulla</button>
+      <button class="btn-danger" onclick="doDelete(${id})">Togli</button>
+    </div>`);
+}
+function doDelete(id){
+  pushHistory();
+  const i = PLAYERS.findIndex(x=>x.id===id);
+  const nm = i>=0 ? PLAYERS[i].name : "";
+  if(i>=0) PLAYERS.splice(i,1);
+  if(!deletedIds.includes(id)) deletedIds.push(id);
+  closeSheet(); renderAll(); save();
+  toast(`${nm} rimosso`);
+}
+
+/* ================== LISTONE ================== */
+let browseRole = "D", browseSort = "q";
+function openBrowse(forceRole){
+  browseRole = forceRole || currentRole;
+  $("browseOverlay").classList.remove("hidden");
+  $("browseSearch").value = "";
+  renderBrowseTabs(); renderBrowseList();
+}
+function closeBrowse(){ $("browseOverlay").classList.add("hidden"); }
+function setBrowseRole(r){ browseRole = r; renderBrowseTabs(); renderBrowseList(); }
+function setBrowseSort(s){ browseSort = s; renderBrowseTabs(); renderBrowseList(); }
+function renderBrowseTabs(){
+  $("browseTabs").innerHTML = ROLE_KEYS.map(r=>
+    `<button class="${r===browseRole?"active":""}" style="--tc:var(--r-${r})" onclick="setBrowseRole('${r}')">${ROLE_SHORT[r]}</button>`
+  ).join("");
+  document.querySelectorAll("#browseSort button").forEach(b=>b.classList.toggle("active", b.dataset.sort===browseSort));
+}
+function renderBrowseList(){
+  const q = ($("browseSearch").value||"").trim().toLowerCase();
+  const known = new Set(PLAYERS.map(p=>p.name.toLowerCase()));
+  let items = q
+    ? LISTONE.filter(p=> p.n.toLowerCase().includes(q) || p.t.toLowerCase().includes(q))
+    : LISTONE.filter(p=> p.r===browseRole);
+
+  if(browseSort==="q") items = items.slice().sort((a,b)=>b.q-a.q);
+  else if(browseSort==="f") items = items.slice().sort((a,b)=>(b.f||0)-(a.f||0));
+  else items = items.slice().sort((a,b)=> a.t.localeCompare(b.t) || b.q-a.q);
+
+  $("browseSub").textContent = `${items.length} giocatori${q?" trovati":" · "+ROLES[browseRole].toLowerCase()}`;
+  const el = $("browseList");
+  if(!items.length){ el.innerHTML = `<div class="empty"><span class="big">🔍</span>Nessun risultato.</div>`; return; }
+
+  el.innerHTML = items.slice(0,300).map(p=>{
+    const has = known.has(p.n.toLowerCase());
+    return `<div class="li ${has?"added":""}" style="--rc:var(--r-${p.r})">
+      <div class="li-main">
+        <div class="li-n">${esc(p.n)}</div>
+        <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}${has?" · già in lista":""}</div>
+      </div>
+      <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
+      <button class="li-add" ${has?"disabled":""} onclick="addFromListone(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" aria-label="Aggiungi ${esc(p.n)}">${has?"✓":"＋"}</button>
+    </div>`;
+  }).join("") + (items.length>300?`<div class="ghost-row">…e altri ${items.length-300}. Usa la ricerca per restringere.</div>`:"");
+}
+function addFromListone(name, role, team, price){
+  if(PLAYERS.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast("Già in lista"); return; }
+  pushHistory();
+  PLAYERS.push({id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true});
+  currentRole = role;
+  buzz(10); renderAll(); renderBrowseList();
+  if($("search").value.trim()) renderList();
+  save();
+  toast(`＋ ${name} aggiunto`, "good");
+}
+
+/* ================== LA MIA ROSA ================== */
+let rosterView = "role";
+function openRoster(){ $("rosterOverlay").classList.remove("hidden"); renderRoster(); }
+function closeRoster(){ $("rosterOverlay").classList.add("hidden"); }
+function setRosterView(v){ rosterView = v; renderRoster(); }
+
+function renderRoster(){
+  document.querySelectorAll("#rosterOverlay .seg button").forEach(b=>b.classList.toggle("active", b.dataset.view===rosterView));
+  const mine = mineOf();
+  const spent = totalSpent();
+  $("rosterSub").textContent = `${mine.length} di ${totalSlots()} giocatori`;
+  $("rosSpent").textContent = spent;
+  $("rosLeft").textContent = creditsLeft();
+  $("rosPct").textContent = Math.round(mine.length/totalSlots()*100) + "%";
+
+  const body = $("rosterBody");
+  if(rosterView==="full"){
+    if(!mine.length){ body.innerHTML = `<div class="empty"><span class="big">👕</span>Non hai ancora preso nessuno.</div>`; return; }
+    const order = {P:0,D:1,C:2,A:3};
+    body.innerHTML = [...mine].sort((a,b)=> order[a.role]-order[b.role] || b.paid-a.paid).map(p=>`
+      <div class="li" style="--rc:var(--r-${p.role})">
+        <div class="li-main"><div class="li-n">${esc(p.name)}</div><div class="li-t">${ROLE_SHORT[p.role]} · ${esc(p.team)}</div></div>
+        <div class="li-v"><div class="q num">${p.paid}</div></div>
+      </div>`).join("");
+    return;
+  }
+
+  body.innerHTML = ROLE_KEYS.map(r=>{
+    const s = roleStats(r);
+    const rm = s.mine.slice().sort((a,b)=>b.paid-a.paid);
+    const over = s.spent > s.target;
+    let out = `<div class="ros-sec" style="--rc:var(--r-${r})">
+      <span class="rs-l">${ROLES[r]} ${rm.length}/${s.totalSlots}</span>
+      <span class="rs-r">${over?`<span class="over">${s.spent}</span>`:s.spent}<span style="color:var(--dim-2)">/${s.target}</span></span>
+    </div>`;
+    out += `<div class="ros-note">${s.slotsLeft>0
+      ? `${s.slotsLeft} slot da riempire · restano ${s.budgetLeft} nel piano · max ${s.roleMax}/gioc.`
+      : "reparto completo"}</div>`;
+    out += rm.map(p=>`
+      <div class="li" style="--rc:var(--r-${r})">
+        <div class="li-main"><div class="li-n">${esc(p.name)}</div><div class="li-t">${esc(p.team)}</div></div>
+        <div class="li-v"><div class="q num">${p.paid}</div></div>
+      </div>`).join("");
+    if(s.slotsLeft>0) out += `<div class="slots-free">${Array.from({length:s.slotsLeft},()=>"<span>libero</span>").join("")}</div>`;
+    return out;
+  }).join("");
+}
+
+function buildSummary(){
+  const mine = mineOf();
+  const L = [`LA MIA ROSA — Asta Tracker`, ``];
+  ROLE_KEYS.forEach(r=>{
+    const s = roleStats(r);
+    const rm = s.mine.slice().sort((a,b)=>b.paid-a.paid);
+    const d = s.spent - s.target;
+    L.push(`${ROLES[r].toUpperCase()} (${rm.length}/${s.totalSlots}) — ${s.spent} crediti — ${d===0?"in linea col piano":(d>0?`+${d} oltre il piano di ${s.target}`:`${d} sotto il piano di ${s.target}`)}`);
+    rm.forEach(p=> L.push(`  • ${p.name} (${p.team}) — ${p.paid}`));
+    if(!rm.length) L.push(`  (nessuno)`);
+    if(s.slotsLeft) L.push(`  → ${s.slotsLeft} slot liberi, max ${s.roleMax}/gioc.`);
+    L.push(``);
+  });
+  const rs = reserveState();
+  L.push(`TOTALE: ${totalSpent()}/${CFG.budget} · residuo ${creditsLeft()} · ${mine.length}/${totalSlots()} giocatori`);
+  L.push(`Riserva: ${rs.left} su ${CFG.reserve}${rs.over?` (${rs.over} già usati per sforamenti)`:""}`);
+  L.push(`Offerta massima sostenibile ora: ${maxBid()}`);
+  return L.join("\n");
+}
+function openSummary(){
+  openSheet(`
+    <h3>Riepilogo rosa</h3>
+    <div class="sub">Copialo e mandalo dove vuoi.</div>
+    <div class="field"><textarea id="sumOut" readonly style="height:230px">${esc(buildSummary())}</textarea></div>
+    <button class="btn-wide btn-confirm" onclick="copyFrom('sumOut','sumMsg')">Copia riepilogo</button>
+    <div id="sumMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:16px;color:var(--mine)"></div>
+    <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
+}
+
+async function copyFrom(inId, msgId){
+  const el = $(inId), m = $(msgId); let ok = false;
+  try{ if(navigator.clipboard?.writeText){ await navigator.clipboard.writeText(el.value); ok = true; } }catch(e){}
+  if(!ok){ try{ el.removeAttribute("readonly"); el.focus(); el.select(); ok = document.execCommand("copy"); el.setAttribute("readonly","readonly"); }catch(e){} }
+  if(m){ m.style.color = ok?"var(--mine)":"var(--danger)"; m.textContent = ok?"✓ Copiato":"Copia a mano: tieni premuto sul testo"; }
+  toast(ok?"Copiato negli appunti":"Copia manuale necessaria", ok?"good":"bad");
+}
+
+/* ================== MENU / BACKUP / IMPOSTAZIONI ================== */
+let wakeLock = null, wakeOn = false;
+async function toggleWake(){
+  try{
+    if(wakeOn){ if(wakeLock) await wakeLock.release(); wakeLock=null; wakeOn=false; toast("Schermo libero di spegnersi"); }
+    else{
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeOn = true; toast("Schermo sempre acceso","good");
+      wakeLock.addEventListener("release", ()=>{ wakeOn=false; });
+    }
+  }catch(e){ toast("Non supportato su questo browser","bad"); }
+  openMenu();
+}
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState==="visible" && wakeOn){
+    try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+  }
+  if(document.visibilityState==="hidden") save();
+});
+
+function openMenu(){
+  openSheet(`
+    <h3>Menu</h3>
+    <div class="sub">Tutto quello che non serve durante l'asta.</div>
+    <div class="menu-list">
+      <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
+      <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
+      <button onclick="importFile()"><i>↥</i><div>Importa file<small>ricarica un backup salvato</small></div></button>
+      <button onclick="openSettings()"><i>⚙</i><div>Impostazioni lega<small>budget ${CFG.budget} · ${totalSlots()} slot · riserva ${CFG.reserve}</small></div></button>
+      <button onclick="toggleWake()"><i>☀</i><div>Schermo sempre acceso<small>utile durante l'asta</small></div><span class="switch ${wakeOn?"on":""}">${wakeOn?"ON":"OFF"}</span></button>
+      <button class="danger" onclick="askReset()"><i>⟲</i><div>Azzera l'asta<small>rimette tutti i giocatori liberi</small></div></button>
+    </div>
+    <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
+}
+
+function stateObject(){
+  return {
+    v:2, cfg:CFG,
+    statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
+    added: PLAYERS.filter(p=>p.added).map(p=>({id:p.id,name:p.name,role:p.role,team:p.team,price:p.price})),
+    deletedIds, nextId
+  };
+}
+function openBackup(){
+  const code = b64enc(JSON.stringify(stateObject()));
+  openSheet(`
+    <h3>Salva / Ripristina</h3>
+    <div class="sub">L'app salva già da sola sul telefono. Questo serve se cambi dispositivo o svuoti il browser.</div>
+    <div class="field">
+      <label>1 · Copia il codice e mettilo al sicuro</label>
+      <textarea id="bkOut" readonly style="height:70px">${code}</textarea>
+      <button class="btn-wide btn-confirm" style="margin-top:8px" onclick="copyFrom('bkOut','bkMsg')">Copia codice</button>
+      <div id="bkMsg" style="text-align:center;font-size:12px;margin-top:6px;min-height:16px"></div>
+    </div>
+    <div class="field">
+      <label>2 · Oppure incolla qui un codice salvato</label>
+      <textarea id="bkIn" placeholder="Incolla il codice…" style="height:60px"></textarea>
+      <div id="bkStatus" style="text-align:center;font-size:12.5px;margin-top:6px;min-height:16px;font-weight:700"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Chiudi</button>
+      <button class="btn-confirm" onclick="restoreCode()">Ripristina</button>
+    </div>`);
+}
+function restoreCode(){
+  const raw = $("bkIn").value.trim(), st = $("bkStatus");
+  if(!raw){ st.style.color="var(--danger)"; st.textContent="Incolla prima il codice."; return; }
+  try{
+    applyState(JSON.parse(b64dec(raw)));
+    renderAll(); save();
+    st.style.color="var(--mine)"; st.textContent="✓ Ripristinato";
+    setTimeout(closeSheet, 800); toast("Backup ripristinato","good");
+  }catch(e){
+    st.style.color="var(--danger)"; st.textContent="Codice non valido o incompleto.";
+  }
+}
+function exportFile(){
+  const blob = new Blob([JSON.stringify(stateObject(),null,1)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "asta-tracker-backup.json";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast("File esportato","good");
+}
+function importFile(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = () => {
+    const f = inp.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try{ applyState(JSON.parse(rd.result)); renderAll(); save(); closeSheet(); toast("Backup importato","good"); }
+      catch(e){ toast("File non valido","bad"); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+
+function openSettings(){
+  const f = (k,l,v,extra="") => `<div class="field"><label>${l}</label><input type="number" inputmode="numeric" id="${k}" value="${v}" ${extra}></div>`;
+  openSheet(`
+    <h3>Impostazioni lega</h3>
+    <div class="sub">Adatta l'app alle regole della tua asta.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
+      ${f("cfgBudget","Crediti totali",CFG.budget)}
+      ${f("cfgReserve","Riserva da tenere",CFG.reserve)}
+    </div>
+    <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:6px 0 8px">Slot in rosa</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0 8px">
+      ${ROLE_KEYS.map(r=>f("slot"+r,ROLE_SHORT[r],CFG.slots[r])).join("")}
+    </div>
+    <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:6px 0 8px">Piano di spesa per reparto</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0 8px">
+      ${ROLE_KEYS.map(r=>f("bud"+r,ROLE_SHORT[r],CFG.roleBudget[r],'oninput="checkCfg()"')).join("")}
+    </div>
+    <div id="cfgMsg"></div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Annulla</button>
+      <button class="btn-confirm" onclick="saveSettings()">Salva</button>
+    </div>
+    <button class="btn-wide" style="margin-top:9px;background:transparent;color:var(--dim-2);font-size:12.5px" onclick="resetSettings()">Ripristina valori di partenza</button>`);
+  ["cfgBudget","cfgReserve",...ROLE_KEYS.map(r=>"bud"+r)].forEach(id=>{
+    const el = $(id); if(el) el.addEventListener("input", checkCfg);
+  });
+  checkCfg();
+}
+function readCfgForm(){
+  const n = (id,fb) => { const v = parseInt(($(id)||{}).value,10); return isNaN(v)||v<0 ? fb : v; };
+  const c = {budget:n("cfgBudget",CFG.budget), reserve:n("cfgReserve",CFG.reserve), slots:{}, roleBudget:{}};
+  ROLE_KEYS.forEach(r=>{ c.slots[r]=n("slot"+r,CFG.slots[r]); c.roleBudget[r]=n("bud"+r,CFG.roleBudget[r]); });
+  return c;
+}
+function checkCfg(){
+  const c = readCfgForm(), box = $("cfgMsg"); if(!box) return;
+  const tot = sum(ROLE_KEYS.map(r=>c.roleBudget[r])) + c.reserve;
+  const d = tot - c.budget;
+  box.innerHTML = d===0
+    ? `<div class="alertbox ok">Piano coerente: ${tot - c.reserve} sui reparti + ${c.reserve} di riserva = ${c.budget}.</div>`
+    : `<div class="alertbox warn">Il piano somma ${tot} invece di ${c.budget} (${d>0?"+":""}${d}). Puoi salvare lo stesso, ma i consigli saranno meno precisi.</div>`;
+}
+function saveSettings(){
+  CFG = readCfgForm();
+  try{ localStorage.setItem("asta-tracker-cfg", JSON.stringify(CFG)); }catch(e){}
+  closeSheet(); renderAll(); save(); toast("Impostazioni salvate","good");
+}
+function resetSettings(){
+  CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
+  try{ localStorage.setItem("asta-tracker-cfg", JSON.stringify(CFG)); }catch(e){}
+  closeSheet(); renderAll(); save(); toast("Impostazioni ripristinate");
+}
+
+function askReset(){
+  openSheet(`
+    <h3>Azzerare l'asta?</h3>
+    <div class="note">Tutti i giocatori tornano liberi e i prezzi pagati si cancellano. I giocatori che avevi aggiunto restano in lista, le impostazioni non cambiano.</div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Annulla</button>
+      <button class="btn-danger" onclick="doReset()">Azzera</button>
+    </div>`);
+}
+function doReset(){
+  pushHistory();
+  PLAYERS.forEach(p=>{ p.status="free"; p.paid=p.price; });
+  showTaken = false;
+  closeSheet(); renderAll(); save(); toast("Asta azzerata");
+}
+
+/* ================== PERSISTENZA ================== */
+const KEY = "asta-tracker-state-v2";
+const OLD_KEY = "asta-tracker-state-v1";
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    const json = JSON.stringify(stateObject());
+    let ok = false;
+    try{ localStorage.setItem(KEY, json); ok = true; }catch(e){}
+    try{ if(window.storage){ window.storage.set(KEY, json, false); ok = true; } }catch(e){}
+    if(ok){
+      const el = $("saveTag"); if(!el) return;
+      el.style.opacity = "1";
+      clearTimeout(window._st);
+      window._st = setTimeout(()=>{ el.style.opacity = "0"; }, 1100);
+    }
+  }, 120);
+}
+function applyState(state){
+  if(!state || typeof state !== "object") throw new Error("bad");
+  if(state.cfg){
+    CFG = {
+      budget: state.cfg.budget ?? DEFAULT_CFG.budget,
+      reserve: state.cfg.reserve ?? DEFAULT_CFG.reserve,
+      slots: {...DEFAULT_CFG.slots, ...(state.cfg.slots||{})},
+      roleBudget: {...DEFAULT_CFG.roleBudget, ...(state.cfg.roleBudget||{})}
+    };
+  }
+  // ricostruisco da zero per essere sempre coerente
+  PLAYERS.length = 0;
+  BASE_PLAYERS.forEach(bp=>PLAYERS.push({...bp}));
+  const added = state.added || state.addedPlayers || [];
+  added.forEach(ap=>{
+    if(!PLAYERS.some(p=>p.id===ap.id)){
+      PLAYERS.push({id:ap.id, name:ap.name, role:ap.role, team:ap.team||"?", price:ap.price,
+                    fixed:false, fav:false, status:"free", paid:ap.price, added:true});
+    }
+  });
+  (state.statuses||[]).forEach(s=>{
+    const p = PLAYERS.find(x=>x.id===s.id);
+    if(p){
+      if(typeof s.price==="number" && s.price>0) p.price = s.price;   // tetto personalizzato
+      p.status = s.status || "free";
+      p.paid = typeof s.paid==="number" ? s.paid : p.price;
+      if(typeof s.fav==="boolean") p.fav = s.fav;
+      if(typeof s.fixed==="boolean") p.fixed = s.fixed;
+    }
+  });
+  deletedIds = state.deletedIds || [];
+  deletedIds.forEach(id=>{
+    const i = PLAYERS.findIndex(x=>x.id===id);
+    if(i>=0) PLAYERS.splice(i,1);
+  });
+  nextId = Math.max(BASE_PLAYERS.length, state.nextId||0, ...PLAYERS.map(p=>p.id+1));
+  HISTORY = []; updateUndo();
+}
+let storageOK = true;
+function checkStorage(){
+  try{
+    const k = "asta-test";
+    localStorage.setItem(k, "1");
+    localStorage.removeItem(k);
+    storageOK = true;
+  }catch(e){
+    storageOK = !!window.storage;
+  }
+  const el = $("storageWarn");
+  if(el) el.hidden = storageOK;
+}
+
+function load(){
+  checkStorage();
+  try{
+    const c = localStorage.getItem("asta-tracker-cfg");
+    if(c) CFG = {...CFG, ...JSON.parse(c)};
+  }catch(e){}
+  try{ detailsOpen = localStorage.getItem("asta-details-open")==="1"; }catch(e){}
+  let raw = null;
+  try{ raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY); }catch(e){}
+  if(raw){ try{ applyState(JSON.parse(raw)); }catch(e){} }
+}
+
+/* ================== INIT ================== */
+function renderAll(){ renderTabs(); renderList(); renderBudget(); renderRoster0(); }
+function renderRoster0(){ if(!$("rosterOverlay").classList.contains("hidden")) renderRoster(); }
+
+$("search").addEventListener("input", renderList);
+$("browseSearch").addEventListener("input", renderBrowseList);
+
+/* ================== TEMA CHIARO / SCURO ================== */
+const THEME_KEY = "asta-theme";
+let theme = "dark";
+function applyTheme(t, save){
+  theme = (t === "light") ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+  const m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute("content", theme==="light" ? "#f2f7f2" : "#07160f");
+  if(save){ try{ localStorage.setItem(THEME_KEY, theme); }catch(e){} }
+}
+function toggleTheme(ev){
+  const next = theme==="light" ? "dark" : "light";
+  buzz(8);
+
+  // centro dell'onda = centro del pulsante; raggio = angolo piu lontano dello schermo
+  const btn = document.getElementById("themeBtn");
+  const r = btn ? btn.getBoundingClientRect() : {left:innerWidth-40, top:40, width:34, height:34};
+  const cx = r.left + r.width/2;
+  const cy = r.top + r.height/2;
+  const maxR = Math.max(
+    Math.hypot(cx, cy),
+    Math.hypot(innerWidth - cx, cy),
+    Math.hypot(cx, innerHeight - cy),
+    Math.hypot(innerWidth - cx, innerHeight - cy)
+  );
+  const root = document.documentElement;
+  root.style.setProperty("--theme-x", cx + "px");
+  root.style.setProperty("--theme-y", cy + "px");
+  root.style.setProperty("--theme-r", maxR + "px");
+
+  root.classList.add("theme-transitioning");
+  clearTimeout(window._themeT);
+  window._themeT = setTimeout(()=> root.classList.remove("theme-transitioning"), 1400);
+
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(document.startViewTransition && !reduce){
+    document.startViewTransition(()=> applyTheme(next, true));
+  } else {
+    applyTheme(next, true);
+  }
+}
+function loadTheme(){
+  let t = null;
+  try{ t = localStorage.getItem(THEME_KEY); }catch(e){}
+  if(!t){
+    try{ t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; }catch(e){ t = "dark"; }
+  }
+  applyTheme(t, false);
+}
+loadTheme();
+
+/* La tastiera iOS non deve coprire i pulsanti del foglio */
+if(window.visualViewport){
+  const vv = window.visualViewport;
+  const sync = () => {
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--kb", kb + "px");
+    document.documentElement.style.setProperty("--sheet-max", Math.round(vv.height * 0.9) + "px");
+  };
+  vv.addEventListener("resize", sync);
+  vv.addEventListener("scroll", sync);
+  sync();
+}
+
+function init(){
+  load();
+  setDetails(detailsOpen);
+  $("sortBtn").textContent = SORTS[sortMode];
+  // apre sul primo reparto che ha ancora obiettivi liberi
+  const firstOpen = ROLE_KEYS.find(r=>PLAYERS.some(p=>p.role===r && p.status==="free"));
+  if(firstOpen) currentRole = firstOpen;
+  updateUndo();
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
