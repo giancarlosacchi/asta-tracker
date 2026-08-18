@@ -128,6 +128,7 @@ header{
   border:.5px solid rgba(48,209,88,.3);border-radius:999px;padding:4px 9px;
   opacity:0;transition:opacity .25s;white-space:nowrap;
 }
+.save-chip.bad{color:var(--danger);background:rgba(255,95,87,.16);border-color:rgba(255,95,87,.4);opacity:1!important;}
 .icon-btn{
   width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
   background:var(--g-1);border:.5px solid var(--stroke);color:var(--dim);font-size:16px;
@@ -668,7 +669,7 @@ html.theme-transitioning .sheet{
 <main>
   <div class="warn-bar" id="storageWarn" hidden>
     <b>Attenzione: qui il salvataggio automatico non funziona.</b>
-    Apri il file con Safari (o Chrome) invece che dall'anteprima, oppure tieni un codice di backup dal menu ⋯ → Salva/Ripristina.
+    Apri il link con Safari invece che dall'anteprima di un'altra app, oppure scarica il file di backup da ⋯ → Sicurezza dati dopo ogni giocatore.
   </div>
   <div class="tools">
     <input class="search" id="search" type="search" placeholder="Cerca in tutti i ruoli…" autocomplete="off" aria-label="Cerca giocatore">
@@ -796,6 +797,7 @@ const BASE_PLAYERS = PLAYERS.map(p=>({...p}));
 let currentRole = "D";
 let nextId = PLAYERS.length;
 let deletedIds = [];
+let deletedNames = [];
 let showTaken = false;
 let sortMode = "val";
 let detailsOpen = false;
@@ -890,7 +892,7 @@ function snapshot(){
   return {
     statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
     extra: PLAYERS.filter(p=>p.added).map(p=>({...p})),
-    deletedIds:[...deletedIds], nextId, currentRole
+    deletedIds:[...deletedIds], deletedNames:[...deletedNames], nextId, currentRole
   };
 }
 function pushHistory(){
@@ -913,7 +915,7 @@ function undo(){
       if(typeof st.fixed==="boolean") p.fixed = st.fixed;
     }
   });
-  nextId = s.nextId; deletedIds = [...s.deletedIds];
+  nextId = s.nextId; deletedIds = [...s.deletedIds]; deletedNames = [...(s.deletedNames||[])];
   if(s.currentRole) currentRole = s.currentRole;
   updateUndo(); renderAll(); save();
   buzz(12); toast("Annullato", "good");
@@ -1304,6 +1306,7 @@ function doDelete(id){
   const nm = i>=0 ? PLAYERS[i].name : "";
   if(i>=0) PLAYERS.splice(i,1);
   if(!deletedIds.includes(id)) deletedIds.push(id);
+  if(nm && !deletedNames.includes(nm)) deletedNames.push(nm);
   closeSheet(); renderAll(); save();
   toast(`${nm} rimosso`);
 }
@@ -1473,6 +1476,7 @@ function openMenu(){
     <h3>Menu</h3>
     <div class="sub">Tutto quello che non serve durante l'asta.</div>
     <div class="menu-list">
+      <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">copie automatiche e recupero</small></div></button>
       <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
       <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
       <button onclick="importFile()"><i>↥</i><div>Importa file<small>ricarica un backup salvato</small></div></button>
@@ -1483,13 +1487,86 @@ function openMenu(){
     <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
 }
 
+function openSafety(){
+  const snaps = readSnaps();
+  const rows = snaps.length ? snaps.map((sn,i)=>{
+    let o = null; try{ o = JSON.parse(sn.j); }catch(e){}
+    const n = o && o.sig ? o.sig.n : "?";
+    const sp = o && o.sig ? o.sig.spent : "?";
+    return `<div class="li" style="--rc:var(--accent)">
+      <div class="li-main">
+        <div class="li-n">${fmtTime(sn.t)}</div>
+        <div class="li-t">${n} ${n===1?"giocatore":"giocatori"} · ${sp} ${sp===1?"credito":"crediti"}</div>
+      </div>
+      <button class="chip" onclick="restoreSnap(${i})">Ripristina</button>
+    </div>`;
+  }).join("") : '<div class="note">Ancora nessuna istantanea: comparirà appena fai la prima mossa.</div>';
+
+  const mine = mineOf();
+  openSheet(`
+    <h3>Sicurezza dati</h3>
+    <div class="sub">Ogni tocco viene salvato in tre posti diversi. Qui vedi lo stato e puoi tornare indietro.</div>
+
+    <div class="bid-info">
+      <div><div class="k">Memoria telefono</div><div class="v" style="font-size:15px;color:${storageOK?'var(--accent)':'var(--danger)'}">${storageOK?'attiva':'BLOCCATA'}</div></div>
+      <div><div class="k">Database browser</div><div class="v" style="font-size:15px;color:${idbOK?'var(--accent)':'var(--dim-2)'}">${idbOK?'attivo':'—'}</div></div>
+    </div>
+    <div class="note" style="margin-top:10px">
+      Ultimo salvataggio: <b>${lastSaveTs?fmtTime(lastSaveTs):'—'}</b><br>
+      In rosa ora: <b>${mine.length} ${mine.length===1?"giocatore":"giocatori"} · ${sum(mine.map(x=>x.paid))} crediti</b>${loadedFrom?`<br>Dati caricati da: ${esc(loadedFrom)}`:''}
+    </div>
+
+    <button class="btn-wide btn-confirm" style="margin-top:14px" onclick="exportFile()">⬇︎ Scarica il file di backup</button>
+    <div class="note" style="margin-top:8px;font-size:11.5px">Fallo una volta prima dell'asta e una a metà: è la copia che sopravvive anche se perdi il telefono.</div>
+
+    <div style="font-size:11.5px;color:var(--dim-2);font-weight:600;margin:16px 0 8px">ISTANTANEE AUTOMATICHE (ultime ${MAX_SNAPS})</div>
+    ${rows}
+
+    <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
+}
+function restoreSnap(i){
+  const sn = readSnaps()[i]; if(!sn) return;
+  const o = tryCandidate(sn.j);
+  if(!o){ toast("Istantanea illeggibile","bad"); return; }
+  openSheet(`
+    <h3>Tornare a ${fmtTime(sn.t)}?</h3>
+    <div class="note">La situazione attuale viene comunque conservata come istantanea, quindi puoi sempre tornare indietro.</div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="openSafety()">Annulla</button>
+      <button class="btn-confirm" onclick="doRestoreSnap(${i})">Ripristina</button>
+    </div>`);
+}
+function doRestoreSnap(i){
+  const sn = readSnaps()[i]; if(!sn) return;
+  try{ pushSnap(JSON.stringify(stateObject())); }catch(e){}
+  const o = tryCandidate(sn.j);
+  try{
+    applyState(o);
+    closeSheet(); renderAll(); persistNow();
+    toast("Ripristinato al " + fmtTime(sn.t), "good");
+  }catch(e){ toast("Ripristino non riuscito","bad"); }
+}
+
 function stateObject(){
+  const mine = mineOf();
   return {
-    v:2, cfg:CFG,
-    statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
+    v:3,
+    ts: nowMs(),
+    cfg: CFG,
+    // il nome viaggia insieme all'id: se un giorno cambio l'elenco base, i dati si riagganciano lo stesso
+    statuses: PLAYERS.map(p=>({id:p.id,n:p.name,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
     added: PLAYERS.filter(p=>p.added).map(p=>({id:p.id,name:p.name,role:p.role,team:p.team,price:p.price})),
-    deletedIds, nextId
+    deleted: deletedNames.slice(),
+    deletedIds, nextId,
+    sig: {n: mine.length, spent: sum(mine.map(x=>x.paid))}   // firma per accorgersi di un file rovinato
   };
+}
+function nowMs(){ return Date.now(); }
+function fmtTime(ms){
+  try{
+    const d = new Date(ms);
+    return d.toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }catch(e){ return "?"; }
 }
 function openBackup(){
   const code = b64enc(JSON.stringify(stateObject()));
@@ -1516,8 +1593,9 @@ function restoreCode(){
   const raw = $("bkIn").value.trim(), st = $("bkStatus");
   if(!raw){ st.style.color="var(--danger)"; st.textContent="Incolla prima il codice."; return; }
   try{
+    try{ pushSnap(JSON.stringify(stateObject())); }catch(e){}
     applyState(JSON.parse(b64dec(raw)));
-    renderAll(); save();
+    renderAll(); persistNow();
     st.style.color="var(--mine)"; st.textContent="✓ Ripristinato";
     setTimeout(closeSheet, 800); toast("Backup ripristinato","good");
   }catch(e){
@@ -1540,7 +1618,8 @@ function importFile(){
     const f = inp.files[0]; if(!f) return;
     const rd = new FileReader();
     rd.onload = () => {
-      try{ applyState(JSON.parse(rd.result)); renderAll(); save(); closeSheet(); toast("Backup importato","good"); }
+      try{ pushSnap(JSON.stringify(stateObject())); }catch(e){}
+      try{ applyState(JSON.parse(rd.result)); renderAll(); persistNow(); closeSheet(); toast("Backup importato","good"); }
       catch(e){ toast("File non valido","bad"); }
     };
     rd.readAsText(f);
@@ -1611,33 +1690,122 @@ function askReset(){
     </div>`);
 }
 function doReset(){
+  try{ pushSnap(JSON.stringify(stateObject())); }catch(e){}
   pushHistory();
   PLAYERS.forEach(p=>{ p.status="free"; p.paid=p.price; });
   showTaken = false;
   closeSheet(); renderAll(); save(); toast("Asta azzerata");
 }
 
-/* ================== PERSISTENZA ================== */
-const KEY = "asta-tracker-state-v2";
+/* ================== PERSISTENZA A PROVA DI ASTA ==================
+   Tre copie indipendenti, cosi' se una salta le altre reggono:
+   1) localStorage  - chiave principale
+   2) IndexedDB     - database separato del browser
+   3) 8 istantanee a rotazione, ognuna con l'orario
+   In lettura si prende sempre la piu' recente VALIDA. Se non si legge nulla
+   ma qualcosa c'era, l'app lo dice invece di ripartire vuota.                */
+
+const KEY = "asta-tracker-state-v3";
+const KEY_V2 = "asta-tracker-state-v2";
 const OLD_KEY = "asta-tracker-state-v1";
-let saveTimer;
+const SNAP_KEY = "asta-tracker-snapshots";
+const MAX_SNAPS = 8;
+
+let storageOK = true, idbOK = false, lastSaveTs = 0, loadedFrom = "";
+
+/* ---------- IndexedDB (seconda copia, indipendente da localStorage) ---------- */
+let _db = null;
+function idb(){
+  if(_db) return Promise.resolve(_db);
+  return new Promise(res=>{
+    try{
+      const r = indexedDB.open("astaTracker", 1);
+      r.onupgradeneeded = () => { try{ r.result.createObjectStore("kv"); }catch(e){} };
+      r.onsuccess = () => { _db = r.result; idbOK = true; res(_db); };
+      r.onerror = () => res(null);
+      setTimeout(()=>res(_db), 1500);
+    }catch(e){ res(null); }
+  });
+}
+async function idbPut(json){
+  const db = await idb(); if(!db) return false;
+  return new Promise(res=>{
+    try{
+      const tx = db.transaction("kv","readwrite");
+      tx.objectStore("kv").put(json, KEY);
+      tx.oncomplete = () => res(true);
+      tx.onerror = () => res(false);
+    }catch(e){ res(false); }
+  });
+}
+async function idbGet(){
+  const db = await idb(); if(!db) return null;
+  return new Promise(res=>{
+    try{
+      const tx = db.transaction("kv","readonly");
+      const q = tx.objectStore("kv").get(KEY);
+      q.onsuccess = () => res(q.result || null);
+      q.onerror = () => res(null);
+    }catch(e){ res(null); }
+  });
+}
+
+/* ---------- istantanee a rotazione ---------- */
+function readSnaps(){
+  try{ return JSON.parse(localStorage.getItem(SNAP_KEY) || "[]"); }catch(e){ return []; }
+}
+function pushSnap(json){
+  try{
+    const list = readSnaps();
+    if(list.length && list[0].j === json) return;      // niente doppioni
+    list.unshift({t: nowMs(), j: json});
+    while(list.length > MAX_SNAPS) list.pop();
+    localStorage.setItem(SNAP_KEY, JSON.stringify(list));
+  }catch(e){ /* spazio finito: le istantanee sono un extra, non blocco il salvataggio */ }
+}
+
+/* ---------- salvataggio ---------- */
+let saveTimer = null;
 function save(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(()=>{
-    const json = JSON.stringify(stateObject());
-    let ok = false;
-    try{ localStorage.setItem(KEY, json); ok = true; }catch(e){}
-    try{ if(window.storage){ window.storage.set(KEY, json, false); ok = true; } }catch(e){}
-    if(ok){
-      const el = $("saveTag"); if(!el) return;
-      el.style.opacity = "1";
-      clearTimeout(window._st);
-      window._st = setTimeout(()=>{ el.style.opacity = "0"; }, 1100);
-    }
-  }, 120);
+  saveTimer = setTimeout(persistNow, 120);
 }
+function persistNow(){
+  clearTimeout(saveTimer); saveTimer = null;
+  let json;
+  try{ json = JSON.stringify(stateObject()); }catch(e){ return flagSave(false); }
+  let ok = false;
+  try{ localStorage.setItem(KEY, json); ok = true; }catch(e){}
+  pushSnap(json);
+  idbPut(json).then(r=>{ if(r) idbOK = true; });
+  try{ if(window.storage) window.storage.set(KEY, json, false); }catch(e){}
+  if(ok) lastSaveTs = nowMs();
+  flagSave(ok);
+}
+function flagSave(ok){
+  storageOK = ok || idbOK;
+  const w = $("storageWarn"); if(w) w.hidden = storageOK;
+  const el = $("saveTag"); if(!el) return;
+  el.textContent = ok ? "✓ salvato" : "⚠ non salvato";
+  el.classList.toggle("bad", !ok);
+  el.style.opacity = "1";
+  clearTimeout(window._st);
+  if(ok) window._st = setTimeout(()=>{ el.style.opacity = "0"; }, 1100);
+}
+/* l'app viene chiusa o messa in secondo piano: si salva subito, senza aspettare */
+["pagehide","beforeunload","freeze"].forEach(ev=>
+  window.addEventListener(ev, ()=>{ if(saveTimer) persistNow(); }));
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "hidden" && saveTimer) persistNow();
+});
+
+/* ---------- lettura ---------- */
+function normName(x){ return String(x||"").toLowerCase().replace(/[^a-z0-9]/g,""); }
+
 function applyState(state){
-  if(!state || typeof state !== "object") throw new Error("bad");
+  if(!state || typeof state !== "object") throw new Error("stato non valido");
+  if(!Array.isArray(state.statuses)) throw new Error("stato incompleto");
+
   if(state.cfg){
     CFG = {
       budget: state.cfg.budget ?? DEFAULT_CFG.budget,
@@ -1646,59 +1814,100 @@ function applyState(state){
       roleBudget: {...DEFAULT_CFG.roleBudget, ...(state.cfg.roleBudget||{})}
     };
   }
-  // ricostruisco da zero per essere sempre coerente
+
   PLAYERS.length = 0;
   BASE_PLAYERS.forEach(bp=>PLAYERS.push({...bp}));
-  const added = state.added || state.addedPlayers || [];
-  added.forEach(ap=>{
-    if(!PLAYERS.some(p=>p.id===ap.id)){
+  (state.added || state.addedPlayers || []).forEach(ap=>{
+    if(!PLAYERS.some(p=>p.id===ap.id || normName(p.name)===normName(ap.name))){
       PLAYERS.push({id:ap.id, name:ap.name, role:ap.role, team:ap.team||"?", price:ap.price,
                     fixed:false, fav:false, status:"free", paid:ap.price, added:true});
     }
   });
-  (state.statuses||[]).forEach(s=>{
-    const p = PLAYERS.find(x=>x.id===s.id);
-    if(p){
-      if(typeof s.price==="number" && s.price>0) p.price = s.price;   // tetto personalizzato
-      p.status = s.status || "free";
-      p.paid = typeof s.paid==="number" ? s.paid : p.price;
-      if(typeof s.fav==="boolean") p.fav = s.fav;
-      if(typeof s.fixed==="boolean") p.fixed = s.fixed;
-    }
+
+  // aggancio per id; se l'id punta a un altro nome (elenco base cambiato) ripiego sul nome
+  const used = new Set();
+  state.statuses.forEach(st=>{
+    let p = PLAYERS.find(x=>x.id===st.id && !used.has(x));
+    if(p && st.n && normName(p.name) !== normName(st.n)) p = null;
+    if(!p && st.n) p = PLAYERS.find(x=>normName(x.name)===normName(st.n) && !used.has(x));
+    if(!p) return;
+    used.add(p);
+    if(typeof st.price === "number" && st.price > 0) p.price = st.price;
+    p.status = (st.status === "mine" || st.status === "taken") ? st.status : "free";
+    p.paid = typeof st.paid === "number" ? st.paid : p.price;
+    if(typeof st.fav === "boolean") p.fav = st.fav;
+    if(typeof st.fixed === "boolean") p.fixed = st.fixed;
   });
-  deletedIds = state.deletedIds || [];
-  deletedIds.forEach(id=>{
-    const i = PLAYERS.findIndex(x=>x.id===id);
-    if(i>=0) PLAYERS.splice(i,1);
-  });
-  nextId = Math.max(BASE_PLAYERS.length, state.nextId||0, ...PLAYERS.map(p=>p.id+1));
-  HISTORY = []; updateUndo();
-}
-let storageOK = true;
-function checkStorage(){
-  try{
-    const k = "asta-test";
-    localStorage.setItem(k, "1");
-    localStorage.removeItem(k);
-    storageOK = true;
-  }catch(e){
-    storageOK = !!window.storage;
+
+  deletedIds = Array.isArray(state.deletedIds) ? state.deletedIds : [];
+  deletedNames = Array.isArray(state.deleted) ? state.deleted : [];
+  const delSet = new Set(deletedNames.map(normName));
+  for(let i = PLAYERS.length - 1; i >= 0; i--){
+    const p = PLAYERS[i];
+    if(delSet.has(normName(p.name)) || (deletedIds.includes(p.id) && !used.has(p))) PLAYERS.splice(i,1);
   }
-  const el = $("storageWarn");
-  if(el) el.hidden = storageOK;
+
+  nextId = Math.max(BASE_PLAYERS.length, state.nextId || 0, ...PLAYERS.map(p=>p.id+1));
+  HISTORY = []; updateUndo();
+  return true;
 }
 
-function load(){
-  checkStorage();
-  try{
-    const c = localStorage.getItem("asta-tracker-cfg");
-    if(c) CFG = {...CFG, ...JSON.parse(c)};
-  }catch(e){}
-  try{ detailsOpen = localStorage.getItem("asta-details-open")==="1"; }catch(e){}
-  let raw = null;
-  try{ raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY); }catch(e){}
-  if(raw){ try{ applyState(JSON.parse(raw)); }catch(e){} }
+/* prova un candidato senza rovinare lo stato attuale se e' rotto */
+function tryCandidate(json){
+  let obj;
+  try{ obj = JSON.parse(json); }catch(e){ return null; }
+  if(!obj || !Array.isArray(obj.statuses)) return null;
+  return obj;
 }
+
+async function load(){
+  try{ const c = localStorage.getItem("asta-tracker-cfg"); if(c) CFG = {...CFG, ...JSON.parse(c)}; }catch(e){}
+  try{ detailsOpen = localStorage.getItem("asta-details-open") === "1"; }catch(e){}
+
+  // test di scrittura reale
+  try{ localStorage.setItem("asta-test","1"); localStorage.removeItem("asta-test"); storageOK = true; }
+  catch(e){ storageOK = false; }
+
+  const cands = [];
+  loadReport = [];
+  const add = (src, json) => { if(json){ cands.push({src, json}); loadReport.push(src+" ("+json.length+")"); } };
+  try{
+    add("memoria del telefono", localStorage.getItem(KEY));
+    add("memoria del telefono", localStorage.getItem(KEY_V2));
+    add("versione precedente", localStorage.getItem(OLD_KEY));
+  }catch(e){}
+  try{ add("database del browser", await idbGet()); }catch(e){}
+  readSnaps().forEach(sn => add("backup del " + fmtTime(sn.t), sn.j));
+
+  let found = 0, best = null;
+  cands.forEach(c=>{
+    const obj = tryCandidate(c.json);
+    if(!obj) return;
+    found++;
+    const ts = typeof obj.ts === "number" ? obj.ts : 0;
+    if(!best || ts > best.ts) best = {ts, obj, src: c.src};
+  });
+
+  if(best){
+    try{
+      applyState(best.obj);
+      loadedFrom = best.src;
+      lastSaveTs = best.ts || 0;
+      return;
+    }catch(e){ /* passo al prossimo tentativo qui sotto */ }
+  }
+
+  // il piu' recente non si applica: provo tutti gli altri, dal piu' nuovo al piu' vecchio
+  const ordered = cands.map(c=>({c, obj: tryCandidate(c.json)}))
+                       .filter(x=>x.obj)
+                       .sort((a,b)=>(b.obj.ts||0)-(a.obj.ts||0));
+  for(const x of ordered){
+    try{ applyState(x.obj); loadedFrom = x.c.src; lastSaveTs = x.obj.ts||0; recoveredNotice = true; return; }catch(e){}
+  }
+  if(cands.length > 0) recoveredNotice = "fail";   // c'erano dati ma nessuno leggibile
+}
+let recoveredNotice = false;
+let loadReport = [];
 
 /* ================== INIT ================== */
 function renderAll(){ renderTabs(); renderList(); renderBudget(); renderRoster0(); }
@@ -1771,15 +1980,26 @@ if(window.visualViewport){
   sync();
 }
 
-function init(){
-  load();
+async function init(){
+  await load();
   setDetails(detailsOpen);
   $("sortBtn").textContent = SORTS[sortMode];
-  // apre sul primo reparto che ha ancora obiettivi liberi
   const firstOpen = ROLE_KEYS.find(r=>PLAYERS.some(p=>p.role===r && p.status==="free"));
   if(firstOpen) currentRole = firstOpen;
   updateUndo();
   renderAll();
+
+  if(recoveredNotice === "fail"){
+    openSheet(`
+      <h3>⚠ Non riesco a rileggere i dati</h3>
+      <div class="note">C'erano dei salvataggi ma nessuno è leggibile. Prima di toccare qualsiasi cosa apri <b>⋯ → Sicurezza dati</b>: lì trovi le istantanee automatiche e puoi recuperare l'ultima buona.</div>
+      <div class="sheet-actions"><button class="btn-confirm" onclick="closeSheet();openSafety()">Apri Sicurezza dati</button></div>`);
+  } else if(recoveredNotice){
+    toast("Dati recuperati da " + loadedFrom, "good");
+  } else if(!storageOK && !idbOK){
+    toast("Attenzione: questo browser non salva", "bad");
+  }
+  setInterval(()=>{ if(mineOf().length) persistNow(); }, 60000);   // rete di sicurezza ogni minuto
 }
 init();
 </script>
