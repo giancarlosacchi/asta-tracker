@@ -241,7 +241,8 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .card.taken{opacity:.4;}
 .card.taken .p-name{text-decoration:line-through;text-decoration-color:var(--dim-2);}
 
-.c-fav{width:34px;flex-shrink:0;display:grid;place-items:center;font-size:14px;color:var(--dim-3);}
+.c-fav{width:40px;flex-shrink:0;display:grid;place-items:center;font-size:21px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;}
+.c-fav:active{transform:scale(1.25);}
 .c-fav.on{color:var(--gold);}
 .c-body{flex:1;min-width:0;padding:12px 2px 12px 0;text-align:left;display:flex;flex-direction:column;gap:4px;}
 .p-name{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -356,6 +357,30 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 }
 .stepper button:active{background:var(--g-3);}
 .stepper input{text-align:center;font-size:28px!important;font-weight:600;font-variant-numeric:tabular-nums;padding:11px 4px!important;letter-spacing:-.03em;}
+
+/* rotella numerica stile sveglia iOS */
+.wheel{
+  position:relative;height:200px;overflow:hidden;border-radius:18px;
+  background:var(--input-bg);border:.5px solid var(--stroke);box-shadow:var(--inner-hi);
+}
+.wheel-band{
+  position:absolute;left:10px;right:10px;top:80px;height:40px;border-radius:11px;
+  background:var(--g-2);pointer-events:none;z-index:0;
+}
+.wheel-scroll{
+  position:relative;z-index:1;height:100%;overflow-y:scroll;
+  scroll-snap-type:y mandatory;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  perspective:620px;perspective-origin:50% 50%;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.wheel-scroll::-webkit-scrollbar{display:none;width:0;height:0;}
+.wheel-pad{height:80px;}
+.wheel-item{
+  height:40px;line-height:40px;text-align:center;scroll-snap-align:center;
+  font-size:27px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+  opacity:.12;transform:scale(.6);transform-origin:50% 50%;will-change:transform,opacity;
+}
+.wheel-item.sel{color:var(--accent);font-weight:700;}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
 .chip{
   padding:9px 14px;border-radius:999px;background:var(--g-1);border:.5px solid var(--stroke);
@@ -1122,35 +1147,32 @@ function openBid(id, ev){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
   bidPlayerId = id;
   const s = roleStats(p.role);
-  const start = p.status==="mine" ? p.paid : Math.min(suggested(p), Math.max(1,maxBid()));
   const isEdit = p.status==="mine";
+  const bonus = isEdit ? p.paid : 0;
+  const sug = suggested(p);
+  const top = Math.max(1, maxBid() + bonus);           // tetto silenzioso: oltre non potresti riempire la rosa
+  const start = isEdit ? p.paid : Math.min(sug, top);
 
   openSheet(`
     <h3>${esc(p.name)}</h3>
     <div class="sub">${ROLES[p.role]} · ${esc(p.team)} · tetto che ti eri dato: <b style="color:var(--gold)">${p.price}</b></div>
 
     <div class="bid-info">
-      <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + (isEdit?p.paid:0)}</div></div>
-      <div><div class="k">Max offerta</div><div class="v num" style="color:var(--gold)">${maxBid() + (isEdit?p.paid:0)}</div></div>
-      <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.slotsLeft}/${s.totalSlots}</div></div>
+      <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
+      <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.mine.length}/${s.totalSlots}</div></div>
     </div>
 
     <div class="field" style="margin-top:14px;">
       <label>Crediti pagati</label>
-      <div class="stepper">
-        <button type="button" onclick="bump(-1)" aria-label="meno 1">−</button>
-        <input id="paidInput" type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="${start}">
-        <button type="button" onclick="bump(1)" aria-label="più 1">＋</button>
+      <div class="wheel">
+        <div class="wheel-band"></div>
+        <div class="wheel-scroll" id="wheelScroll"></div>
       </div>
-      <div class="chips">
-        <button type="button" class="chip" onclick="bump(-5)">−5</button>
-        <button type="button" class="chip" onclick="bump(5)">+5</button>
-        <button type="button" class="chip" onclick="bump(10)">+10</button>
-        <button type="button" class="chip gold" onclick="setBid(${suggested(p)})">consigliato ${suggested(p)}</button>
+      <div class="chips" style="justify-content:center">
+        <button type="button" class="chip gold" onclick="setBid(${sug})">consigliato ${sug}</button>
         <button type="button" class="chip" onclick="setBid(${p.price})">tetto ${p.price}</button>
       </div>
     </div>
-    <div id="bidMsg"></div>
 
     <div class="sheet-actions">
       ${isEdit
@@ -1165,62 +1187,60 @@ function openBid(id, ev){
     </div>
   `);
 
-  const inp = $("paidInput");
-  inp.addEventListener("input", ()=>checkBid(id));
-  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); confirmBid(id); } });
-  setTimeout(()=>{ inp.focus(); inp.select(); }, 60);
-  checkBid(id);
+  initWheel(top, start);
 }
-function bump(d){
-  const i = $("paidInput"); if(!i) return;
-  i.value = Math.max(0,(parseInt(i.value,10)||0) + d);
-  checkBid();
-}
-function setBid(v){ const i=$("paidInput"); if(i){ i.value=v; checkBid(); } }
 
-let bidOverride = false;
-let bidPlayerId = null;
-function checkBid(id){
-  if(id===undefined || id===null) id = bidPlayerId;
-  const i = $("paidInput"); const box = $("bidMsg"); const btn = $("bidConfirm");
-  if(!i || !box) return;
-  const v = parseInt(i.value,10);
-  const p = PLAYERS.find(x=>x.id===id);
-  const editBonus = (p && p.status==="mine") ? p.paid : 0;
-  const avail = creditsLeft() + editBonus;
-  const mb = maxBid() + editBonus;
-  const s = p ? roleStats(p.role) : null;
-  bidOverride = false; box.innerHTML = "";
-  if(btn){ btn.disabled = false; btn.style.opacity = 1; }
-  if(isNaN(v) || v < 0) return;
+/* ---- rotella tipo sveglia iOS ---- */
+const WHEEL_H = 40;
+let wheelVal = 0, wheelMax = 0, wheelWin = [0,-1], wheelRaf = 0;
 
-  if(v > avail){
-    box.innerHTML = `<div class="alertbox">Non hai ${v} crediti: te ne restano ${avail}.</div>`;
-    if(btn){ btn.disabled = true; btn.style.opacity = .45; }
-    return;
-  }
-  if(v > mb){
-    bidOverride = true;
-    box.innerHTML = `<div class="alertbox">Spendendo ${v} non riesci più a riempire tutti gli slot (max sostenibile ${mb}). Confermi lo stesso?</div>`;
-    if(btn) btn.textContent = "Confermo comunque";
-    return;
-  }
-  if(s && s.slotsLeft===0 && (!p || p.status!=="mine")){
-    box.innerHTML = `<div class="alertbox warn">Il reparto ${ROLES[p.role].toLowerCase()} è già completo (${s.totalSlots}/${s.totalSlots}).</div>`;
-    return;
-  }
-  if(s && v > s.roleMax && s.slotsLeft>0){
-    box.innerHTML = `<div class="alertbox warn">Sfori il piano del reparto: attingi ${v - Math.max(0,s.budgetLeft)} dalla riserva.</div>`;
-    return;
-  }
-  if(p && v <= p.price){
-    box.innerHTML = `<div class="alertbox ok">Dentro il tetto che ti eri dato (${p.price}). Ottimo affare.</div>`;
-  }
+function initWheel(max, val){
+  wheelMax = max; wheelWin = [0,-1];
+  const sc = $("wheelScroll");
+  let html = '<div class="wheel-pad"></div>';
+  for(let i=0;i<=max;i++) html += `<div class="wheel-item">${i}</div>`;
+  html += '<div class="wheel-pad"></div>';
+  sc.innerHTML = html;
+  sc.addEventListener("scroll", onWheelScroll, {passive:true});
+  setWheel(val, false);
 }
+function setWheel(v, smooth){
+  const sc = $("wheelScroll"); if(!sc) return;
+  v = Math.max(0, Math.min(wheelMax, Math.round(v)));
+  wheelVal = v;
+  sc.scrollTo({top: v*WHEEL_H, behavior: smooth ? "smooth" : "auto"});
+  paintWheel();
+}
+function setBid(v){ setWheel(v, true); }
+function onWheelScroll(){
+  const sc = $("wheelScroll"); if(!sc) return;
+  const v = Math.max(0, Math.min(wheelMax, Math.round(sc.scrollTop / WHEEL_H)));
+  if(v !== wheelVal){ wheelVal = v; buzz(3); }
+  if(!wheelRaf) wheelRaf = requestAnimationFrame(()=>{ wheelRaf = 0; paintWheel(); });
+}
+function paintWheel(){
+  const sc = $("wheelScroll"); if(!sc) return;
+  const c = sc.scrollTop / WHEEL_H;
+  const kids = sc.children;
+  for(let i=wheelWin[0]; i<=wheelWin[1]; i++){
+    const el = kids[i+1];
+    if(el){ el.style.transform=""; el.style.opacity=""; el.classList.remove("sel"); }
+  }
+  const lo = Math.max(0, Math.floor(c)-4), hi = Math.min(wheelMax, Math.ceil(c)+4);
+  for(let i=lo;i<=hi;i++){
+    const el = kids[i+1]; if(!el) continue;
+    const d = i - c, ad = Math.abs(d);
+    el.style.transform = `rotateX(${Math.max(-72,Math.min(72,d*20))}deg) scale(${Math.max(.55, 1-.11*ad)})`;
+    el.style.opacity = String(Math.max(.12, 1 - ad*.26));
+    el.classList.toggle("sel", ad < .5);
+  }
+  wheelWin = [lo,hi];
+}
+
 function confirmBid(id){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
-  const v = parseInt($("paidInput").value,10);
-  if(isNaN(v) || v < 0){ toast("Inserisci un numero valido","bad"); return; }
+  const v = wheelVal;
+  if(isNaN(v) || v < 0){ toast("Valore non valido","bad"); return; }
   const editBonus = p.status==="mine" ? p.paid : 0;
   if(v > creditsLeft() + editBonus){ toast("Crediti insufficienti","bad"); return; }
   pushHistory();
