@@ -1356,8 +1356,24 @@ function statsHtml(p){
     if(!isP && st.rr && st.rr !== "0 / 0") cells += `<div class="stat-cell"><div class="k">Rigori</div><div class="v">${st.rr}</div></div>`;
   }
   const flags = (q.rig?" · rigorista":"") + (q.cp?" · calci piazzati":"");
+  const nota = st
+    ? `Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · fantacalcio.it${flags}`
+    : `Nessuna statistica: la scorsa stagione non era in Serie A · fantacalcio.it${flags}`;
   return `<div class="stat-grid">${cells}</div>
-    <div class="stat-note">Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · fantacalcio.it${flags}</div>`;
+    <div class="stat-note">${nota}</div>`;
+}
+
+function openQStats(name, role, team, quota){
+  const fake = {name, role, team};
+  const has = PLAYERS.some(x=>qnorm(x.name)===qnorm(name));
+  openSheet(`
+    <h3>${esc(name)}${qbadges(qinfo(fake))}</h3>
+    <div class="sub">${ROLES[role]} · ${esc(team)} · quota ${quota}</div>
+    ${statsHtml(fake) || '<div class="note">Nessun dato disponibile per questo giocatore.</div>'}
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Chiudi</button>
+      ${has ? "" : `<button class="btn-confirm" onclick="closeSheet();addFromListone(${JSON.stringify(name).replace(/"/g,"&quot;")},'${role}',${JSON.stringify(team).replace(/"/g,"&quot;")},${quota})">＋ In lista</button>`}
+    </div>`);
 }
 
 function openBid(id, ev){
@@ -1563,7 +1579,7 @@ function renderBrowseList(){
   el.innerHTML = items.slice(0,300).map(p=>{
     const has = known.has(p.n.toLowerCase());
     return `<div class="li ${has?"added":""}" style="--rc:var(--r-${p.r})">
-      <div class="li-main">
+      <div class="li-main" onclick="openQStats(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" style="cursor:pointer">
         <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
         <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}${has?" · già in lista":""}</div>
       </div>
@@ -2469,7 +2485,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 10:40";
+const BUILD = "19/08 · 11:20";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
