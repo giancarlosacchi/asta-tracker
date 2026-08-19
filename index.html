@@ -1323,9 +1323,20 @@ function renderList(){
   const taken = items.filter(p=>p.status==="taken");
   const s = stats[currentRole];
 
-  html += `<div class="sec-title">Da prendere · ${free.length} <span style="color:var(--dim);letter-spacing:0;text-transform:none">·&nbsp;${s.slotsLeft} slot, max ${s.roleMax}/gioc.</span></div>`;
-  html += free.length ? free.map(p=>cardHtml(p,stats)).join("")
-                      : `<div class="ghost-row">Nessun obiettivo libero in questo reparto</div>`;
+  const mineKeys = new Set(items.map(p=>siteKey(p.name, p.team, p.role)));
+  const others = LISTONE.filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)));
+  const quotaOf = p => { const q = qinfo(p); return q && q.qa ? q.qa : (p.price||0); };
+  const uni = [
+    ...free.map(p=>({m:p, prio:(p.fixed||p.fav)?0:1, q:quotaOf(p), n:p.name, t:p.team})),
+    ...others.map(L=>({o:L, prio:1, q:L.q||0, n:L.n, t:L.t}))
+  ];
+  if(sortMode==="name") uni.sort((a,b)=> a.prio-b.prio || a.n.localeCompare(b.n));
+  else if(sortMode==="team") uni.sort((a,b)=> a.prio-b.prio || a.t.localeCompare(b.t) || b.q-a.q);
+  else uni.sort((a,b)=> a.prio-b.prio || b.q-a.q);
+
+  html += `<div class="sec-title">Da prendere · ${uni.length} <span style="color:var(--dim);letter-spacing:0;text-transform:none">·&nbsp;${s.slotsLeft} slot, max ${s.roleMax}/gioc.</span></div>`;
+  html += uni.length ? uni.map(e=> e.m ? cardHtml(e.m, stats) : otherRowHtml(e.o)).join("")
+                     : `<div class="ghost-row">Nessun giocatore libero in questo reparto</div>`;
 
   if(mine.length){
     html += `<div class="sec-title">Presi da te · ${mine.length} <span style="color:var(--mine);letter-spacing:0;text-transform:none">·&nbsp;${sum(mine.map(p=>p.paid))} crediti</span></div>`;
@@ -1337,15 +1348,6 @@ function renderList(){
     if(showTaken) html += taken.map(p=>cardHtml(p,stats)).join("");
   }
 
-  // tutto il resto del listone per questo reparto
-  const mineKeys = new Set(items.map(p=>siteKey(p.name, p.team, p.role)));
-  const others = LISTONE
-    .filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)))
-    .sort((a,b)=>b.q-a.q);
-  if(others.length){
-    html += `<div class="sec-title" onclick="toggleOthers()" style="cursor:pointer">Tutti gli altri · ${others.length} <span style="color:var(--dim-2);letter-spacing:0;text-transform:none">${showOthers?"▴ nascondi":"▾ mostra"}</span></div>`;
-    if(showOthers) html += others.map(otherRowHtml).join("");
-  }
   list.innerHTML = html;
 }
 function toggleShowTaken(){ showTaken = !showTaken; renderList(); }
@@ -2529,7 +2531,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 12:00";
+const BUILD = "19/08 · 12:30";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
