@@ -454,7 +454,18 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   font-size:27px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
   opacity:.12;transform-origin:50% 50%;
 }
-.wheel-item.sel{color:var(--accent);font-weight:700;}
+.wheel-item.sel{color:var(--accent);font-weight:700;transition:color .15s;}
+.wheel-item.sel.mid{color:var(--warn);}
+.wheel-item.sel.bad{color:var(--danger);}
+.wheel-band{transition:background .2s;}
+.wheel-band.mid{background:rgba(255,159,10,.14)!important;}
+.wheel-band.bad{background:rgba(255,95,87,.16)!important;}
+.rec-note{
+  font-size:11.5px;color:var(--dim);text-align:center;margin-top:9px;line-height:1.5;
+}
+.rec-note b{color:var(--accent);font-weight:700;}
+.rec-note.mid b{color:var(--warn);}
+.rec-note.bad b{color:var(--danger);}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
 .chip{
   padding:9px 14px;border-radius:999px;background:var(--g-1);border:.5px solid var(--stroke);
@@ -1388,6 +1399,65 @@ function tapPlayer(id){
 }
 
 /* --- foglio offerta --- */
+/* ================== CONVENIENZA IN ASTA ==================
+   Quanto vale davvero un giocatore ADESSO: dipende da quanti soldi girano
+   ancora al tavolo, da quanti giocatori forti restano nel ruolo e dal tuo
+   piano di spesa. Tutto ricalcolato a ogni acquisto. */
+
+function freePoolByRole(){
+  const stByKey = {};
+  PLAYERS.forEach(p=>{ if(p.status!=="free") stByKey[siteKey(p.name,p.team,p.role)] = p.status; });
+  const pool = {P:[],D:[],C:[],A:[]};
+  LISTONE.forEach(L=>{
+    if(stByKey[siteKey(L.n,L.t,L.r)]) return;
+    const v = fvmScaled(L.f) || L.q || 1;
+    if(pool[L.r]) pool[L.r].push({n:L.n, v, q:L.q});
+  });
+  ROLE_KEYS.forEach(r=>pool[r].sort((a,b)=>b.v-a.v));
+  return pool;
+}
+
+function marketState(){
+  const pool = freePoolByRole();
+  const ts = teams();
+  let money = Math.max(0, creditsLeft());
+  const open = {};
+  ROLE_KEYS.forEach(r=>open[r]=slotsLeft(r));
+  ts.forEach(t=>{
+    const st = squadStats(t.id);
+    money += Math.max(0, st.left);
+    ROLE_KEYS.forEach(r=>open[r]+=Math.max(0, CFG.slots[r]-st.cntRole[r]));
+  });
+  let value = 0;
+  ROLE_KEYS.forEach(r=>{
+    pool[r].slice(0, open[r]).forEach(x=>value += Math.max(1, x.v));
+    if(open[r] > pool[r].length) value += open[r]-pool[r].length;   // gli slot di riempimento valgono 1
+  });
+  const tracked = ts.length > 0;
+  const infl = tracked && value>0 ? Math.max(.6, Math.min(2.5, money/value)) : 1;
+  return {pool, money, open, infl, tracked, ts};
+}
+
+function fairRec(p){
+  const ms = marketState();
+  const q = qinfo(p);
+  const base = (q && fvmScaled(q.fvm)) || p.price || 1;
+  let fair = base * ms.infl;
+  // scarsita': quante alternative di livello simile restano libere nel ruolo
+  const myKey = qnorm((q && q.n) || p.name);
+  const alts = ms.pool[p.role].filter(x=>qnorm(x.n)!==myKey && x.v >= base*0.75);
+  if(alts.length<=1) fair *= 1.15;
+  else if(alts.length>=8) fair *= 0.9;
+  const plan = suggested(p);
+  const bonus = p.status==="mine" ? p.paid : 0;
+  let rec = Math.round(ms.tracked ? 0.6*fair + 0.4*plan : 0.5*fair + 0.5*plan);
+  rec = Math.max(1, Math.min(rec, Math.max(1, maxBid() + bonus)));
+  const rich = ms.ts.map(t=>({n:t.name, left:squadStats(t.id).left}))
+                    .sort((a,b)=>b.left-a.left).slice(0,2);
+  return {rec, fair:Math.round(fair), plan, infl:ms.infl, tracked:ms.tracked,
+          alts:alts.slice(0,3).map(a=>a.n), altCount:alts.length, rich};
+}
+
 function statsHtml(p){
   const q = qinfo(p);
   if(!q) return "";
@@ -1437,7 +1507,8 @@ function openBid(id, ev){
   const s = roleStats(p.role);
   const isEdit = p.status==="mine";
   const bonus = isEdit ? p.paid : 0;
-  const sug = suggested(p);
+  const R = fairRec(p);
+  const sug = R.rec;
   const top = Math.max(1, maxBid() + bonus);           // tetto silenzioso: oltre non potresti riempire la rosa
   const start = isEdit ? p.paid : Math.min(sug, top);
 
@@ -1456,6 +1527,9 @@ function openBid(id, ev){
       <div class="wheel">
         <div class="wheel-band"></div>
         <div class="wheel-scroll" id="wheelScroll"></div>
+      </div>
+      <div class="rec-note" id="recNote"><b>buon prezzo</b> fino a ~${R.rec}${R.tracked?` · mercato ${R.infl>=1?"+":""}${Math.round((R.infl-1)*100)}%`:""}<br>
+        ${R.altCount ? `alternative nel ruolo: ${R.alts.map(esc).join(", ")}${R.altCount>3?` +${R.altCount-3}`:""}` : `<b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}
       </div>
       <div class="chips" style="justify-content:center">
         <button type="button" class="chip gold" onclick="setBid(${sug})">consigliato ${sug}</button>
@@ -1476,15 +1550,15 @@ function openBid(id, ev){
     </div>
   `);
 
-  initWheel(top, start);
+  initWheel(top, start, R.rec);
 }
 
 /* ---- rotella tipo sveglia iOS ---- */
 const WHEEL_H = 40;
-let wheelVal = 0, wheelMax = 0, wheelWin = [0,-1], wheelRaf = 0;
+let wheelVal = 0, wheelMax = 0, wheelWin = [0,-1], wheelRaf = 0, wheelRec = null;
 
-function initWheel(max, val){
-  wheelMax = max; wheelWin = [0,-1];
+function initWheel(max, val, rec){
+  wheelMax = max; wheelWin = [0,-1]; wheelRec = rec || null;
   const sc = $("wheelScroll");
   let html = '<div class="wheel-pad"></div>';
   for(let i=0;i<=max;i++) html += `<div class="wheel-item">${i}</div>`;
@@ -1516,12 +1590,23 @@ function paintWheel(){
     if(el){ el.style.transform=""; el.style.opacity=""; el.classList.remove("sel"); }
   }
   const lo = Math.max(0, Math.floor(c)-4), hi = Math.min(wheelMax, Math.ceil(c)+4);
+  const lvl = wheelRec==null ? "" : (wheelVal<=wheelRec ? "" : (wheelVal<=Math.round(wheelRec*1.2)+1 ? "mid" : "bad"));
   for(let i=lo;i<=hi;i++){
     const el = kids[i+1]; if(!el) continue;
     const d = i - c, ad = Math.abs(d);
     el.style.transform = `rotateX(${Math.max(-72,Math.min(72,d*20))}deg) scale(${Math.max(.55, 1-.11*ad)})`;
     el.style.opacity = String(Math.max(.12, 1 - ad*.26));
-    el.classList.toggle("sel", ad < .5);
+    el.classList.remove("mid","bad");
+    const sel = ad < .5;
+    el.classList.toggle("sel", sel);
+    if(sel && lvl) el.classList.add(lvl);
+  }
+  const band = document.querySelector(".wheel-band");
+  if(band){ band.classList.remove("mid","bad"); if(lvl) band.classList.add(lvl); }
+  const rn = $("recNote");
+  if(rn && wheelRec!=null){
+    rn.classList.remove("mid","bad"); if(lvl) rn.classList.add(lvl);
+    rn.querySelector("b").textContent = wheelVal<=wheelRec ? "buon prezzo" : (lvl==="mid" ? "ci stai sopra" : "lo strapaghi");
   }
   wheelWin = [lo,hi];
 }
@@ -2544,7 +2629,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 14:00";
+const BUILD = "19/08 · 15:00";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
