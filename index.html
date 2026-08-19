@@ -1282,7 +1282,7 @@ function otherRowHtml(L){
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[L.r]}</span>
         <span>${esc(L.t)}</span>
-        <span class="hint" style="color:var(--dim-2)">FVM ${L.f||"–"}</span>
+        <span class="hint" style="color:var(--dim-2)">FVM ${fvmScaled(L.f)||"–"}</span>
       </span>
     </button>
     <div class="c-right">
@@ -1394,7 +1394,7 @@ function statsHtml(p){
   const isP = p.role === "P";
   let cells = `
     <div class="stat-cell"><div class="k">Quota</div><div class="v" style="color:var(--gold)">${q.qa||"–"}</div></div>
-    <div class="stat-cell"><div class="k">FVM</div><div class="v">${q.fvm||"–"}</div></div>`;
+    <div class="stat-cell"><div class="k">FVM su ${CFG.budget}</div><div class="v">${fvmScaled(q.fvm)||"–"}</div></div>`;
   if(st){
     cells += `
     <div class="stat-cell"><div class="k">Presenze</div><div class="v">${st.pg}</div></div>
@@ -1636,7 +1636,7 @@ function renderBrowseList(){
         <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
         <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}${has?" · già in lista":""}</div>
       </div>
-      <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
+      <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${fvmScaled(p.f)||"–"}</div></div>
       <button class="li-add" ${has?"disabled":""} onclick="addFromListone(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" aria-label="Aggiungi ${esc(p.n)}">${has?"✓":"＋"}</button>
     </div>`;
   }).join("") + (items.length>300?`<div class="ghost-row">…e altri ${items.length-300}. Usa la ricerca per restringere.</div>`:"");
@@ -2289,6 +2289,11 @@ function qinfo(p){
   }
   return c[0] || null;
 }
+function fvmScaled(v){
+  v = +v || 0;
+  if(!v) return null;
+  return Math.max(1, Math.round(v * CFG.budget / 1000));
+}
 function qbadges(q){
   if(!q) return "";
   let h = "";
@@ -2538,7 +2543,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 13:10";
+const BUILD = "19/08 · 13:30";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
