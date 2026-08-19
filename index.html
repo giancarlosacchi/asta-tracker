@@ -319,6 +319,17 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   background:color-mix(in srgb, currentColor 16%, transparent);
 }
 .pill.role{color:var(--rc);}
+.bdg{
+  display:inline-block;font-size:8.5px;font-weight:800;line-height:1;
+  padding:2.5px 4.5px;border-radius:5px;margin-left:5px;vertical-align:2px;letter-spacing:.03em;
+}
+.bdg.r{background:rgba(255,159,10,.16);color:var(--warn);border:.5px solid rgba(255,159,10,.35);}
+.bdg.cp{background:rgba(100,210,255,.13);color:var(--r-D);border:.5px solid rgba(100,210,255,.3);}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;}
+.stat-cell{background:var(--g-1);border:.5px solid var(--stroke);border-radius:11px;padding:7px 4px;text-align:center;box-shadow:var(--inner-hi);}
+.stat-cell .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim-2);}
+.stat-cell .v{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;}
+.stat-note{font-size:10px;color:var(--dim-2);margin-top:7px;text-align:center;}
 .pill.new{color:var(--accent);}
 .pill.mine{color:var(--accent);}
 .hint{font-size:11.5px;color:var(--dim);}
@@ -933,7 +944,7 @@ const RAW_PLAYERS = [
   {n:"Castro",r:"A",t:"Roma",p:38},{n:"Dovbyk",r:"A",t:"Bologna",p:34},{n:"Kuhn",r:"A",t:"Como",p:24},{n:"Esposito Pio",r:"A",t:"Inter",p:24},
   {n:"Alison Santos",r:"A",t:"Napoli",p:22},{n:"Esposito Se.",r:"A",t:"Cagliari",p:20},{n:"Dia",r:"A",t:"Lazio",p:16},{n:"Bowie",r:"A",t:"Sassuolo",p:16},
   {n:"Ghedjemis",r:"A",t:"Frosinone",p:15},{n:"Raimondo",r:"A",t:"Frosinone",p:12},{n:"Noslin",r:"A",t:"Lazio",p:10},{n:"Adams",r:"A",t:"Venezia",p:9},
-  {n:"Bilal Touré",r:"A",t:"Parma",p:8},{n:"Yeboha",r:"A",t:"Venezia",p:7},{n:"Mendy",r:"A",t:"Cagliari",p:7},{n:"Elphege",r:"A",t:"Parma",p:6},
+  {n:"Bilal Touré",r:"A",t:"Parma",p:8},{n:"Yeboah",r:"A",t:"Venezia",p:7},{n:"Mendy",r:"A",t:"Cagliari",p:7},{n:"Elphege",r:"A",t:"Parma",p:6},
   {n:"Adorante",r:"A",t:"Venezia",p:6},{n:"Geubbels",r:"A",t:"Lecce",p:4},{n:"Azon",r:"A",t:"?",p:4},
   {n:"Pellegrino",r:"A",t:"Fiorentina",p:8},{n:"Piccoli",r:"A",t:"Bologna",p:15},
 ];
@@ -1207,7 +1218,7 @@ function cardHtml(p, stats){
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
     <button class="c-body" onclick="tapPlayer(${p.id})">
-      <span class="p-name">${esc(p.name)}</span>
+      <span class="p-name">${esc(p.name)}${qbadges(qinfo(p))}</span>
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[p.role]}</span>
         <span>${esc(p.team)}</span>
@@ -1250,7 +1261,7 @@ function renderList(){
       html += `<div class="sec-title">Dal listone · ${extra.length}</div>`;
       html += extra.map(p=>`<div class="li" style="--rc:var(--r-${p.r})">
         <div class="li-main">
-          <div class="li-n">${esc(p.n)}</div>
+          <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
           <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}</div>
         </div>
         <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
@@ -1323,6 +1334,32 @@ function tapPlayer(id){
 }
 
 /* --- foglio offerta --- */
+function statsHtml(p){
+  const q = qinfo(p);
+  if(!q) return "";
+  const st = q.st;
+  const isP = p.role === "P";
+  let cells = `
+    <div class="stat-cell"><div class="k">Quota</div><div class="v" style="color:var(--gold)">${q.qa||"–"}</div></div>
+    <div class="stat-cell"><div class="k">FVM</div><div class="v">${q.fvm||"–"}</div></div>`;
+  if(st){
+    cells += `
+    <div class="stat-cell"><div class="k">Presenze</div><div class="v">${st.pg}</div></div>
+    <div class="stat-cell"><div class="k">Fantamedia</div><div class="v" style="color:var(--accent)">${st.fm}</div></div>
+    <div class="stat-cell"><div class="k">Media voto</div><div class="v">${st.mv}</div></div>
+    ${isP
+      ? `<div class="stat-cell"><div class="k">Gol subiti</div><div class="v">${st.gs}</div></div>
+         <div class="stat-cell"><div class="k">Rig. parati</div><div class="v">${st.rp}</div></div>`
+      : `<div class="stat-cell"><div class="k">Gol</div><div class="v">${st.gol}</div></div>
+         <div class="stat-cell"><div class="k">Assist</div><div class="v">${st.ass}</div></div>`}
+    <div class="stat-cell"><div class="k">Amm / Esp</div><div class="v">${st.amm} / ${st.esp}</div></div>`;
+    if(!isP && st.rr && st.rr !== "0 / 0") cells += `<div class="stat-cell"><div class="k">Rigori</div><div class="v">${st.rr}</div></div>`;
+  }
+  const flags = (q.rig?" · rigorista":"") + (q.cp?" · calci piazzati":"");
+  return `<div class="stat-grid">${cells}</div>
+    <div class="stat-note">Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · fantacalcio.it${flags}</div>`;
+}
+
 function openBid(id, ev){
   if(ev) ev.stopPropagation();
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
@@ -1342,6 +1379,7 @@ function openBid(id, ev){
       <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
       <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.mine.length}/${s.totalSlots}</div></div>
     </div>
+    ${statsHtml(p)}
 
     <div class="field" style="margin-top:14px;">
       <label>Crediti pagati</label>
@@ -1518,7 +1556,7 @@ function renderBrowseList(){
   else if(browseSort==="f") items = items.slice().sort((a,b)=>(b.f||0)-(a.f||0));
   else items = items.slice().sort((a,b)=> a.t.localeCompare(b.t) || b.q-a.q);
 
-  $("browseSub").textContent = `${items.length} giocatori${q?" trovati":" · "+ROLES[browseRole].toLowerCase()}`;
+  $("browseSub").textContent = `${items.length} giocatori${q?" trovati":" · "+ROLES[browseRole].toLowerCase()}${QDATA?` · quote del ${fmtTime(Date.parse(QDATA.updated)).split(",")[0]}`:""}`;
   const el = $("browseList");
   if(!items.length){ el.innerHTML = `<div class="empty"><span class="big">🔍</span>Nessun risultato.</div>`; return; }
 
@@ -1526,7 +1564,7 @@ function renderBrowseList(){
     const has = known.has(p.n.toLowerCase());
     return `<div class="li ${has?"added":""}" style="--rc:var(--r-${p.r})">
       <div class="li-main">
-        <div class="li-n">${esc(p.n)}</div>
+        <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
         <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}${has?" · già in lista":""}</div>
       </div>
       <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
@@ -1666,6 +1704,7 @@ function openMenu(){
     <h3>Menu</h3>
     <div class="sub">Tutto quello che non serve durante l'asta.</div>
     <div class="menu-list">
+      <button onclick="closeSheet();refreshQuotes(true)"><i>⟳</i><div>Aggiorna quote<small>${QDATA?`ultimo aggiornamento ${fmtTime(Date.parse(QDATA.updated))}`:"quote e statistiche da fantacalcio.it"}</small></div></button>
       <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">copie automatiche e recupero</small></div></button>
       <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
       <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
@@ -2131,6 +2170,99 @@ $("search").addEventListener("input", renderList);
 $("browseSearch").addEventListener("input", renderBrowseList);
 
 
+/* ================== QUOTE LIVE (fantacalcio.it) ================== */
+const QKEY = "asta-quotes-v1";
+let QDATA = null, QIDX = null;
+function qnorm(x){ return String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,""); }
+function qteam3(t){ return String(t).slice(0,3).toUpperCase(); }
+let QTOK = null;
+function buildQIdx(){
+  QIDX = {}; QTOK = [];
+  if(!QDATA || !Array.isArray(QDATA.players)) return;
+  QDATA.players.forEach(q=>{
+    const k = qnorm(q.n);
+    (QIDX[k] = QIDX[k]||[]).push(q);
+    QTOK.push({q, toks: String(q.n).split(/[\s.]+/).map(qnorm).filter(Boolean)});
+  });
+}
+function qinfo(p){
+  if(!QIDX) return null;
+  const nn = qnorm(p.name); if(!nn) return null;
+  let c = (QIDX[nn]||[]).slice();
+  if(!c.length){
+    for(const k in QIDX){
+      if(k.length>3 && (k.startsWith(nn)||nn.startsWith(k))) c.push(...QIDX[k]);
+    }
+  }
+  c = c.filter(q=>q.r===p.role);
+  if(!c.length && QTOK){
+    // nomi in ordine diverso o abbreviati: "Jesus Rodriguez" vs "Rodriguez J."
+    const mine = String(p.name).split(/[\s.]+/).map(qnorm).filter(Boolean);
+    if(mine.length){
+      c = QTOK.filter(e=>{
+        if(e.q.r !== p.role) return false;
+        const long = e.toks.filter(t=>t.length>2);
+        const inits = e.toks.filter(t=>t.length<=2);
+        if(!long.length || !long.every(t=>mine.includes(t))) return false;   // i cognomi devono esserci tutti
+        const leftover = mine.filter(m=>!long.includes(m));
+        if(inits.length && leftover.length){
+          // se restano pezzi di nome, almeno un'iniziale deve combaciare ("F.P." con "Pio")
+          return inits.some(t=>leftover.some(m=>m.startsWith(t)));
+        }
+        return true;
+      }).map(e=>e.q);
+    }
+  }
+  if(c.length>1){
+    const t = qteam3(p.team);
+    const f = c.filter(q=>q.t===t);
+    if(f.length) c = f;
+  }
+  return c[0] || null;
+}
+function qbadges(q){
+  if(!q) return "";
+  let h = "";
+  if(q.rig) h += '<span class="bdg r" title="Rigorista">R</span>';
+  if(q.cp)  h += '<span class="bdg cp" title="Calci piazzati">CP</span>';
+  return h;
+}
+function applyQuotesToListone(){
+  if(!QDATA) return 0;
+  let upd = 0;
+  LISTONE.forEach(L=>{
+    const q = qinfo({name:L.n, team:L.t, role:L.r});
+    if(!q) return;
+    if(q.qa && L.q !== q.qa){ L.q = q.qa; upd++; }
+    if(q.fvm) L.f = q.fvm;
+  });
+  return upd;
+}
+async function refreshQuotes(manual){
+  if(location.protocol === "file:"){ if(manual) toast("Apri l'app dal link per aggiornare le quote","bad"); return; }
+  if(manual) toast("Controllo le quote…");
+  try{
+    const r = await fetch("quotes.json?_=" + nowMs());
+    if(!r.ok) throw new Error("http " + r.status);
+    const d = await r.json();
+    if(!d || !Array.isArray(d.players) || d.players.length < 100) throw new Error("dati incompleti");
+    QDATA = d; buildQIdx();
+    try{ localStorage.setItem(QKEY, JSON.stringify(d)); }catch(e){}
+    const upd = applyQuotesToListone();
+    renderAll();
+    if(!$("browseOverlay").classList.contains("hidden")) renderBrowseList();
+    if(manual) toast(`Quote del ${fmtTime(Date.parse(d.updated))} · ${d.players.length} giocatori · ${upd} quotazioni riviste`, "good");
+  }catch(e){
+    if(manual) toast("Aggiornamento non riuscito (serve la connessione)", "bad");
+  }
+}
+function loadQuotesCache(){
+  try{
+    const raw = localStorage.getItem(QKEY);
+    if(raw){ QDATA = JSON.parse(raw); buildQIdx(); applyQuotesToListone(); }
+  }catch(e){}
+}
+
 /* ================== AVVERSARI ================== */
 const TEAM_COLORS = ["#64d2ff","#ff9f0a","#ff6b6b","#bf7bff","#30d158","#ffd160","#5ac8fa","#ff7ab8","#a0e060","#c2a3ff"];
 function teams(){ if(!Array.isArray(CFG.teams)) CFG.teams = []; return CFG.teams; }
@@ -2337,7 +2469,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 09:05";
+const BUILD = "19/08 · 10:40";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
@@ -2441,6 +2573,8 @@ if(window.visualViewport){
 
 async function init(){
   await load();
+  loadQuotesCache();
+  setTimeout(()=>refreshQuotes(false), 800);
   setDetails(detailsOpen);
   $("sortBtn").textContent = SORTS[sortMode];
   const firstOpen = ROLE_KEYS.find(r=>PLAYERS.some(p=>p.role===r && p.status==="free"));

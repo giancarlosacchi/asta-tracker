@@ -7,8 +7,9 @@ def get(url):
     req = urllib.request.Request(url, headers=UA)
     return urllib.request.urlopen(req, timeout=90).read().decode('utf-8', 'replace')
 
+import html as _html
 def clean(s):
-    return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', s)).strip()
+    return _html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', s)).strip())
 
 def parse_rows(html):
     out = []
