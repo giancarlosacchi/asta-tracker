@@ -57,14 +57,14 @@
   --grass-a:rgba(255,255,255,.04);
   --grass-b:rgba(0,0,0,.14);
   --sw-line:rgba(255,255,255,.26);
-  --chrome-a:rgba(7,22,15,.82);
-  --chrome-b:rgba(7,22,15,.62);
-  --chrome-nav:rgba(11,30,20,.86);
+  --chrome-a:rgba(9,26,17,.97);
+  --chrome-b:rgba(9,26,17,.9);
+  --chrome-nav:rgba(13,34,23,.96);
   --chrome-sheet:rgba(16,40,28,.72);
   --chrome-toast:rgba(16,40,28,.85);
-  --chrome-full-a:rgba(14,44,31,.86);
-  --chrome-full-b:rgba(7,22,15,.9);
-  --chrome-fullhdr:rgba(7,22,15,.5);
+  --chrome-full-a:rgba(13,40,28,.985);
+  --chrome-full-b:rgba(6,20,13,.99);
+  --chrome-fullhdr:rgba(9,26,17,.92);
   --scrim:rgba(0,0,0,.45);
   --tint-gold:rgba(255,209,96,.055);   --tint-gold-b:rgba(255,209,96,.22);
   --tint-mine:rgba(48,209,88,.11);     --tint-mine-b:rgba(48,209,88,.32);
@@ -184,8 +184,6 @@ header{
   position:sticky;top:0;z-index:30;
   padding:calc(8px + env(safe-area-inset-top,0px)) 14px 0;
   background:linear-gradient(180deg, var(--chrome-a), var(--chrome-b));
-  backdrop-filter:blur(28px) saturate(180%);
-  -webkit-backdrop-filter:blur(28px) saturate(180%);
   border-bottom:.5px solid var(--stroke);
 }
 .hdr-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:36px;}
@@ -199,7 +197,7 @@ header{
 .icon-btn{
   width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
   background:var(--g-1);border:.5px solid var(--stroke);color:var(--dim);font-size:16px;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--inner-hi);
+  box-shadow:var(--inner-hi);
 }
 .icon-btn:active{background:var(--g-3);}
 .icon-btn svg{width:17px;height:17px;}
@@ -213,7 +211,6 @@ html[data-theme="light"] #themeBtn .ic-moon{display:none;}
   margin-top:6px;padding:12px 6px 11px;
   background:var(--g-1);border:.5px solid var(--stroke);border-radius:var(--radius);
   box-shadow:var(--inner-hi);
-  backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
 }
 .money-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;position:relative;}
 .money-cell+.money-cell::before{content:"";position:absolute;left:0;top:12%;bottom:12%;width:.5px;background:var(--stroke);}
@@ -273,7 +270,6 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   flex:1;min-width:0;padding:12px 14px;border-radius:15px;font-size:16px;
   border:.5px solid var(--stroke);background:var(--g-1);color:var(--text);
   box-shadow:var(--inner-hi);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
 .search::placeholder{color:var(--dim-2);}
 .search:focus{border-color:rgba(48,209,88,.5);background:var(--g-2);}
@@ -363,7 +359,6 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);
   max-width:520px;margin:0 auto;
   background:var(--chrome-nav);
-  backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
   border:.5px solid var(--stroke-2);border-radius:24px;
   box-shadow:0 14px 40px -14px rgba(0,0,0,.75), var(--inner-hi);
   overflow:hidden;
@@ -493,7 +488,6 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   position:fixed;inset:0;height:100svh;z-index:70;display:flex;flex-direction:column;
   overscroll-behavior:contain;
   background:linear-gradient(175deg, var(--chrome-full-a), var(--chrome-full-b));
-  backdrop-filter:blur(34px) saturate(170%);-webkit-backdrop-filter:blur(34px) saturate(170%);
   animation:fullIn .3s cubic-bezier(.22,1,.32,1);
 }
 @keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
@@ -506,7 +500,6 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;
   border-bottom:.5px solid var(--stroke);
   background:var(--chrome-fullhdr);
-  backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);
 }
 .full-hdr .fh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .full-hdr h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.035em;}
@@ -606,14 +599,14 @@ html[data-theme="light"]{
   --grass-b:rgba(255,255,255,.5);
   --sw-line:rgba(12,60,32,.32);
 
-  --chrome-a:rgba(246,251,246,.86);
-  --chrome-b:rgba(246,251,246,.62);
-  --chrome-nav:rgba(252,254,252,.84);
+  --chrome-a:rgba(244,250,244,.97);
+  --chrome-b:rgba(244,250,244,.9);
+  --chrome-nav:rgba(252,254,252,.96);
   --chrome-sheet:rgba(250,253,250,.82);
   --chrome-toast:rgba(250,253,250,.92);
-  --chrome-full-a:rgba(240,248,241,.9);
-  --chrome-full-b:rgba(233,244,235,.92);
-  --chrome-fullhdr:rgba(250,253,250,.6);
+  --chrome-full-a:rgba(240,248,241,.985);
+  --chrome-full-b:rgba(233,244,235,.99);
+  --chrome-fullhdr:rgba(250,253,250,.94);
   --scrim:rgba(16,44,28,.3);
 
   --tint-gold:rgba(200,140,0,.07);  --tint-gold-b:rgba(200,140,0,.3);
@@ -685,6 +678,38 @@ html.theme-transitioning .sheet{
 }
 #themeBtn svg{transition:transform .5s cubic-bezier(.34,1.4,.5,1), opacity .3s;}
 #themeBtn:active svg{transform:rotate(35deg) scale(.9);}
+
+
+/* ============ GRAFICA LEGGERA (per telefoni che arrancano) ============ */
+html[data-lite="1"] *{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  animation:none!important;
+}
+html[data-lite="1"] .overlay{background:rgba(0,0,0,.66)!important;}
+html[data-lite="1"] .sheet{background:var(--bg-1)!important;}
+html[data-lite="1"] .toast{background:var(--bg-2)!important;}
+html[data-lite="1"] .card,
+html[data-lite="1"] .li,
+html[data-lite="1"] .rb,
+html[data-lite="1"] .money,
+html[data-lite="1"] .ros-stat,
+html[data-lite="1"] .bid-info>div,
+html[data-lite="1"] .search,
+html[data-lite="1"] .sort-btn,
+html[data-lite="1"] .act,
+html[data-lite="1"] .chip,
+html[data-lite="1"] .menu-list button,
+html[data-lite="1"] .bottom-nav,
+html[data-lite="1"] .wheel,
+html[data-lite="1"] .icon-btn{box-shadow:none!important;}
+html[data-lite="1"] .tab.active,
+html[data-lite="1"] .seg button.active{box-shadow:none!important;}
+html[data-lite="1"] .wheel-scroll{perspective:none!important;}
+html[data-lite="1"] .wheel-item{transform:none!important;}
+html[data-lite="1"] .pitch-bg{background:linear-gradient(180deg,var(--bg-1),var(--bg-0))!important;}
+html[data-lite="1"] .pitch-bg svg{display:none!important;}
+html[data-lite="1"] .pitch-bg::before,
+html[data-lite="1"] .pitch-bg::after{display:none!important;}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;}
@@ -1601,6 +1626,7 @@ function openSafety(){
       <div><div class="k">Database browser</div><div class="v" style="font-size:15px;color:${idbOK?'var(--accent)':'var(--dim-2)'}">${idbOK?'attivo':'—'}</div></div>
     </div>
     <div class="note" style="margin-top:10px">
+      Versione app: <b>${BUILD}</b>${lite?' · grafica leggera':''}<br>
       Ultimo salvataggio: <b>${lastSaveTs?fmtTime(lastSaveTs):'—'}</b><br>
       In rosa ora: <b>${mine.length} ${mine.length===1?"giocatore":"giocatori"} · ${sum(mine.map(x=>x.paid))} crediti</b>${loadedFrom?`<br>Dati caricati da: ${esc(loadedFrom)}`:''}
     </div>
@@ -1724,7 +1750,11 @@ function openSettings(){
 
     <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:2px 0 9px">Sfondo</div>
     ${bgPickerHtml()}
-    <div class="note" style="font-size:11px;margin-bottom:16px">Ogni sfondo ha la sua versione giorno e notte: cambia da solo quando premi sole/luna.</div>
+    <div class="note" style="font-size:11px;margin-bottom:14px">Ogni sfondo ha la sua versione giorno e notte: cambia da solo quando premi sole/luna.</div>
+
+    <div class="menu-list" style="margin-bottom:16px">
+      <button onclick="toggleLite()"><i>⚡</i><div>Grafica leggera<small>toglie sfocature e ombre: usala se l'app rallenta o sbianca</small></div><span class="switch ${lite?"on":""}" id="liteSwitch">${lite?"ON":"OFF"}</span></button>
+    </div>
 
     <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Regole della lega</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
@@ -2010,6 +2040,19 @@ function renderRoster0(){ if(!$("rosterOverlay").classList.contains("hidden")) r
 
 $("search").addEventListener("input", renderList);
 $("browseSearch").addEventListener("input", renderBrowseList);
+
+/* ================== VERSIONE E GRAFICA LEGGERA ================== */
+const BUILD = "18/08 · 16:45";
+const LITE_KEY = "asta-lite";
+let lite = false;
+function applyLite(v, save){
+  lite = !!v;
+  document.documentElement.setAttribute("data-lite", lite ? "1" : "0");
+  if(save){ try{ localStorage.setItem(LITE_KEY, lite?"1":"0"); }catch(e){} }
+  const el = $("liteSwitch"); if(el){ el.textContent = lite?"ON":"OFF"; el.classList.toggle("on", lite); }
+}
+function toggleLite(){ applyLite(!lite, true); buzz(6); toast(lite?"Grafica leggera attiva":"Grafica completa"); }
+(function(){ let v=null; try{ v = localStorage.getItem(LITE_KEY); }catch(e){} applyLite(v==="1", false); })();
 
 /* ================== SFONDI ================== */
 const BGS = [
