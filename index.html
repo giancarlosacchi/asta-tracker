@@ -62,9 +62,9 @@
   --chrome-nav:rgba(13,34,23,.96);
   --chrome-sheet:rgba(16,40,28,.72);
   --chrome-toast:rgba(16,40,28,.85);
-  --chrome-full-a:rgba(13,40,28,.985);
-  --chrome-full-b:rgba(6,20,13,.99);
-  --chrome-fullhdr:rgba(9,26,17,.92);
+  --chrome-full-a:#0d281c;
+  --chrome-full-b:#061a11;
+  --chrome-fullhdr:#0b2015;
   --scrim:rgba(0,0,0,.45);
   --tint-gold:rgba(255,209,96,.055);   --tint-gold-b:rgba(255,209,96,.22);
   --tint-mine:rgba(48,209,88,.11);     --tint-mine-b:rgba(48,209,88,.32);
@@ -356,7 +356,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 /* ============ TAB BAR FLOTTANTE ============ */
 .bottom-nav{
   position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:40;
-  display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);
+  display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h);
   max-width:520px;margin:0 auto;
   background:var(--chrome-nav);
   border:.5px solid var(--stroke-2);border-radius:24px;
@@ -365,15 +365,15 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 }
 .bottom-nav button{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  color:var(--dim-2);font-size:10px;font-weight:500;
+  color:var(--dim-2);font-size:9px;font-weight:500;padding:0 2px;text-align:center;line-height:1.1;
 }
 .bottom-nav button i{font-style:normal;font-size:18px;line-height:1;}
-.bottom-nav button svg{width:22px;height:22px;}
+.bottom-nav button svg{width:21px;height:21px;}
 .bottom-nav button:disabled{opacity:.3;}
 .bottom-nav button.accent{color:var(--accent);}
 .bottom-nav button:active{background:var(--g-1);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  #browseOverlay, #rosterOverlay{background:linear-gradient(175deg,#0e2c1f,#07160f);}
+  #browseOverlay, #rosterOverlay, #rivalsOverlay{background:linear-gradient(175deg,#0e2c1f,#07160f);}
   .bottom-nav{background:rgba(8,24,16,.97);}
   header{background:rgba(7,22,15,.97);}
   .sheet{background:rgba(14,36,25,.98);}
@@ -387,7 +387,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   display:flex;align-items:flex-end;justify-content:center;
   overscroll-behavior:contain;padding:0 8px calc(var(--kb,0px) + 8px);transition:padding-bottom .2s;
 }
-.overlay.hidden,#browseOverlay.hidden, #rosterOverlay.hidden{display:none;}
+.overlay.hidden,#browseOverlay.hidden, #rosterOverlay.hidden, #rivalsOverlay.hidden{display:none;}
 .sheet{
   width:100%;max-width:520px;max-height:var(--sheet-max,88svh);overflow-y:auto;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
@@ -484,18 +484,18 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .switch.on{color:var(--accent);}
 
 /* ============ SCHERMATE FULL ============ */
-#browseOverlay, #rosterOverlay{
+#browseOverlay, #rosterOverlay, #rivalsOverlay{
   position:fixed;inset:0;height:100svh;z-index:70;display:flex;flex-direction:column;
   overscroll-behavior:contain;
   background:linear-gradient(175deg, var(--chrome-full-a), var(--chrome-full-b));
   animation:fullIn .3s cubic-bezier(.22,1,.32,1);
 }
 @keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
-#browseOverlay::before, #rosterOverlay::before{
+#browseOverlay::before, #rosterOverlay::before, #rivalsOverlay::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(120% 55% at 50% 0%, rgba(48,209,88,.07), transparent 60%);
 }
-#browseOverlay>*, #rosterOverlay>*{position:relative;z-index:1;}
+#browseOverlay>*, #rosterOverlay>*, #rivalsOverlay>*{position:relative;z-index:1;}
 .full-hdr{
   padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;
   border-bottom:.5px solid var(--stroke);
@@ -545,6 +545,33 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .ros-note{font-size:11.5px;color:var(--dim-2);margin:0 0 9px;}
 .slots-free{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px;}
 .slots-free span{flex:1;min-width:46px;text-align:center;padding:8px 4px;border-radius:12px;border:.5px dashed var(--stroke);color:var(--dim-2);font-size:10px;}
+
+.rv{
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:18px;
+  padding:13px 14px;margin-bottom:9px;box-shadow:var(--inner-hi);
+}
+.rv.me{border-color:rgba(48,209,88,.4);background:rgba(48,209,88,.07);}
+.rv-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.rv-name{font-size:15.5px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;}
+.rv-name .dot{width:9px;height:9px;border-radius:50%;background:var(--tc);flex-shrink:0;}
+.rv-left{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.03em;}
+.rv-left small{font-size:10px;font-weight:500;color:var(--dim-2);display:block;text-align:right;}
+.rv-sub{font-size:11.5px;color:var(--dim);margin-top:3px;}
+.rv-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--track);margin-top:10px;}
+.rv-bar i{display:block;height:100%;}
+.rv-legend{display:flex;justify-content:space-between;margin-top:7px;gap:4px;}
+.rv-legend span{font-size:10.5px;color:var(--dim-2);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;}
+.rv-legend span::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--rc);}
+.rv-list{margin-top:10px;border-top:.5px solid var(--stroke);padding-top:8px;}
+.rv-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:4px 0;}
+.rv-row .n{display:flex;align-items:center;gap:7px;min-width:0;}
+.rv-row .n::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--rc);flex-shrink:0;}
+.rv-row .p{font-weight:700;font-variant-numeric:tabular-nums;color:var(--gold);}
+.rv-toggle{width:100%;text-align:center;font-size:11px;color:var(--dim-2);padding:8px 0 0;}
+.team-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.team-row input{flex:1;padding:11px 12px;border-radius:12px;border:.5px solid var(--stroke);background:var(--input-bg);color:var(--text);font-size:15px;}
+.team-row .del{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:var(--g-1);border:.5px solid var(--stroke);color:var(--danger);font-size:15px;}
+.chip.sel{background:var(--accent);color:var(--on-accent);border-color:transparent;}
 
 .toast{
   position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + var(--nav-gap) + 16px);transform:translate(-50%,16px);
@@ -604,9 +631,9 @@ html[data-theme="light"]{
   --chrome-nav:rgba(252,254,252,.96);
   --chrome-sheet:rgba(250,253,250,.82);
   --chrome-toast:rgba(250,253,250,.92);
-  --chrome-full-a:rgba(240,248,241,.985);
-  --chrome-full-b:rgba(233,244,235,.99);
-  --chrome-fullhdr:rgba(250,253,250,.94);
+  --chrome-full-a:#f0f8f1;
+  --chrome-full-b:#e9f4eb;
+  --chrome-fullhdr:#f7fbf7;
   --scrim:rgba(16,44,28,.3);
 
   --tint-gold:rgba(200,140,0,.07);  --tint-gold-b:rgba(200,140,0,.3);
@@ -624,7 +651,7 @@ html[data-theme="light"] .toast{box-shadow:0 12px 34px -14px rgba(12,40,25,.5), 
 html[data-theme="light"] #rosterOverlay .full-hdr h3{color:#0d7ea8;}
 html[data-theme="light"] .card.taken{opacity:.5;}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  html[data-theme="light"] #browseOverlay, html[data-theme="light"] #rosterOverlay{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
+  html[data-theme="light"] #browseOverlay, html[data-theme="light"] #rosterOverlay, html[data-theme="light"] #rivalsOverlay{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
   html[data-theme="light"] .bottom-nav,
   html[data-theme="light"] header,
   html[data-theme="light"] .full-hdr{background:rgba(250,253,250,.97);}
@@ -802,10 +829,31 @@ html[data-lite="1"] .pitch-bg::after{display:none!important;}
   <button onclick="openRoster()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M9 4 4.5 6.2 6 10l1.6-.6V20h8.8V9.4L18 10l1.5-3.8L15 4a3 3 0 0 1-6 0Z"/></svg>
     <span>La mia rosa</span></button>
+  <button onclick="openRivals()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 19a5.5 5.5 0 0 0-3-4.6"/></svg>
+    <span>Avversari</span></button>
   <button onclick="openSummary()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>
     <span>Riepilogo</span></button>
 </nav>
+
+<div class="full hidden" id="rivalsOverlay">
+  <div class="full-hdr">
+    <div class="fh-top">
+      <div>
+        <h3>Avversari</h3>
+        <div class="fh-sub" id="rivalsSub">—</div>
+      </div>
+      <button class="full-close" onclick="closeRivals()" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="seg" id="rivalsSort">
+      <button data-s="credit" onclick="setRivalSort('credit')">Crediti</button>
+      <button data-s="spent" onclick="setRivalSort('spent')">Spesa</button>
+      <button data-s="name" onclick="setRivalSort('name')">Nome</button>
+    </div>
+  </div>
+  <div class="full-body" id="rivalsBody"></div>
+</div>
 
 <div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
 
@@ -896,7 +944,7 @@ const ROLE_SHORT = {P:"POR", D:"DIF", C:"CEN", A:"ATT"};
 const ROLE_KEYS = ["P","D","C","A"];
 
 const DEFAULT_CFG = {
-  budget:500, reserve:50,
+  budget:500, reserve:50, teams:[],
   slots:{P:3,D:8,C:8,A:6},
   roleBudget:{P:25,D:85,C:190,A:150}
 };
@@ -904,7 +952,7 @@ let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
 
 const PLAYERS = RAW_PLAYERS.map((x,i)=>({
   id:i, name:x.n, role:x.r, team:x.t||"?", price:x.p,
-  fixed:!!x.f, fav:false, status:"free", paid:x.p, added:false
+  fixed:!!x.f, fav:false, status:"free", paid:x.p, added:false, by:null
 }));
 const BASE_PLAYERS = PLAYERS.map(p=>({...p}));
 
@@ -1004,7 +1052,7 @@ function suggested(p){
 let HISTORY = [];
 function snapshot(){
   return {
-    statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
+    statuses: PLAYERS.map(p=>({id:p.id,status:p.status,paid:p.paid,price:p.price,by:p.by||null,fav:!!p.fav,fixed:!!p.fixed})),
     extra: PLAYERS.filter(p=>p.added).map(p=>({...p})),
     deletedIds:[...deletedIds], deletedNames:[...deletedNames], nextId, currentRole
   };
@@ -1144,21 +1192,28 @@ function cardHtml(p, stats){
       sugLine = `<div class="sug">cons. ${sg}</div>`;
     }
   }
+  let takenInfo = "";
+  if(p.status==="taken"){
+    const t = teamById(p.by);
+    takenInfo = `<span class="hint">${t?`<b style="color:${teamColor(p.by)}">${esc(t.name)}</b>`:"preso da altri"}${p.paid?` · ${p.paid}`:""}</span>`;
+  }
   const priceBlock = p.status==="mine"
     ? `<div class="pricebox"><div class="price paid num">${p.paid}<small>pagato</small></div></div>`
-    : `<div class="pricebox"><div class="price num">${p.price}<small>tetto</small></div>${sugLine}</div>`;
+    : p.status==="taken"
+      ? `<div class="pricebox"><div class="price num" style="color:var(--dim)">${p.paid||"–"}<small>pagato</small></div></div>`
+      : `<div class="pricebox"><div class="price num">${p.price}<small>tetto</small></div>${sugLine}</div>`;
 
   return `<article class="card ${cls}" style="--rc:var(--r-${p.role})">
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
-    <button class="c-body" onclick="openBid(${p.id})">
+    <button class="c-body" onclick="tapPlayer(${p.id})">
       <span class="p-name">${esc(p.name)}</span>
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[p.role]}</span>
         <span>${esc(p.team)}</span>
         ${p.added?'<span class="pill new">nuovo</span>':""}
         ${p.status==="mine"?'<span class="pill mine">tuo</span>':""}
-        ${hint}
+        ${hint}${takenInfo}
       </span>
     </button>
     <div class="c-right">
@@ -1251,10 +1306,20 @@ function toggleFav(id, ev){
 function markTaken(id, ev){
   if(ev) ev.stopPropagation();
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  if(p.status==="taken"){
+    pushHistory();
+    p.status="free"; p.by=null; p.paid=p.price;
+    buzz(10); renderAll(); save(); toast(`${p.name} rimesso in lista`);
+    return;
+  }
+  if(teams().length){ openAssign(id); return; }   // con gli avversari impostati chiedo chi e quanto
   pushHistory();
-  if(p.status==="taken"){ p.status="free"; toast(`${p.name} rimesso in lista`); }
-  else { p.status="taken"; p.paid=p.price; toast(`${p.name} → preso da altri`); }
-  buzz(10); renderAll(); save();
+  p.status="taken"; p.paid=p.price;
+  buzz(10); renderAll(); save(); toast(`${p.name} → preso da altri`);
+}
+function tapPlayer(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  if(p.status==="taken" && teams().length) openAssign(id); else openBid(id);
 }
 
 /* --- foglio offerta --- */
@@ -1545,6 +1610,17 @@ function buildSummary(){
   L.push(`TOTALE: ${totalSpent()}/${CFG.budget} · residuo ${creditsLeft()} · ${mine.length}/${totalSlots()} giocatori`);
   L.push(`Riserva: ${rs.left} su ${CFG.reserve}${rs.over?` (${rs.over} già usati per sforamenti)`:""}`);
   L.push(`Offerta massima sostenibile ora: ${maxBid()}`);
+  if(teams().length){
+    L.push(``, `— AVVERSARI —`);
+    teams().forEach(t=>{
+      const st = squadStats(t.id);
+      const dett = ROLE_KEYS.map(r=>`${ROLE_SHORT[r]} ${st.byRole[r]}`).join(" · ");
+      L.push(`${t.name}: ${st.left} residui · ${st.n}/${totalSlots()} giocatori · max ${st.maxBid}`);
+      L.push(`  ${dett}${st.topRole?` — più forte in ${ROLES[st.topRole].toLowerCase()}`:""}`);
+    });
+    const unk = PLAYERS.filter(p=>p.status==="taken" && !p.by);
+    if(unk.length) L.push(`Senza nome: ${unk.length} giocatori per ${sum(unk.map(p=>p.paid||0))} crediti`);
+  }
   return L.join("\n");
 }
 function openSummary(){
@@ -1669,7 +1745,7 @@ function stateObject(){
     ts: nowMs(),
     cfg: CFG,
     // il nome viaggia insieme all'id: se un giorno cambio l'elenco base, i dati si riagganciano lo stesso
-    statuses: PLAYERS.map(p=>({id:p.id,n:p.name,status:p.status,paid:p.paid,price:p.price,fav:!!p.fav,fixed:!!p.fixed})),
+    statuses: PLAYERS.map(p=>({id:p.id,n:p.name,status:p.status,paid:p.paid,price:p.price,by:p.by||null,fav:!!p.fav,fixed:!!p.fixed})),
     added: PLAYERS.filter(p=>p.added).map(p=>({id:p.id,name:p.name,role:p.role,team:p.team,price:p.price})),
     deleted: deletedNames.slice(),
     deletedIds, nextId,
@@ -1755,6 +1831,10 @@ function openSettings(){
     <div class="menu-list" style="margin-bottom:16px">
       <button onclick="toggleLite()"><i>⚡</i><div>Grafica leggera<small>toglie sfocature e ombre: usala se l'app rallenta o sbianca</small></div><span class="switch ${lite?"on":""}" id="liteSwitch">${lite?"ON":"OFF"}</span></button>
     </div>
+
+    <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Avversari</div>
+    <div id="teamsBox">${teamsBoxHtml()}</div>
+    <div class="note" style="font-size:11px;margin:6px 0 18px">Usano le stesse regole tue: ${CFG.budget} crediti e ${totalSlots()} slot a testa. Con almeno un nome qui, la ✕ su un giocatore ti chiede chi l'ha preso e a quanto.</div>
 
     <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Regole della lega</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
@@ -1936,8 +2016,10 @@ function applyState(state){
       budget: state.cfg.budget ?? DEFAULT_CFG.budget,
       reserve: state.cfg.reserve ?? DEFAULT_CFG.reserve,
       slots: {...DEFAULT_CFG.slots, ...(state.cfg.slots||{})},
-      roleBudget: {...DEFAULT_CFG.roleBudget, ...(state.cfg.roleBudget||{})}
+      roleBudget: {...DEFAULT_CFG.roleBudget, ...(state.cfg.roleBudget||{})},
+      teams: Array.isArray(state.cfg.teams) ? state.cfg.teams : (Array.isArray(CFG.teams) ? CFG.teams : [])
     };
+    nextTeamId = Math.max(1, ...CFG.teams.map(t=>parseInt(String(t.id).replace(/\D/g,""),10)+1 || 1));
   }
 
   PLAYERS.length = 0;
@@ -1960,6 +2042,7 @@ function applyState(state){
     if(typeof st.price === "number" && st.price > 0) p.price = st.price;
     p.status = (st.status === "mine" || st.status === "taken") ? st.status : "free";
     p.paid = typeof st.paid === "number" ? st.paid : p.price;
+    p.by = st.by || null;
     if(typeof st.fav === "boolean") p.fav = st.fav;
     if(typeof st.fixed === "boolean") p.fixed = st.fixed;
   });
@@ -1987,6 +2070,8 @@ function tryCandidate(json){
 
 async function load(){
   try{ const c = localStorage.getItem("asta-tracker-cfg"); if(c) CFG = {...CFG, ...JSON.parse(c)}; }catch(e){}
+  if(!Array.isArray(CFG.teams)) CFG.teams = [];
+  nextTeamId = Math.max(1, ...CFG.teams.map(t=>parseInt(String(t.id).replace(/\D/g,""),10)+1 || 1));
   try{ detailsOpen = localStorage.getItem("asta-details-open") === "1"; }catch(e){}
 
   // test di scrittura reale
@@ -2036,13 +2121,202 @@ let loadReport = [];
 
 /* ================== INIT ================== */
 function renderAll(){ renderTabs(); renderList(); renderBudget(); renderRoster0(); }
-function renderRoster0(){ if(!$("rosterOverlay").classList.contains("hidden")) renderRoster(); }
+function renderRoster0(){
+  if(!$("rosterOverlay").classList.contains("hidden")) renderRoster();
+  if(!$("rivalsOverlay").classList.contains("hidden")) renderRivals();
+}
 
 $("search").addEventListener("input", renderList);
 $("browseSearch").addEventListener("input", renderBrowseList);
 
+
+/* ================== AVVERSARI ================== */
+const TEAM_COLORS = ["#64d2ff","#ff9f0a","#ff6b6b","#bf7bff","#30d158","#ffd160","#5ac8fa","#ff7ab8","#a0e060","#c2a3ff"];
+function teams(){ if(!Array.isArray(CFG.teams)) CFG.teams = []; return CFG.teams; }
+function teamById(id){ return teams().find(t=>t.id===id) || null; }
+function teamColor(id){
+  const i = teams().findIndex(t=>t.id===id);
+  return i<0 ? "var(--dim-2)" : TEAM_COLORS[i % TEAM_COLORS.length];
+}
+function addTeam(name){
+  const n = (name||"").trim();
+  if(!n) return;
+  if(teams().some(t=>t.name.toLowerCase()===n.toLowerCase())){ toast("Nome già usato","bad"); return; }
+  teams().push({id:"t"+(nextTeamId++), name:n});
+  saveCfg(); renderAll();
+}
+function removeTeam(id){
+  CFG.teams = teams().filter(t=>t.id!==id);
+  PLAYERS.forEach(p=>{ if(p.by===id) p.by=null; });
+  saveCfg(); renderAll(); save(); refreshTeamsBox();
+}
+function renameTeam(id, name){
+  const t = teamById(id); if(!t) return;
+  t.name = (name||"").trim() || t.name;
+  saveCfg(); save();
+}
+let nextTeamId = 1;
+function saveCfg(){ try{ localStorage.setItem("asta-tracker-cfg", JSON.stringify(CFG)); }catch(e){} }
+
+/* statistiche di una squadra avversaria (o della tua, con id "me") */
+function squadStats(id){
+  const ps = id==="me" ? mineOf() : PLAYERS.filter(p=>p.status==="taken" && p.by===id);
+  const spent = sum(ps.map(p=>p.paid||0));
+  const byRole = {}, cntRole = {};
+  ROLE_KEYS.forEach(r=>{
+    const rp = ps.filter(p=>p.role===r);
+    byRole[r] = sum(rp.map(p=>p.paid||0));
+    cntRole[r] = rp.length;
+  });
+  const left = CFG.budget - spent;
+  const sl = Math.max(0, totalSlots() - ps.length);
+  const mb = sl>0 ? Math.max(0, left-(sl-1)) : left;
+  const top = ROLE_KEYS.slice().sort((a,b)=>byRole[b]-byRole[a])[0];
+  return {ps, spent, byRole, cntRole, left, slotsLeft:sl, maxBid:mb, n:ps.length, topRole: byRole[top]>0 ? top : null};
+}
+
+/* --- foglio "chi l'ha preso" --- */
+let assignId = null, assignTeam = null;
+function openAssign(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  assignId = id;
+  assignTeam = p.by || null;
+  const start = p.status==="taken" && p.paid ? p.paid : p.price;
+  openSheet(`
+    <h3>Chi ha preso ${esc(p.name)}?</h3>
+    <div class="sub">${ROLES[p.role]} · ${esc(p.team)} · il tuo tetto era <b style="color:var(--gold)">${p.price}</b></div>
+    <div class="chips" id="assignChips">
+      ${teams().map(t=>`<button type="button" class="chip ${t.id===assignTeam?"sel":""}" data-t="${t.id}" onclick="pickTeam('${t.id}')">${esc(t.name)}</button>`).join("")}
+      <button type="button" class="chip ${assignTeam===null?"sel":""}" data-t="" onclick="pickTeam(null)">Non lo so</button>
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label>A quanto l'ha pagato</label>
+      <div class="wheel"><div class="wheel-band"></div><div class="wheel-scroll" id="wheelScroll"></div></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeSheet()">Annulla</button>
+      <button class="btn-confirm" onclick="confirmAssign()">Conferma</button>
+    </div>
+    ${p.status==="taken" ? `<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="freePlayer(${id})">Rimettilo tra gli obiettivi</button>` : ""}
+  `);
+  initWheel(CFG.budget, start);
+}
+function pickTeam(t){
+  assignTeam = t;
+  document.querySelectorAll("#assignChips .chip").forEach(c=>c.classList.toggle("sel", (c.dataset.t||null) === (t||null) ? true : false));
+  buzz(5);
+}
+function confirmAssign(){
+  const p = PLAYERS.find(x=>x.id===assignId); if(!p) return;
+  pushHistory();
+  p.status = "taken";
+  p.by = assignTeam;
+  p.paid = wheelVal;
+  closeSheet(); buzz(12); renderAll(); save();
+  const t = teamById(assignTeam);
+  toast(t ? `${p.name} → ${t.name} per ${wheelVal}` : `${p.name} preso da altri per ${wheelVal}`);
+}
+function freePlayer(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  pushHistory();
+  p.status="free"; p.by=null; p.paid=p.price;
+  closeSheet(); renderAll(); save();
+  toast(`${p.name} rimesso tra gli obiettivi`);
+}
+
+/* --- schermata --- */
+let rivalSort = "credit";
+let rivalOpen = {};
+function openRivals(){
+  if(!teams().length){
+    openSheet(`
+      <h3>Nessun avversario</h3>
+      <div class="note">Aggiungi i nomi delle altre squadre della tua lega: da lì in poi, ogni volta che tocchi ✕ su un giocatore potrai dire chi l'ha preso e a quanto, e qui vedrai crediti e spesa di tutti.</div>
+      <div class="sheet-actions">
+        <button class="btn-cancel" onclick="closeSheet()">Dopo</button>
+        <button class="btn-confirm" onclick="closeSheet();openSettings()">Aggiungili ora</button>
+      </div>`);
+    return;
+  }
+  $("rivalsOverlay").classList.remove("hidden");
+  renderRivals();
+}
+function closeRivals(){ $("rivalsOverlay").classList.add("hidden"); }
+function setRivalSort(s){ rivalSort = s; renderRivals(); }
+function toggleRival(id){ rivalOpen[id] = !rivalOpen[id]; renderRivals(); }
+
+function renderRivals(){
+  document.querySelectorAll("#rivalsSort button").forEach(b=>b.classList.toggle("active", b.dataset.s===rivalSort));
+  const unknown = PLAYERS.filter(p=>p.status==="taken" && !p.by);
+  const rows = [{id:"me", name:"Tu", me:true}, ...teams()];
+  const withStats = rows.map(t=>({...t, st: squadStats(t.id)}));
+  const sorted = withStats.slice().sort((a,b)=>{
+    if(a.me) return -1; if(b.me) return 1;
+    if(rivalSort==="name") return a.name.localeCompare(b.name);
+    if(rivalSort==="spent") return b.st.spent - a.st.spent;
+    return a.st.left - b.st.left;
+  });
+
+  const tot = sum(withStats.map(t=>t.st.n));
+  $("rivalsSub").textContent = `${teams().length} squadre · ${tot} giocatori assegnati${unknown.length?` · ${unknown.length} senza nome`:""}`;
+
+  $("rivalsBody").innerHTML = sorted.map(t=>{
+    const s = t.st;
+    const segs = ROLE_KEYS.map(r=>{
+      const w = s.spent>0 ? (s.byRole[r]/s.spent*100) : 0;
+      return w>0 ? `<i style="width:${w}%;background:var(--r-${r})"></i>` : "";
+    }).join("");
+    const legend = ROLE_KEYS.map(r=>`<span style="--rc:var(--r-${r})">${ROLE_SHORT[r]} ${s.byRole[r]}</span>`).join("");
+    const open = !!rivalOpen[t.id];
+    const list = open && s.ps.length
+      ? `<div class="rv-list">${[...s.ps].sort((a,b)=>(b.paid||0)-(a.paid||0)).map(p=>
+          `<div class="rv-row" style="--rc:var(--r-${p.role})"><span class="n">${esc(p.name)} <span style="color:var(--dim-2)">${esc(p.team)}</span></span><span class="p">${p.paid||0}</span></div>`
+        ).join("")}</div>`
+      : (open ? `<div class="rv-list"><div class="note" style="font-size:12px">Ancora nessun giocatore.</div></div>` : "");
+    return `<div class="rv ${t.me?"me":""}" style="--tc:${t.me?"var(--accent)":teamColor(t.id)}">
+      <div class="rv-top">
+        <div>
+          <div class="rv-name"><span class="dot"></span>${esc(t.name)}</div>
+          <div class="rv-sub">${s.n}/${totalSlots()} giocatori · può offrire fino a <b style="color:var(--gold)">${s.maxBid}</b>${s.topRole?` · più forte in <b style="color:var(--r-${s.topRole})">${ROLES[s.topRole].toLowerCase()}</b>`:""}</div>
+        </div>
+        <div class="rv-left">${s.left}<small>residuo</small></div>
+      </div>
+      <div class="rv-bar">${segs}</div>
+      <div class="rv-legend">${legend}</div>
+      <button class="rv-toggle" onclick="toggleRival('${t.id}')">${open?"nascondi rosa ▴":"vedi la rosa ▾"}</button>
+      ${list}
+    </div>`;
+  }).join("") + (unknown.length ? `<div class="rv" style="--tc:var(--dim-2)">
+      <div class="rv-top"><div><div class="rv-name"><span class="dot"></span>Senza nome</div>
+      <div class="rv-sub">${unknown.length} giocatori presi da qualcuno che non hai segnato</div></div>
+      <div class="rv-left">${sum(unknown.map(p=>p.paid||0))}<small>spesi</small></div></div></div>` : "");
+}
+
+function teamsBoxHtml(){
+  return teams().map(t=>`
+    <div class="team-row">
+      <span class="dot" style="width:10px;height:10px;border-radius:50%;background:${teamColor(t.id)};flex-shrink:0"></span>
+      <input value="${esc(t.name)}" onchange="renameTeam('${t.id}', this.value); refreshTeamsBox()" aria-label="Nome squadra">
+      <button class="del" onclick="removeTeam('${t.id}')" aria-label="Togli">✕</button>
+    </div>`).join("") + `
+    <div class="team-row">
+      <span style="width:10px;flex-shrink:0"></span>
+      <input id="newTeam" placeholder="Nome della squadra…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTeamFromInput();}">
+      <button class="del" style="color:var(--accent)" onclick="addTeamFromInput()" aria-label="Aggiungi">＋</button>
+    </div>`;
+}
+function refreshTeamsBox(){ const el=$("teamsBox"); if(el) el.innerHTML = teamsBoxHtml(); }
+function addTeamFromInput(){
+  const el = $("newTeam"); if(!el) return;
+  addTeam(el.value);
+  el.value = "";
+  refreshTeamsBox();
+  const nu = $("newTeam"); if(nu) nu.focus();
+}
+
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "18/08 · 17:20";
+const BUILD = "18/08 · 18:10";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
