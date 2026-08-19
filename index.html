@@ -1214,15 +1214,16 @@ function cardHtml(p, stats){
       ? `<div class="pricebox"><div class="price num" style="color:var(--dim)">${p.paid||"–"}<small>pagato</small></div></div>`
       : `<div class="pricebox"><div class="price num">${p.price}<small>tetto</small></div>${sugLine}</div>`;
 
+  const qd = qinfo(p);
   return `<article class="card ${cls}" style="--rc:var(--r-${p.role})">
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
     <button class="c-body" onclick="tapPlayer(${p.id})">
-      <span class="p-name">${esc(p.name)}${qbadges(qinfo(p))}</span>
+      <span class="p-name">${esc(p.name)}${qbadges(qd)}</span>
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[p.role]}</span>
         <span>${esc(p.team)}</span>
-        ${p.added?'<span class="pill new">nuovo</span>':""}
+        <span class="hint" style="color:var(--dim-2)">FVM ${fvmScaled(qd&&qd.fvm)||"–"}</span>
         ${p.status==="mine"?'<span class="pill mine">tuo</span>':""}
         ${hint}${takenInfo}
       </span>
@@ -1286,7 +1287,7 @@ function otherRowHtml(L){
       </span>
     </button>
     <div class="c-right">
-      <div class="pricebox"><div class="price num">${L.q}<small>quota</small></div></div>
+      <div class="pricebox"><div class="price num">${L.q}<small>tetto</small></div><div class="sug">cons. ${suggested({role:L.r, price:L.q})}</div></div>
       <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
       <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
     </div>
@@ -2543,7 +2544,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 13:30";
+const BUILD = "19/08 · 14:00";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
