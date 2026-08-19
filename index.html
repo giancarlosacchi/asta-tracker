@@ -974,7 +974,7 @@ let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
 
 const PLAYERS = RAW_PLAYERS.map((x,i)=>({
   id:i, name:x.n, role:x.r, team:x.t||"?", price:x.p,
-  fixed:!!x.f, fav:false, status:"free", paid:x.p, added:false, by:null
+  fixed:!!x.f, fav:false, status:"free", paid:x.p, added:false, by:null, hasTetto:false
 }));
 const BASE_PLAYERS = PLAYERS.map(p=>({...p}));
 
@@ -1198,34 +1198,26 @@ function sortPlayers(arr){
 }
 
 /* ================== LISTA PRINCIPALE ================== */
-function cardHtml(p, stats){
+function cardHtml(p, stats, ms){
   const cls = p.status==="mine" ? "mine" : p.status==="taken" ? "taken" : ((p.fixed||p.fav) ? "fixed" : "");
-  let hint = "", sugLine = "";
+  const qd = qinfo(p);
+  const quota = (qd && qd.qa) || null;
+  let hint = "", priceBlock = "";
   if(p.status==="free"){
     const s = stats[p.role];
-    if(s.slotsLeft===0){
-      hint = `<span class="hint warn">reparto completo</span>`;
-      sugLine = `<div class="sug warn">stop</div>`;
-    } else if(p.price > s.roleMax){
-      hint = `<span class="hint warn">⚠ non puoi arrivarci</span>`;
-      sugLine = `<div class="sug warn">max ${s.roleMax}</div>`;
-    } else {
-      const sg = suggested(p);
-      sugLine = `<div class="sug">cons. ${sg}</div>`;
-    }
+    const R = fairRec(p, ms);
+    if(s.slotsLeft===0) hint = `<span class="hint warn">reparto completo</span>`;
+    priceBlock = `<div class="pricebox"><div class="price num">${R.rec}<small>valore</small></div></div>`;
+  } else if(p.status==="mine"){
+    priceBlock = `<div class="pricebox"><div class="price paid num">${p.paid}<small>pagato</small></div></div>`;
+  } else {
+    priceBlock = `<div class="pricebox"><div class="price num" style="color:var(--dim)">${p.paid||"–"}<small>pagato</small></div></div>`;
   }
   let takenInfo = "";
   if(p.status==="taken"){
     const t = teamById(p.by);
-    takenInfo = `<span class="hint">${t?`<b style="color:${teamColor(p.by)}">${esc(t.name)}</b>`:"preso da altri"}${p.paid?` · ${p.paid}`:""}</span>`;
+    takenInfo = `<span class="hint">${t?`<b style="color:${teamColor(p.by)}">${esc(t.name)}</b>`:"preso da altri"}</span>`;
   }
-  const priceBlock = p.status==="mine"
-    ? `<div class="pricebox"><div class="price paid num">${p.paid}<small>pagato</small></div></div>`
-    : p.status==="taken"
-      ? `<div class="pricebox"><div class="price num" style="color:var(--dim)">${p.paid||"–"}<small>pagato</small></div></div>`
-      : `<div class="pricebox"><div class="price num">${p.price}<small>tetto</small></div>${sugLine}</div>`;
-
-  const qd = qinfo(p);
   return `<article class="card ${cls}" style="--rc:var(--r-${p.role})">
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
@@ -1234,7 +1226,7 @@ function cardHtml(p, stats){
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[p.role]}</span>
         <span>${esc(p.team)}</span>
-        <span class="hint" style="color:var(--dim-2)">FVM ${fvmScaled(qd&&qd.fvm)||"–"}</span>
+        ${quota?`<span class="hint" style="color:var(--dim-2)">quota ${quota}</span>`:""}
         ${p.status==="mine"?'<span class="pill mine">tuo</span>':""}
         ${hint}${takenInfo}
       </span>
@@ -1264,7 +1256,7 @@ function addQuick(name, role, team, price){
   let p = PLAYERS.find(x=>x.role===role && qnorm(x.name)===qnorm(name));
   if(!p){
     pushHistory();
-    p = {id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true, by:null};
+    p = {id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true, by:null, hasTetto:false};
     PLAYERS.push(p);
   }
   return p;
@@ -1283,10 +1275,11 @@ function addThenFav(name, role, team, price){
   buzz(8); renderAll(); save();
   toast(`★ ${name} tra gli obiettivi`);
 }
-function otherRowHtml(L){
+function otherRowHtml(L, ms){
   const A = JSON.stringify(L.n).replace(/"/g,"&quot;");
   const T = JSON.stringify(L.t).replace(/"/g,"&quot;");
   const q = qinfo({name:L.n, team:L.t, role:L.r});
+  const R = fairRec({name:L.n, team:L.t, role:L.r, price:L.q, status:"free"}, ms);
   return `<article class="card" style="--rc:var(--r-${L.r})">
     <button class="c-fav" onclick="addThenFav(${A},'${L.r}',${T},${L.q})" aria-label="Segna come obiettivo">★</button>
     <button class="c-body" onclick="openQStats(${A},'${L.r}',${T},${L.q})">
@@ -1294,11 +1287,11 @@ function otherRowHtml(L){
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[L.r]}</span>
         <span>${esc(L.t)}</span>
-        <span class="hint" style="color:var(--dim-2)">FVM ${fvmScaled(L.f)||"–"}</span>
+        <span class="hint" style="color:var(--dim-2)">quota ${L.q}</span>
       </span>
     </button>
     <div class="c-right">
-      <div class="pricebox"><div class="price num">${L.q}<small>tetto</small></div><div class="sug">cons. ${suggested({role:L.r, price:L.q})}</div></div>
+      <div class="pricebox"><div class="price num">${R.rec}<small>valore</small></div></div>
       <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
       <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
     </div>
@@ -1309,6 +1302,7 @@ function renderList(){
   const q = $("search").value.trim().toLowerCase();
   const list = $("list");
   const stats = {P:roleStats("P"),D:roleStats("D"),C:roleStats("C"),A:roleStats("A")};
+  const MS = marketState();
   let html = "";
 
   if(q){
@@ -1318,7 +1312,7 @@ function renderList(){
     ));
     if(hits.length){
       html += `<div class="sec-title">Nella tua lista · ${hits.length}</div>`;
-      html += hits.map(p=>cardHtml(p,stats)).join("");
+      html += hits.map(p=>cardHtml(p,stats,MS)).join("");
     }
     const known = new Set(PLAYERS.map(p=>p.name.toLowerCase()));
     const extra = LISTONE.filter(p=>
@@ -1327,7 +1321,7 @@ function renderList(){
     ).sort((a,b)=>b.q-a.q).slice(0,12);
     if(extra.length){
       html += `<div class="sec-title">Dal listone · ${extra.length}</div>`;
-      html += extra.map(p=>otherRowHtml(p)).join("");
+      html += extra.map(p=>otherRowHtml(p,MS)).join("");
     }
     if(!hits.length && !extra.length){
       html = `<div class="empty"><span class="big">🔍</span>Nessun giocatore trovato per “${esc(q)}”.</div>`;
@@ -1344,27 +1338,26 @@ function renderList(){
 
   const mineKeys = new Set(items.map(p=>siteKey(p.name, p.team, p.role)));
   const others = LISTONE.filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)));
-  const quotaOf = p => { const q = qinfo(p); return q && q.qa ? q.qa : (p.price||0); };
   const uni = [
-    ...free.map(p=>({m:p, prio:(p.fixed||p.fav)?0:1, q:quotaOf(p), n:p.name, t:p.team})),
-    ...others.map(L=>({o:L, prio:1, q:L.q||0, n:L.n, t:L.t}))
+    ...free.map(p=>({m:p, prio:(p.fixed||p.fav)?0:1, q:fairRec(p, MS).rec, n:p.name, t:p.team})),
+    ...others.map(L=>({o:L, prio:1, q:fairRec({name:L.n,team:L.t,role:L.r,price:L.q,status:"free"}, MS).rec, n:L.n, t:L.t}))
   ];
   if(sortMode==="name") uni.sort((a,b)=> a.prio-b.prio || a.n.localeCompare(b.n));
   else if(sortMode==="team") uni.sort((a,b)=> a.prio-b.prio || a.t.localeCompare(b.t) || b.q-a.q);
   else uni.sort((a,b)=> a.prio-b.prio || b.q-a.q);
 
   html += `<div class="sec-title">Da prendere · ${uni.length} <span style="color:var(--dim);letter-spacing:0;text-transform:none">·&nbsp;${s.slotsLeft} slot, max ${s.roleMax}/gioc.</span></div>`;
-  html += uni.length ? uni.map(e=> e.m ? cardHtml(e.m, stats) : otherRowHtml(e.o)).join("")
+  html += uni.length ? uni.map(e=> e.m ? cardHtml(e.m, stats, MS) : otherRowHtml(e.o, MS)).join("")
                      : `<div class="ghost-row">Nessun giocatore libero in questo reparto</div>`;
 
   if(mine.length){
     html += `<div class="sec-title">Presi da te · ${mine.length} <span style="color:var(--mine);letter-spacing:0;text-transform:none">·&nbsp;${sum(mine.map(p=>p.paid))} crediti</span></div>`;
-    html += mine.map(p=>cardHtml(p,stats)).join("");
+    html += mine.map(p=>cardHtml(p,stats,MS)).join("");
   }
   if(taken.length){
     html += `<div class="ghost-row" onclick="toggleShowTaken()" style="cursor:pointer;margin-top:14px;">
       ${showTaken?"Nascondi":"Mostra"} i ${taken.length} presi dagli altri</div>`;
-    if(showTaken) html += taken.map(p=>cardHtml(p,stats)).join("");
+    if(showTaken) html += taken.map(p=>cardHtml(p,stats,MS)).join("");
   }
 
   list.innerHTML = html;
@@ -1438,8 +1431,8 @@ function marketState(){
   return {pool, money, open, infl, tracked, ts};
 }
 
-function fairRec(p){
-  const ms = marketState();
+function fairRec(p, msIn){
+  const ms = msIn || marketState();
   const q = qinfo(p);
   const base = (q && fvmScaled(q.fvm)) || p.price || 1;
   let fair = base * ms.infl;
@@ -1514,7 +1507,7 @@ function openBid(id, ev){
 
   openSheet(`
     <h3>${esc(p.name)}</h3>
-    <div class="sub">${ROLES[p.role]} · ${esc(p.team)} · tetto che ti eri dato: <b style="color:var(--gold)">${p.price}</b></div>
+    <div class="sub">${ROLES[p.role]} · ${esc(p.team)}${(qinfo(p)&&qinfo(p).qa)?` · quota ${qinfo(p).qa}`:""}</div>
 
     <div class="bid-info">
       <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
@@ -1532,8 +1525,7 @@ function openBid(id, ev){
         ${R.altCount ? `alternative nel ruolo: ${R.alts.map(esc).join(", ")}${R.altCount>3?` +${R.altCount-3}`:""}` : `<b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}
       </div>
       <div class="chips" style="justify-content:center">
-        <button type="button" class="chip gold" onclick="setBid(${sug})">consigliato ${sug}</button>
-        <button type="button" class="chip" onclick="setBid(${p.price})">tetto ${p.price}</button>
+        <button type="button" class="chip gold" onclick="setBid(${sug})">valore ${sug}</button>
       </div>
     </div>
 
@@ -1544,10 +1536,7 @@ function openBid(id, ev){
       <button class="btn-confirm" id="bidConfirm" onclick="confirmBid(${id})">${isEdit?"Aggiorna":"L'ho preso"}</button>
     </div>
     ${isEdit?'<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="closeSheet()">Chiudi</button>':""}
-    <div style="display:flex;gap:9px;margin-top:9px">
-      <button class="btn-wide" style="background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="editCeiling(${id})">✎ Cambia tetto</button>
-      <button class="btn-wide" style="background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="askDelete(${id})">🗑 Togli dalla lista</button>
-    </div>
+    <button class="btn-wide" style="margin-top:9px;background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="askDelete(${id})">🗑 Togli dalla lista</button>
   `);
 
   initWheel(top, start, R.rec);
@@ -1658,6 +1647,7 @@ function saveCeiling(id){
   if(isNaN(v)||v<1){ toast("Valore non valido","bad"); return; }
   pushHistory();
   p.price = v;
+  p.hasTetto = true;
   if(p.status!=="mine") p.paid = v;
   closeSheet(); renderAll(); save(); toast(`Tetto di ${p.name}: ${v}`,"good");
 }
@@ -1730,7 +1720,7 @@ function renderBrowseList(){
 function addFromListone(name, role, team, price){
   if(PLAYERS.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast("Già in lista"); return; }
   pushHistory();
-  PLAYERS.push({id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true});
+  PLAYERS.push({id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true, hasTetto:false});
   currentRole = role;
   buzz(10); renderAll(); renderBrowseList();
   if($("search").value.trim()) renderList();
@@ -1940,7 +1930,7 @@ function stateObject(){
     ts: nowMs(),
     cfg: CFG,
     // il nome viaggia insieme all'id: se un giorno cambio l'elenco base, i dati si riagganciano lo stesso
-    statuses: PLAYERS.map(p=>({id:p.id,n:p.name,status:p.status,paid:p.paid,price:p.price,by:p.by||null,fav:!!p.fav,fixed:!!p.fixed})),
+    statuses: PLAYERS.map(p=>({id:p.id,n:p.name,status:p.status,paid:p.paid,price:p.price,by:p.by||null,fav:!!p.fav,fixed:!!p.fixed,tt:p.hasTetto?1:0})),
     added: PLAYERS.filter(p=>p.added).map(p=>({id:p.id,name:p.name,role:p.role,team:p.team,price:p.price})),
     deleted: deletedNames.slice(),
     deletedIds, nextId,
@@ -2222,7 +2212,7 @@ function applyState(state){
   (state.added || state.addedPlayers || []).forEach(ap=>{
     if(!PLAYERS.some(p=>p.id===ap.id || normName(p.name)===normName(ap.name))){
       PLAYERS.push({id:ap.id, name:ap.name, role:ap.role, team:ap.team||"?", price:ap.price,
-                    fixed:false, fav:false, status:"free", paid:ap.price, added:true});
+                    fixed:false, fav:false, status:"free", paid:ap.price, added:true, hasTetto:false});
     }
   });
 
@@ -2238,6 +2228,7 @@ function applyState(state){
     p.status = (st.status === "mine" || st.status === "taken") ? st.status : "free";
     p.paid = typeof st.paid === "number" ? st.paid : p.price;
     p.by = st.by || null;
+    if(st.tt!=null) p.hasTetto = !!st.tt;
     if(typeof st.fav === "boolean") p.fav = st.fav;
     if(typeof st.fixed === "boolean") p.fixed = st.fixed;
   });
@@ -2629,7 +2620,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 15:00";
+const BUILD = "19/08 · 16:20";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
