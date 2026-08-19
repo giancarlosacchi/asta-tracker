@@ -261,7 +261,7 @@ html[data-theme="light"] #themeBtn .ic-moon{display:none;}
 .tab .tn{display:block;font-size:9.5px;font-weight:500;color:var(--dim-2);margin-top:1px;white-space:nowrap;}
 .tab.active{background:var(--g-3);color:var(--tc);box-shadow:0 2px 8px -2px rgba(0,0,0,.5), var(--inner-hi);}
 .tab.active .tn{color:var(--dim);}
-.tab.full{opacity:.5;}
+.tab.is-done{opacity:.5;}
 
 /* ============ MAIN ============ */
 main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 auto;}
@@ -373,7 +373,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .bottom-nav button.accent{color:var(--accent);}
 .bottom-nav button:active{background:var(--g-1);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  .full{background:linear-gradient(175deg,#0e2c1f,#07160f);}
+  #browseOverlay, #rosterOverlay{background:linear-gradient(175deg,#0e2c1f,#07160f);}
   .bottom-nav{background:rgba(8,24,16,.97);}
   header{background:rgba(7,22,15,.97);}
   .sheet{background:rgba(14,36,25,.98);}
@@ -387,7 +387,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   display:flex;align-items:flex-end;justify-content:center;
   overscroll-behavior:contain;padding:0 8px calc(var(--kb,0px) + 8px);transition:padding-bottom .2s;
 }
-.overlay.hidden,.full.hidden{display:none;}
+.overlay.hidden,#browseOverlay.hidden, #rosterOverlay.hidden{display:none;}
 .sheet{
   width:100%;max-width:520px;max-height:var(--sheet-max,88svh);overflow-y:auto;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
@@ -484,18 +484,18 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .switch.on{color:var(--accent);}
 
 /* ============ SCHERMATE FULL ============ */
-.full{
+#browseOverlay, #rosterOverlay{
   position:fixed;inset:0;height:100svh;z-index:70;display:flex;flex-direction:column;
   overscroll-behavior:contain;
   background:linear-gradient(175deg, var(--chrome-full-a), var(--chrome-full-b));
   animation:fullIn .3s cubic-bezier(.22,1,.32,1);
 }
 @keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
-.full::before{
+#browseOverlay::before, #rosterOverlay::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(120% 55% at 50% 0%, rgba(48,209,88,.07), transparent 60%);
 }
-.full>*{position:relative;z-index:1;}
+#browseOverlay>*, #rosterOverlay>*{position:relative;z-index:1;}
 .full-hdr{
   padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;
   border-bottom:.5px solid var(--stroke);
@@ -624,7 +624,7 @@ html[data-theme="light"] .toast{box-shadow:0 12px 34px -14px rgba(12,40,25,.5), 
 html[data-theme="light"] #rosterOverlay .full-hdr h3{color:#0d7ea8;}
 html[data-theme="light"] .card.taken{opacity:.5;}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  html[data-theme="light"] .full{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
+  html[data-theme="light"] #browseOverlay, html[data-theme="light"] #rosterOverlay{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
   html[data-theme="light"] .bottom-nav,
   html[data-theme="light"] header,
   html[data-theme="light"] .full-hdr{background:rgba(250,253,250,.97);}
@@ -1106,7 +1106,7 @@ function renderTabs(){
   $("tabs").innerHTML = ROLE_KEYS.map(r=>{
     const s = roleStats(r);
     const freeCount = PLAYERS.filter(p=>p.role===r && p.status==="free").length;
-    return `<button class="tab ${r===currentRole?"active":""} ${s.slotsLeft===0?"full":""}"
+    return `<button class="tab ${r===currentRole?"active":""} ${s.slotsLeft===0?"is-done":""}"
         style="--tc:var(--r-${r})" onclick="tapRole('${r}')" aria-pressed="${r===currentRole}">
       ${ROLE_SHORT[r]}
       <span class="tn">${s.mine.length}/${s.totalSlots} · ${freeCount}</span>
@@ -2042,7 +2042,7 @@ $("search").addEventListener("input", renderList);
 $("browseSearch").addEventListener("input", renderBrowseList);
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "18/08 · 16:45";
+const BUILD = "18/08 · 17:20";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
