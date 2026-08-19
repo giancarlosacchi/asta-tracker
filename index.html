@@ -1237,6 +1237,48 @@ function cardHtml(p, stats){
   </article>`;
 }
 
+let showOthers = true;
+try{ showOthers = localStorage.getItem("asta-others") !== "0"; }catch(e){}
+function toggleOthers(){
+  showOthers = !showOthers;
+  try{ localStorage.setItem("asta-others", showOthers?"1":"0"); }catch(e){}
+  renderList();
+}
+function siteKey(name, team, role){
+  const q = qinfo({name, team, role});
+  return q ? "s:"+qnorm(q.n)+q.t : "n:"+qnorm(name);
+}
+function addQuick(name, role, team, price){
+  let p = PLAYERS.find(x=>x.role===role && qnorm(x.name)===qnorm(name));
+  if(!p){
+    pushHistory();
+    p = {id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true, by:null};
+    PLAYERS.push(p);
+  }
+  return p;
+}
+function addThenBid(name, role, team, price){
+  const p = addQuick(name, role, team, price);
+  renderAll(); save(); openBid(p.id);
+}
+function addThenTaken(name, role, team, price){
+  const p = addQuick(name, role, team, price);
+  renderAll(); save(); markTaken(p.id);
+}
+function otherRowHtml(L){
+  const A = JSON.stringify(L.n).replace(/"/g,"&quot;");
+  const T = JSON.stringify(L.t).replace(/"/g,"&quot;");
+  return `<div class="li" style="--rc:var(--r-${L.r})">
+    <div class="li-main" onclick="openQStats(${A},'${L.r}',${T},${L.q})" style="cursor:pointer">
+      <div class="li-n">${esc(L.n)}${qbadges(qinfo({name:L.n,team:L.t,role:L.r}))}</div>
+      <div class="li-t">${esc(L.t)}</div>
+    </div>
+    <div class="li-v"><div class="q num">${L.q}</div><div class="f num">FVM ${L.f||"–"}</div></div>
+    <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
+    <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
+  </div>`;
+}
+
 function renderList(){
   const q = $("search").value.trim().toLowerCase();
   const list = $("list");
@@ -1281,14 +1323,6 @@ function renderList(){
   const taken = items.filter(p=>p.status==="taken");
   const s = stats[currentRole];
 
-  if(items.length===0){
-    list.innerHTML = `<div class="empty"><span class="big">${currentRole==="P"?"🧤":"⚽"}</span>
-      Non hai ancora nessun <b>${ROLES[currentRole].toLowerCase()}</b> nella tua lista.<br>
-      Pescali dal listone ufficiale e imposta il tuo tetto.
-      <br><button class="btn-inline" onclick="openBrowse('${currentRole}')">Apri il listone</button></div>`;
-    return;
-  }
-
   html += `<div class="sec-title">Da prendere · ${free.length} <span style="color:var(--dim);letter-spacing:0;text-transform:none">·&nbsp;${s.slotsLeft} slot, max ${s.roleMax}/gioc.</span></div>`;
   html += free.length ? free.map(p=>cardHtml(p,stats)).join("")
                       : `<div class="ghost-row">Nessun obiettivo libero in questo reparto</div>`;
@@ -1301,6 +1335,16 @@ function renderList(){
     html += `<div class="ghost-row" onclick="toggleShowTaken()" style="cursor:pointer;margin-top:14px;">
       ${showTaken?"Nascondi":"Mostra"} i ${taken.length} presi dagli altri</div>`;
     if(showTaken) html += taken.map(p=>cardHtml(p,stats)).join("");
+  }
+
+  // tutto il resto del listone per questo reparto
+  const mineKeys = new Set(items.map(p=>siteKey(p.name, p.team, p.role)));
+  const others = LISTONE
+    .filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)))
+    .sort((a,b)=>b.q-a.q);
+  if(others.length){
+    html += `<div class="sec-title" onclick="toggleOthers()" style="cursor:pointer">Tutti gli altri · ${others.length} <span style="color:var(--dim-2);letter-spacing:0;text-transform:none">${showOthers?"▴ nascondi":"▾ mostra"}</span></div>`;
+    if(showOthers) html += others.map(otherRowHtml).join("");
   }
   list.innerHTML = html;
 }
@@ -2485,7 +2529,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 11:20";
+const BUILD = "19/08 · 12:00";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
