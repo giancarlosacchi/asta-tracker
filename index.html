@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#04170e">
+<meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Asta">
@@ -366,8 +366,8 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 
 /* ============ TAB BAR FLOTTANTE ============ */
 .bottom-nav{
-  position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:40;
-  display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h);
+  position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:75;
+  display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);
   max-width:520px;margin:0 auto;
   background:var(--chrome-nav);
   border:.5px solid var(--stroke-2);border-radius:24px;
@@ -382,6 +382,8 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 .bottom-nav button svg{width:21px;height:21px;}
 .bottom-nav button:disabled{opacity:.3;}
 .bottom-nav button.accent{color:var(--accent);}
+.bottom-nav button.on{color:var(--accent);}
+.bottom-nav button.on svg{filter:drop-shadow(0 0 6px rgba(48,209,88,.45));}
 .bottom-nav button:active{background:var(--g-1);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
   #browseOverlay, #rosterOverlay, #rivalsOverlay{background:linear-gradient(175deg,#0e2c1f,#07160f);}
@@ -393,7 +395,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 
 /* ============ SHEET ============ */
 .overlay{
-  position:fixed;inset:0;z-index:60;background:var(--scrim);
+  position:fixed;inset:0;z-index:80;background:var(--scrim);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:flex;align-items:flex-end;justify-content:center;
   overscroll-behavior:contain;padding:0 8px calc(var(--kb,0px) + 8px);transition:padding-bottom .2s;
@@ -530,7 +532,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
   width:34px;height:34px;border-radius:50%;background:var(--g-2);border:.5px solid var(--stroke);
   font-size:15px;color:var(--dim);flex-shrink:0;box-shadow:var(--inner-hi);
 }
-.full-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(24px + var(--safe-b));}
+.full-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(var(--nav-h) + var(--nav-gap) + var(--safe-b) + 26px);}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;background:var(--track);padding:3px;border-radius:14px;}
 .seg button{padding:9px 4px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--dim);transition:background .22s,color .22s;}
 .seg button.active{background:var(--g-3);color:var(--text);box-shadow:0 2px 8px -2px rgba(0,0,0,.5), var(--inner-hi);}
@@ -845,18 +847,15 @@ html[data-lite="1"] .pitch-bg::after{display:none!important;}
   <button id="undoBtn" onclick="undo()" disabled>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h11a5 5 0 0 1 0 10h-3"/><path d="M8 5 4 9l4 4"/></svg>
     <span>Annulla</span></button>
-  <button onclick="openBrowse()" class="accent">
+  <button id="navBrowse" onclick="navGo('browse')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     <span>Listone</span></button>
-  <button onclick="openRoster()">
+  <button id="navRoster" onclick="navGo('roster')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M9 4 4.5 6.2 6 10l1.6-.6V20h8.8V9.4L18 10l1.5-3.8L15 4a3 3 0 0 1-6 0Z"/></svg>
     <span>La mia rosa</span></button>
-  <button onclick="openRivals()">
+  <button id="navRivals" onclick="navGo('rivals')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 19a5.5 5.5 0 0 0-3-4.6"/></svg>
     <span>Avversari</span></button>
-  <button onclick="openSummary()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>
-    <span>Riepilogo</span></button>
 </nav>
 
 <div class="full hidden" id="rivalsOverlay">
@@ -1676,12 +1675,33 @@ function doDelete(id){
 /* ================== LISTONE ================== */
 let browseRole = "D", browseSort = "q";
 function openBrowse(forceRole){
+  closeRoster(); closeRivals();
   browseRole = forceRole || currentRole;
   $("browseOverlay").classList.remove("hidden");
   $("browseSearch").value = "";
-  renderBrowseTabs(); renderBrowseList();
+  renderBrowseTabs(); renderBrowseList(); updateNav();
 }
-function closeBrowse(){ $("browseOverlay").classList.add("hidden"); }
+function closeBrowse(){ $("browseOverlay").classList.add("hidden"); updateNav(); }
+
+/* --- nav persistente: passa da una schermata all'altra, ri-tap chiude --- */
+const NAV_MAP = { browse:"browseOverlay", roster:"rosterOverlay", rivals:"rivalsOverlay" };
+function navGo(which){
+  const wasOpen = !$(NAV_MAP[which]).classList.contains("hidden");
+  closeBrowse(); closeRoster(); closeRivals();
+  if(!wasOpen){
+    if(which==="browse") openBrowse();
+    else if(which==="roster") openRoster();
+    else openRivals();
+  }
+  updateNav();
+}
+function updateNav(){
+  const ids = { navBrowse:"browseOverlay", navRoster:"rosterOverlay", navRivals:"rivalsOverlay" };
+  for(const k in ids){
+    const b = $(k); if(!b) continue;
+    b.classList.toggle("on", !$(ids[k]).classList.contains("hidden"));
+  }
+}
 function setBrowseRole(r){ browseRole = r; renderBrowseTabs(); renderBrowseList(); }
 function setBrowseSort(s){ browseSort = s; renderBrowseTabs(); renderBrowseList(); }
 function renderBrowseTabs(){
@@ -1730,8 +1750,8 @@ function addFromListone(name, role, team, price){
 
 /* ================== LA MIA ROSA ================== */
 let rosterView = "role";
-function openRoster(){ $("rosterOverlay").classList.remove("hidden"); renderRoster(); }
-function closeRoster(){ $("rosterOverlay").classList.add("hidden"); }
+function openRoster(){ closeBrowse(); closeRivals(); $("rosterOverlay").classList.remove("hidden"); renderRoster(); updateNav(); }
+function closeRoster(){ $("rosterOverlay").classList.add("hidden"); updateNav(); }
 function setRosterView(v){ rosterView = v; renderRoster(); }
 
 function renderRoster(){
@@ -1774,46 +1794,6 @@ function renderRoster(){
     if(s.slotsLeft>0) out += `<div class="slots-free">${Array.from({length:s.slotsLeft},()=>"<span>libero</span>").join("")}</div>`;
     return out;
   }).join("");
-}
-
-function buildSummary(){
-  const mine = mineOf();
-  const L = [`LA MIA ROSA — Asta Tracker`, ``];
-  ROLE_KEYS.forEach(r=>{
-    const s = roleStats(r);
-    const rm = s.mine.slice().sort((a,b)=>b.paid-a.paid);
-    const d = s.spent - s.target;
-    L.push(`${ROLES[r].toUpperCase()} (${rm.length}/${s.totalSlots}) — ${s.spent} crediti — ${d===0?"in linea col piano":(d>0?`+${d} oltre il piano di ${s.target}`:`${d} sotto il piano di ${s.target}`)}`);
-    rm.forEach(p=> L.push(`  • ${p.name} (${p.team}) — ${p.paid}`));
-    if(!rm.length) L.push(`  (nessuno)`);
-    if(s.slotsLeft) L.push(`  → ${s.slotsLeft} slot liberi, max ${s.roleMax}/gioc.`);
-    L.push(``);
-  });
-  const rs = reserveState();
-  L.push(`TOTALE: ${totalSpent()}/${CFG.budget} · residuo ${creditsLeft()} · ${mine.length}/${totalSlots()} giocatori`);
-  L.push(`Riserva: ${rs.left} su ${CFG.reserve}${rs.over?` (${rs.over} già usati per sforamenti)`:""}`);
-  L.push(`Offerta massima sostenibile ora: ${maxBid()}`);
-  if(teams().length){
-    L.push(``, `— AVVERSARI —`);
-    teams().forEach(t=>{
-      const st = squadStats(t.id);
-      const dett = ROLE_KEYS.map(r=>`${ROLE_SHORT[r]} ${st.byRole[r]}`).join(" · ");
-      L.push(`${t.name}: ${st.left} residui · ${st.n}/${totalSlots()} giocatori · max ${st.maxBid}`);
-      L.push(`  ${dett}${st.topRole?` — più forte in ${ROLES[st.topRole].toLowerCase()}`:""}`);
-    });
-    const unk = PLAYERS.filter(p=>p.status==="taken" && !p.by);
-    if(unk.length) L.push(`Senza nome: ${unk.length} giocatori per ${sum(unk.map(p=>p.paid||0))} crediti`);
-  }
-  return L.join("\n");
-}
-function openSummary(){
-  openSheet(`
-    <h3>Riepilogo rosa</h3>
-    <div class="sub">Copialo e mandalo dove vuoi.</div>
-    <div class="field"><textarea id="sumOut" readonly style="height:230px">${esc(buildSummary())}</textarea></div>
-    <button class="btn-wide btn-confirm" onclick="copyFrom('sumOut','sumMsg')">Copia riepilogo</button>
-    <div id="sumMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:16px;color:var(--mine)"></div>
-    <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
 }
 
 async function copyFrom(inId, msgId){
@@ -2513,12 +2493,13 @@ function freePlayer(id){
 let rivalSort = "credit";
 let rivalOpen = {};
 function openRivals(){
+  closeBrowse(); closeRoster();
   if(!teams().length) teamsEditOpen = true;      // resta aperto anche dopo il primo nome
   $("rivalsOverlay").classList.remove("hidden");
-  renderRivals();
+  renderRivals(); updateNav();
   if(!teams().length) setTimeout(()=>{ const el=$("newTeam"); if(el) el.focus(); }, 250);
 }
-function closeRivals(){ $("rivalsOverlay").classList.add("hidden"); }
+function closeRivals(){ $("rivalsOverlay").classList.add("hidden"); updateNav(); }
 function setRivalSort(s){ rivalSort = s; renderRivals(); }
 function toggleRival(id){ rivalOpen[id] = !rivalOpen[id]; renderRivals(); }
 
@@ -2620,7 +2601,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 16:20";
+const BUILD = "19/08 · 17:05";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
