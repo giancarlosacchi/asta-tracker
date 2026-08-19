@@ -1274,16 +1274,23 @@ function addThenFav(name, role, team, price){
 function otherRowHtml(L){
   const A = JSON.stringify(L.n).replace(/"/g,"&quot;");
   const T = JSON.stringify(L.t).replace(/"/g,"&quot;");
-  return `<div class="li" style="--rc:var(--r-${L.r})">
+  const q = qinfo({name:L.n, team:L.t, role:L.r});
+  return `<article class="card" style="--rc:var(--r-${L.r})">
     <button class="c-fav" onclick="addThenFav(${A},'${L.r}',${T},${L.q})" aria-label="Segna come obiettivo">★</button>
-    <div class="li-main" onclick="openQStats(${A},'${L.r}',${T},${L.q})" style="cursor:pointer">
-      <div class="li-n">${esc(L.n)}${qbadges(qinfo({name:L.n,team:L.t,role:L.r}))}</div>
-      <div class="li-t">${esc(L.t)}</div>
+    <button class="c-body" onclick="openQStats(${A},'${L.r}',${T},${L.q})">
+      <span class="p-name">${esc(L.n)}${qbadges(q)}</span>
+      <span class="p-meta">
+        <span class="pill role">${ROLE_SHORT[L.r]}</span>
+        <span>${esc(L.t)}</span>
+        <span class="hint" style="color:var(--dim-2)">FVM ${L.f||"–"}</span>
+      </span>
+    </button>
+    <div class="c-right">
+      <div class="pricebox"><div class="price num">${L.q}<small>quota</small></div></div>
+      <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
+      <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
     </div>
-    <div class="li-v"><div class="q num">${L.q}</div><div class="f num">FVM ${L.f||"–"}</div></div>
-    <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
-    <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
-  </div>`;
+  </article>`;
 }
 
 function renderList(){
@@ -1308,14 +1315,7 @@ function renderList(){
     ).sort((a,b)=>b.q-a.q).slice(0,12);
     if(extra.length){
       html += `<div class="sec-title">Dal listone · ${extra.length}</div>`;
-      html += extra.map(p=>`<div class="li" style="--rc:var(--r-${p.r})">
-        <div class="li-main">
-          <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
-          <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}</div>
-        </div>
-        <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${p.f||"–"}</div></div>
-        <button class="li-add" onclick="addFromListone(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" aria-label="Aggiungi">＋</button>
-      </div>`).join("");
+      html += extra.map(p=>otherRowHtml(p)).join("");
     }
     if(!hits.length && !extra.length){
       html = `<div class="empty"><span class="big">🔍</span>Nessun giocatore trovato per “${esc(q)}”.</div>`;
@@ -2538,7 +2538,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 12:50";
+const BUILD = "19/08 · 13:10";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
