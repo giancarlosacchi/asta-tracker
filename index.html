@@ -1674,6 +1674,7 @@ function openMenu(){
       <button onclick="toggleWake()"><i>☀</i><div>Schermo sempre acceso<small>utile durante l'asta</small></div><span class="switch ${wakeOn?"on":""}">${wakeOn?"ON":"OFF"}</span></button>
       <button class="danger" onclick="askReset()"><i>⟲</i><div>Azzera l'asta<small>rimette tutti i giocatori liberi</small></div></button>
     </div>
+    <div style="text-align:center;font-size:10.5px;color:var(--dim-2);margin-top:12px">versione ${BUILD}${lite?" · grafica leggera":""}</div>
     <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
 }
 
@@ -2143,7 +2144,7 @@ function addTeam(name){
   if(!n) return;
   if(teams().some(t=>t.name.toLowerCase()===n.toLowerCase())){ toast("Nome già usato","bad"); return; }
   teams().push({id:"t"+(nextTeamId++), name:n});
-  saveCfg(); renderAll();
+  saveCfg(); renderAll(); save();
 }
 function removeTeam(id){
   CFG.teams = teams().filter(t=>t.id!==id);
@@ -2229,25 +2230,34 @@ function freePlayer(id){
 let rivalSort = "credit";
 let rivalOpen = {};
 function openRivals(){
-  if(!teams().length){
-    openSheet(`
-      <h3>Nessun avversario</h3>
-      <div class="note">Aggiungi i nomi delle altre squadre della tua lega: da lì in poi, ogni volta che tocchi ✕ su un giocatore potrai dire chi l'ha preso e a quanto, e qui vedrai crediti e spesa di tutti.</div>
-      <div class="sheet-actions">
-        <button class="btn-cancel" onclick="closeSheet()">Dopo</button>
-        <button class="btn-confirm" onclick="closeSheet();openSettings()">Aggiungili ora</button>
-      </div>`);
-    return;
-  }
+  if(!teams().length) teamsEditOpen = true;      // resta aperto anche dopo il primo nome
   $("rivalsOverlay").classList.remove("hidden");
   renderRivals();
+  if(!teams().length) setTimeout(()=>{ const el=$("newTeam"); if(el) el.focus(); }, 250);
 }
 function closeRivals(){ $("rivalsOverlay").classList.add("hidden"); }
 function setRivalSort(s){ rivalSort = s; renderRivals(); }
 function toggleRival(id){ rivalOpen[id] = !rivalOpen[id]; renderRivals(); }
 
+let teamsEditOpen = false;
+function toggleTeamsEdit(){ teamsEditOpen = !teamsEditOpen; renderRivals(); }
+
 function renderRivals(){
   document.querySelectorAll("#rivalsSort button").forEach(b=>b.classList.toggle("active", b.dataset.s===rivalSort));
+  const sortRow = $("rivalsSort"); if(sortRow) sortRow.hidden = !teams().length;
+
+  if(!teams().length){
+    $("rivalsSub").textContent = "nessuna squadra ancora";
+    $("rivalsBody").innerHTML = `
+      <div class="note" style="margin-bottom:16px;font-size:13.5px">
+        Scrivi qui sotto i nomi delle altre squadre della tua lega.<br><br>
+        Da quel momento, ogni volta che tocchi <b>✕</b> su un giocatore l'app ti chiede
+        <b>chi l'ha preso</b> e <b>a quanto</b>, e in questa schermata vedrai per ognuno
+        i crediti che gli restano, quanto può ancora offrire e in che reparto ha investito.
+      </div>
+      <div id="teamsBox">${teamsBoxHtml()}</div>`;
+    return;
+  }
   const unknown = PLAYERS.filter(p=>p.status==="taken" && !p.by);
   const rows = [{id:"me", name:"Tu", me:true}, ...teams()];
   const withStats = rows.map(t=>({...t, st: squadStats(t.id)}));
@@ -2287,10 +2297,13 @@ function renderRivals(){
       <button class="rv-toggle" onclick="toggleRival('${t.id}')">${open?"nascondi rosa ▴":"vedi la rosa ▾"}</button>
       ${list}
     </div>`;
-  }).join("") + (unknown.length ? `<div class="rv" style="--tc:var(--dim-2)">
+  }).join("")
+    + (unknown.length ? `<div class="rv" style="--tc:var(--dim-2)">
       <div class="rv-top"><div><div class="rv-name"><span class="dot"></span>Senza nome</div>
       <div class="rv-sub">${unknown.length} giocatori presi da qualcuno che non hai segnato</div></div>
-      <div class="rv-left">${sum(unknown.map(p=>p.paid||0))}<small>spesi</small></div></div></div>` : "");
+      <div class="rv-left">${sum(unknown.map(p=>p.paid||0))}<small>spesi</small></div></div></div>` : "")
+    + `<button class="rv-toggle" style="margin-top:6px" onclick="toggleTeamsEdit()">${teamsEditOpen?"chiudi ▴":"aggiungi o modifica squadre ▾"}</button>`
+    + (teamsEditOpen ? `<div id="teamsBox" style="margin-top:10px">${teamsBoxHtml()}</div>` : "");
 }
 
 function teamsBoxHtml(){
@@ -2306,7 +2319,15 @@ function teamsBoxHtml(){
       <button class="del" style="color:var(--accent)" onclick="addTeamFromInput()" aria-label="Aggiungi">＋</button>
     </div>`;
 }
-function refreshTeamsBox(){ const el=$("teamsBox"); if(el) el.innerHTML = teamsBoxHtml(); }
+function refreshTeamsBox(){
+  if(!$("rivalsOverlay").classList.contains("hidden")){
+    teamsEditOpen = true;
+    renderRivals();
+    const el = $("newTeam"); if(el) el.focus();
+    return;
+  }
+  const el = $("teamsBox"); if(el) el.innerHTML = teamsBoxHtml();
+}
 function addTeamFromInput(){
   const el = $("newTeam"); if(!el) return;
   addTeam(el.value);
@@ -2316,7 +2337,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "18/08 · 18:10";
+const BUILD = "18/08 · 18:55";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
