@@ -848,7 +848,7 @@ html[data-lite="1"] .pitch-bg::after{display:none!important;}
     </div>
     <div class="seg" id="rivalsSort">
       <button data-s="credit" onclick="setRivalSort('credit')">Crediti</button>
-      <button data-s="spent" onclick="setRivalSort('spent')">Spesa</button>
+      <button data-s="players" onclick="setRivalSort('players')">Rosa</button>
       <button data-s="name" onclick="setRivalSort('name')">Nome</button>
     </div>
   </div>
@@ -2264,7 +2264,7 @@ function renderRivals(){
   const sorted = withStats.slice().sort((a,b)=>{
     if(a.me) return -1; if(b.me) return 1;
     if(rivalSort==="name") return a.name.localeCompare(b.name);
-    if(rivalSort==="spent") return b.st.spent - a.st.spent;
+    if(rivalSort==="players") return b.st.n - a.st.n || a.st.left - b.st.left;
     return a.st.left - b.st.left;
   });
 
@@ -2337,7 +2337,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "18/08 · 18:55";
+const BUILD = "19/08 · 09:05";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
