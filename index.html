@@ -307,6 +307,7 @@ main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 au
 
 .c-fav{width:40px;flex-shrink:0;display:grid;place-items:center;font-size:21px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;}
 .c-fav:active{transform:scale(1.25);}
+.card{cursor:pointer;}
 .c-fav.on{color:var(--gold);}
 .c-body{flex:1;min-width:0;padding:12px 2px 12px 0;text-align:left;display:flex;flex-direction:column;gap:4px;}
 .p-name{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1217,10 +1218,10 @@ function cardHtml(p, stats, ms){
     const t = teamById(p.by);
     takenInfo = `<span class="hint">${t?`<b style="color:${teamColor(p.by)}">${esc(t.name)}</b>`:"preso da altri"}</span>`;
   }
-  return `<article class="card ${cls}" style="--rc:var(--r-${p.role})">
+  return `<article class="card ${cls}" style="--rc:var(--r-${p.role})" onclick="tapPlayer(${p.id})">
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
-    <button class="c-body" onclick="tapPlayer(${p.id})">
+    <button class="c-body">
       <span class="p-name">${esc(p.name)}${qbadges(qd)}</span>
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[p.role]}</span>
@@ -1232,10 +1233,6 @@ function cardHtml(p, stats, ms){
     </button>
     <div class="c-right">
       ${priceBlock}
-      <button class="act buy" onclick="openBid(${p.id},event)" aria-label="Preso da me">${p.status==="mine"?"✓":"$"}</button>
-      ${p.status==="mine"
-        ? `<button class="act out" onclick="releasePlayer(${p.id},event)" aria-label="Rimetti tra gli obiettivi">↩</button>`
-        : `<button class="act out" onclick="markTaken(${p.id},event)" aria-label="Preso da altri">${p.status==="taken"?"↺":"✕"}</button>`}
     </div>
   </article>`;
 }
@@ -1264,10 +1261,6 @@ function addThenBid(name, role, team, price){
   const p = addQuick(name, role, team, price);
   renderAll(); save(); openBid(p.id);
 }
-function addThenTaken(name, role, team, price){
-  const p = addQuick(name, role, team, price);
-  renderAll(); save(); markTaken(p.id);
-}
 function addThenFav(name, role, team, price){
   const p = addQuick(name, role, team, price);
   p.fav = true;
@@ -1279,9 +1272,9 @@ function otherRowHtml(L, ms){
   const T = JSON.stringify(L.t).replace(/"/g,"&quot;");
   const q = qinfo({name:L.n, team:L.t, role:L.r});
   const R = fairRec({name:L.n, team:L.t, role:L.r, price:L.q, status:"free"}, ms);
-  return `<article class="card" style="--rc:var(--r-${L.r})">
-    <button class="c-fav" onclick="addThenFav(${A},'${L.r}',${T},${L.q})" aria-label="Segna come obiettivo">★</button>
-    <button class="c-body" onclick="openQStats(${A},'${L.r}',${T},${L.q})">
+  return `<article class="card" style="--rc:var(--r-${L.r})" onclick="addThenBid(${A},'${L.r}',${T},${L.q})">
+    <button class="c-fav" onclick="event.stopPropagation();addThenFav(${A},'${L.r}',${T},${L.q})" aria-label="Segna come obiettivo">★</button>
+    <button class="c-body">
       <span class="p-name">${esc(L.n)}${qbadges(q)}</span>
       <span class="p-meta">
         <span class="pill role">${ROLE_SHORT[L.r]}</span>
@@ -1291,8 +1284,6 @@ function otherRowHtml(L, ms){
     </button>
     <div class="c-right">
       <div class="pricebox"><div class="price num">${R.rec}<small>valore</small></div></div>
-      <button class="act buy" onclick="addThenBid(${A},'${L.r}',${T},${L.q})" aria-label="Preso da me">$</button>
-      <button class="act out" onclick="addThenTaken(${A},'${L.r}',${T},${L.q})" aria-label="Preso da altri">✕</button>
     </div>
   </article>`;
 }
@@ -1371,23 +1362,9 @@ function toggleFav(id, ev){
   if(p.fixed){ p.fixed=false; p.fav=false; } else { p.fav = !p.fav; }
   buzz(8); renderList(); save();
 }
-function markTaken(id, ev){
-  if(ev) ev.stopPropagation();
-  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
-  if(p.status==="taken"){
-    pushHistory();
-    p.status="free"; p.by=null; p.paid=p.price;
-    buzz(10); renderAll(); save(); toast(`${p.name} rimesso in lista`);
-    return;
-  }
-  if(teams().length){ openAssign(id); return; }   // con gli avversari impostati chiedo chi e quanto
-  pushHistory();
-  p.status="taken"; p.paid=p.price;
-  buzz(10); renderAll(); save(); toast(`${p.name} → preso da altri`);
-}
 function tapPlayer(id){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
-  if(p.status==="taken" && teams().length) openAssign(id); else openBid(id);
+  openBid(id);
 }
 
 /* --- foglio offerta --- */
@@ -1492,17 +1469,20 @@ function openQStats(name, role, team, quota){
     </div>`);
 }
 
+let bidBuyer = "me";
 function openBid(id, ev){
   if(ev) ev.stopPropagation();
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
   bidPlayerId = id;
   const s = roleStats(p.role);
   const isEdit = p.status==="mine";
+  const isTaken = p.status==="taken";
   const bonus = isEdit ? p.paid : 0;
   const R = fairRec(p);
   const sug = R.rec;
-  const top = Math.max(1, maxBid() + bonus);           // tetto silenzioso: oltre non potresti riempire la rosa
-  const start = isEdit ? p.paid : Math.min(sug, top);
+  const top = Math.max(1, CFG.budget, isTaken ? (p.paid||0) : 0);  // la rotella copre anche i prezzi degli avversari; per me vale comunque il controllo crediti
+  const start = isEdit ? p.paid : (isTaken ? (p.paid || sug) : Math.min(sug, top));
+  bidBuyer = isEdit ? "me" : (isTaken ? (p.by || "x") : "me");
 
   openSheet(`
     <h3>${esc(p.name)}</h3>
@@ -1528,17 +1508,44 @@ function openBid(id, ev){
       </div>
     </div>
 
+    <div class="field" style="margin-top:12px;">
+      <label>Chi lo prende</label>
+      <div class="chips" id="buyerChips">
+        <button type="button" class="chip" data-b="me" onclick="pickBuyer('me')">Io</button>
+        ${teams().map(t=>`<button type="button" class="chip" data-b="${t.id}" onclick="pickBuyer('${t.id}')">${esc(t.name)}</button>`).join("")}
+        <button type="button" class="chip" data-b="x" onclick="pickBuyer('x')">${teams().length?"Altro":"Un altro"}</button>
+      </div>
+    </div>
+
     <div class="sheet-actions">
       ${isEdit
         ? `<button class="btn-cancel" onclick="releasePlayer(${id})">Non è più mio</button>`
-        : `<button class="btn-cancel" onclick="closeSheet()">Annulla</button>`}
-      <button class="btn-confirm" id="bidConfirm" onclick="confirmBid(${id})">${isEdit?"Aggiorna":"L'ho preso"}</button>
+        : isTaken
+          ? `<button class="btn-cancel" onclick="freePlayer(${id})">Rimettilo libero</button>`
+          : `<button class="btn-cancel" onclick="closeSheet()">Annulla</button>`}
+      <button class="btn-confirm" id="bidConfirm" onclick="confirmBid(${id})"></button>
     </div>
-    ${isEdit?'<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="closeSheet()">Chiudi</button>':""}
+    ${(isEdit||isTaken)?'<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="closeSheet()">Chiudi</button>':""}
     <button class="btn-wide" style="margin-top:9px;background:transparent;color:var(--dim-2);font-size:12.5px;font-weight:600;" onclick="askDelete(${id})">🗑 Togli dalla lista</button>
   `);
 
+  updBuyerUI(isEdit);
   initWheel(top, start, R.rec);
+}
+function pickBuyer(b){
+  bidBuyer = b; buzz(5);
+  const p = PLAYERS.find(x=>x.id===bidPlayerId);
+  updBuyerUI(p && p.status==="mine");
+}
+function updBuyerUI(isEdit){
+  document.querySelectorAll("#buyerChips .chip").forEach(c=>c.classList.toggle("sel", c.dataset.b===bidBuyer));
+  const btn = $("bidConfirm");
+  if(!btn) return;
+  if(bidBuyer==="me") btn.textContent = isEdit ? "Aggiorna" : "L'ho preso";
+  else{
+    const t = teamById(bidBuyer);
+    btn.textContent = t ? `→ ${t.name}` : "Preso da altri";
+  }
 }
 
 /* ---- rotella tipo sveglia iOS ---- */
@@ -1603,13 +1610,23 @@ function confirmBid(id){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
   const v = wheelVal;
   if(isNaN(v) || v < 0){ toast("Valore non valido","bad"); return; }
-  const editBonus = p.status==="mine" ? p.paid : 0;
-  if(v > creditsLeft() + editBonus){ toast("Crediti insufficienti","bad"); return; }
-  pushHistory();
-  const was = p.status;
-  p.paid = v; p.status = "mine";
-  closeSheet(); buzz(18); renderAll(); save();
-  toast(was==="mine" ? `${p.name}: ora ${v}` : `✓ ${p.name} è tuo per ${v}`, "good");
+  if(bidBuyer === "me"){
+    const editBonus = p.status==="mine" ? p.paid : 0;
+    if(v > creditsLeft() + editBonus){ toast("Crediti insufficienti","bad"); return; }
+    pushHistory();
+    const was = p.status;
+    p.paid = v; p.status = "mine"; p.by = null;
+    closeSheet(); buzz(18); renderAll(); save();
+    toast(was==="mine" ? `${p.name}: ora ${v}` : `✓ ${p.name} è tuo per ${v}`, "good");
+  } else {
+    pushHistory();
+    p.status = "taken";
+    p.by = bidBuyer==="x" ? null : bidBuyer;
+    p.paid = v;
+    closeSheet(); buzz(12); renderAll(); save();
+    const t = teamById(p.by);
+    toast(t ? `${p.name} → ${t.name} per ${v}` : `${p.name} preso da altri per ${v}`);
+  }
 }
 function releasePlayer(id, ev){
   if(ev) ev.stopPropagation();
@@ -2440,47 +2457,6 @@ function squadStats(id){
 }
 
 /* --- foglio "chi l'ha preso" --- */
-let assignId = null, assignTeam = null;
-function openAssign(id, ev){
-  if(ev) ev.stopPropagation();
-  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
-  assignId = id;
-  assignTeam = p.by || null;
-  const start = p.status==="taken" && p.paid ? p.paid : p.price;
-  openSheet(`
-    <h3>Chi ha preso ${esc(p.name)}?</h3>
-    <div class="sub">${ROLES[p.role]} · ${esc(p.team)} · il tuo tetto era <b style="color:var(--gold)">${p.price}</b></div>
-    <div class="chips" id="assignChips">
-      ${teams().map(t=>`<button type="button" class="chip ${t.id===assignTeam?"sel":""}" data-t="${t.id}" onclick="pickTeam('${t.id}')">${esc(t.name)}</button>`).join("")}
-      <button type="button" class="chip ${assignTeam===null?"sel":""}" data-t="" onclick="pickTeam(null)">Non lo so</button>
-    </div>
-    <div class="field" style="margin-top:14px">
-      <label>A quanto l'ha pagato</label>
-      <div class="wheel"><div class="wheel-band"></div><div class="wheel-scroll" id="wheelScroll"></div></div>
-    </div>
-    <div class="sheet-actions">
-      <button class="btn-cancel" onclick="closeSheet()">Annulla</button>
-      <button class="btn-confirm" onclick="confirmAssign()">Conferma</button>
-    </div>
-    ${p.status==="taken" ? `<button class="btn-wide btn-cancel" style="margin-top:9px" onclick="freePlayer(${id})">Rimettilo tra gli obiettivi</button>` : ""}
-  `);
-  initWheel(CFG.budget, start);
-}
-function pickTeam(t){
-  assignTeam = t;
-  document.querySelectorAll("#assignChips .chip").forEach(c=>c.classList.toggle("sel", (c.dataset.t||null) === (t||null) ? true : false));
-  buzz(5);
-}
-function confirmAssign(){
-  const p = PLAYERS.find(x=>x.id===assignId); if(!p) return;
-  pushHistory();
-  p.status = "taken";
-  p.by = assignTeam;
-  p.paid = wheelVal;
-  closeSheet(); buzz(12); renderAll(); save();
-  const t = teamById(assignTeam);
-  toast(t ? `${p.name} → ${t.name} per ${wheelVal}` : `${p.name} preso da altri per ${wheelVal}`);
-}
 function freePlayer(id){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
   pushHistory();
@@ -2601,7 +2577,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "19/08 · 17:05";
+const BUILD = "20/08 · 10:30";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
