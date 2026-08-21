@@ -380,7 +380,7 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 /* ============ TAB BAR FLOTTANTE ============ */
 .bottom-nav{
   position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:75;
-  display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h);
+  display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h);
   max-width:520px;margin:0 auto;
   background:var(--chrome-nav);
   border:.5px solid var(--stroke-2);border-radius:24px;
@@ -632,6 +632,12 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
   font-size:20px;font-weight:600;flex-shrink:0;display:grid;place-items:center;
 }
 .li.added{opacity:.42;}
+.li-del{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:var(--g-2);border:.5px solid var(--stroke);color:var(--danger-fg,#ff6b6b);
+  font-size:13px;box-shadow:var(--inner-hi);
+}
+.li-del:active{transform:scale(.88);}
 .li.added .li-add{background:var(--g-2);color:var(--accent);border:.5px solid var(--stroke);}
 
 #rosterOverlay .full-hdr h3{color:#64d2ff;}
@@ -998,9 +1004,6 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
   <button id="undoBtn" onclick="toggleUndoPop()" disabled>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h11a5 5 0 0 1 0 10h-3"/><path d="M8 5 4 9l4 4"/></svg>
     <span>Annulla</span></button>
-  <button id="navBrowse" onclick="navGo('browse')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-    <span>Listone</span></button>
   <button id="navRoster" onclick="navGo('roster')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M9 4 4.5 6.2 6 10l1.6-.6V20h8.8V9.4L18 10l1.5-3.8L15 4a3 3 0 0 1-6 0Z"/></svg>
     <span>La mia rosa</span></button>
@@ -1029,26 +1032,6 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
 
 <div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
 
-<div class="full hidden" id="browseOverlay">
-  <div class="full-hdr">
-    <div class="fh-top">
-      <div>
-        <h3>Listone ufficiale</h3>
-        <div class="fh-sub" id="browseSub">501 giocatori</div>
-      </div>
-      <button class="full-close" onclick="closeBrowse()" aria-label="Chiudi">✕</button>
-    </div>
-    <div class="seg roles" id="browseTabs" style="margin-bottom:8px;"></div>
-    <input class="search" id="browseSearch" type="search" placeholder="Nome o squadra…" autocomplete="off" style="margin-bottom:8px;">
-    <div class="seg" id="browseSort">
-      <button data-sort="q" onclick="setBrowseSort('q')">Quotazione</button>
-      <button data-sort="f" onclick="setBrowseSort('f')">Fantavalore</button>
-      <button data-sort="t" onclick="setBrowseSort('t')">Squadra</button>
-    </div>
-  </div>
-  <div class="full-body" id="browseList"></div>
-</div>
-
 <div class="full hidden" id="rosterOverlay">
   <div class="full-hdr">
     <div class="fh-top">
@@ -1070,6 +1053,9 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
   </div>
   <div class="full-body" id="rosterBody"></div>
 </div>
+
+<label id="hapticLab" for="hapticSw" aria-hidden="true" style="position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;"></label>
+<input id="hapticSw" type="checkbox" switch aria-hidden="true" tabindex="-1" style="position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;">
 
 <div id="undoPop" class="hidden">
   <button id="upBack" onclick="undo()" aria-label="Indietro">
@@ -1166,7 +1152,18 @@ const SORTS = {val:"Valore ↓", name:"Nome A-Z", team:"Squadra"};
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sum = a => a.reduce((x,y)=>x+y,0);
-function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+/* feedback aptico: vibrazione su Android, "tick" dell'interruttore su iPhone (iOS 17.4+) */
+let _lastHap = 0;
+function buzz(ms){
+  try{
+    if(navigator.vibrate){ navigator.vibrate(ms); return; }
+    const now = performance.now();
+    if(now - _lastHap < 28) return;          // non accodo tick durante lo scroll veloce
+    _lastHap = now;
+    const lab = $("hapticLab");
+    if(lab) lab.click();
+  }catch(e){}
+}
 
 let toastTimer;
 function toast(msg, kind){
@@ -1335,7 +1332,6 @@ window.addEventListener("resize", setHdrH);
 document.addEventListener("keydown", e=>{
   if(e.key!=="Escape") return;
   if(!$("overlay").classList.contains("hidden")) closeSheet();
-  else if(!$("browseOverlay").classList.contains("hidden")) closeBrowse();
   else if(!$("rosterOverlay").classList.contains("hidden")) closeRoster();
 });
 
@@ -1390,6 +1386,7 @@ function renderTabs(){
 }
 function setRole(r){ currentRole = r; buzz(6); renderTabs(); renderList(); }
 function cycleSort(){
+  buzz(5);
   const ks = Object.keys(SORTS);
   sortMode = ks[(ks.indexOf(sortMode)+1) % ks.length];
   $("sortBtn").textContent = SORTS[sortMode];
@@ -1865,7 +1862,7 @@ function setWheel(v, smooth){
   sc.scrollTo({top: v*WHEEL_H, behavior: smooth ? "smooth" : "auto"});
   paintWheel();
 }
-function setBid(v){ setWheel(v, true); }
+function setBid(v){ buzz(5); setWheel(v, true); }
 function onWheelScroll(){
   const sc = $("wheelScroll"); if(!sc) return;
   const v = Math.max(0, Math.min(wheelMax, Math.round(sc.scrollTop / WHEEL_H)));
@@ -2075,76 +2072,31 @@ function doDelete(id){
 }
 
 /* ================== LISTONE ================== */
-let browseRole = "D", browseSort = "q";
-function openBrowse(forceRole){
-  closeRoster(); closeRivals();
-  browseRole = forceRole || currentRole;
-  $("browseOverlay").classList.remove("hidden");
-  $("browseSearch").value = "";
-  renderBrowseTabs(); renderBrowseList(); updateNav();
-}
-function closeBrowse(){ $("browseOverlay").classList.add("hidden"); updateNav(); }
-
 /* --- nav persistente: passa da una schermata all'altra, ri-tap chiude --- */
-const NAV_MAP = { browse:"browseOverlay", roster:"rosterOverlay", rivals:"rivalsOverlay" };
+const NAV_MAP = { roster:"rosterOverlay", rivals:"rivalsOverlay" };
 function navGo(which){
+  buzz(5);
   const wasOpen = !$(NAV_MAP[which]).classList.contains("hidden");
-  closeBrowse(); closeRoster(); closeRivals();
+  closeRoster(); closeRivals();
   if(!wasOpen){
-    if(which==="browse") openBrowse();
-    else if(which==="roster") openRoster();
+    if(which==="roster") openRoster();
     else openRivals();
   }
   updateNav();
 }
 function updateNav(){
-  const ids = { navBrowse:"browseOverlay", navRoster:"rosterOverlay", navRivals:"rivalsOverlay" };
+  const ids = { navRoster:"rosterOverlay", navRivals:"rivalsOverlay" };
   for(const k in ids){
     const b = $(k); if(!b) continue;
     b.classList.toggle("on", !$(ids[k]).classList.contains("hidden"));
   }
-}
-function setBrowseRole(r){ browseRole = r; renderBrowseTabs(); renderBrowseList(); }
-function setBrowseSort(s){ browseSort = s; renderBrowseTabs(); renderBrowseList(); }
-function renderBrowseTabs(){
-  $("browseTabs").innerHTML = ROLE_KEYS.map(r=>
-    `<button class="${r===browseRole?"active":""}" style="--tc:var(--r-${r})" onclick="setBrowseRole('${r}')">${ROLE_SHORT[r]}</button>`
-  ).join("");
-  document.querySelectorAll("#browseSort button").forEach(b=>b.classList.toggle("active", b.dataset.sort===browseSort));
-}
-function renderBrowseList(){
-  const q = ($("browseSearch").value||"").trim().toLowerCase();
-  const known = new Set(PLAYERS.map(p=>p.name.toLowerCase()));
-  let items = q
-    ? LISTONE.filter(p=> p.n.toLowerCase().includes(q) || p.t.toLowerCase().includes(q))
-    : LISTONE.filter(p=> p.r===browseRole);
-
-  if(browseSort==="q") items = items.slice().sort((a,b)=>b.q-a.q);
-  else if(browseSort==="f") items = items.slice().sort((a,b)=>(b.f||0)-(a.f||0));
-  else items = items.slice().sort((a,b)=> a.t.localeCompare(b.t) || b.q-a.q);
-
-  $("browseSub").textContent = `${items.length} giocatori${q?" trovati":" · "+ROLES[browseRole].toLowerCase()}${QDATA?` · quote del ${fmtTime(Date.parse(QDATA.updated)).split(",")[0]}`:""}`;
-  const el = $("browseList");
-  if(!items.length){ el.innerHTML = `<div class="empty"><span class="big">🔍</span>Nessun risultato.</div>`; return; }
-
-  el.innerHTML = items.slice(0,300).map(p=>{
-    const has = known.has(p.n.toLowerCase());
-    return `<div class="li ${has?"added":""}" style="--rc:var(--r-${p.r})">
-      <div class="li-main" onclick="openQStats(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" style="cursor:pointer">
-        <div class="li-n">${esc(p.n)}${qbadges(qinfo({name:p.n,team:p.t,role:p.r}))}</div>
-        <div class="li-t">${ROLE_SHORT[p.r]} · ${esc(p.t)}${has?" · già in lista":""}</div>
-      </div>
-      <div class="li-v"><div class="q num">${p.q}</div><div class="f num">FVM ${fvmScaled(p.f)||"–"}</div></div>
-      <button class="li-add" ${has?"disabled":""} onclick="addFromListone(${JSON.stringify(p.n).replace(/"/g,"&quot;")},'${p.r}',${JSON.stringify(p.t).replace(/"/g,"&quot;")},${p.q})" aria-label="Aggiungi ${esc(p.n)}">${has?"✓":"＋"}</button>
-    </div>`;
-  }).join("") + (items.length>300?`<div class="ghost-row">…e altri ${items.length-300}. Usa la ricerca per restringere.</div>`:"");
 }
 function addFromListone(name, role, team, price){
   if(PLAYERS.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast("Già in lista"); return; }
   pushHistory();
   PLAYERS.push({id:nextId++, name, role, team, price, fixed:false, fav:false, status:"free", paid:price, added:true, hasTetto:false});
   currentRole = role;
-  buzz(10); renderAll(); renderBrowseList();
+  buzz(10); renderAll();
   if($("search").value.trim()) renderList();
   save();
   toast(`＋ ${name} aggiunto`, "good");
@@ -2152,10 +2104,17 @@ function addFromListone(name, role, team, price){
 
 /* ================== LA MIA ROSA ================== */
 let rosterView = "role";
-function openRoster(){ closeBrowse(); closeRivals(); $("rosterOverlay").classList.remove("hidden"); renderRoster(); updateNav(); }
+function openRoster(){ closeRivals(); $("rosterOverlay").classList.remove("hidden"); renderRoster(); updateNav(); }
 function closeRoster(){ $("rosterOverlay").classList.add("hidden"); updateNav(); }
 function setRosterView(v){ rosterView = v; renderRoster(); }
 
+function rosterRelease(id){
+  const p = PLAYERS.find(x=>x.id===id); if(!p) return;
+  pushHistory();
+  p.status = "free"; p.paid = p.price;
+  buzz(10); renderAll(); renderRoster(); save();
+  toast(`${p.name} rimesso tra gli obiettivi · crediti recuperati`, "good");
+}
 function renderRoster(){
   document.querySelectorAll("#rosterOverlay .seg button").forEach(b=>b.classList.toggle("active", b.dataset.view===rosterView));
   const mine = mineOf();
@@ -2173,6 +2132,7 @@ function renderRoster(){
       <div class="li" style="--rc:var(--r-${p.role})">
         <div class="li-main"><div class="li-n">${esc(p.name)}</div><div class="li-t">${ROLE_SHORT[p.role]} · ${esc(p.team)}</div></div>
         <div class="li-v"><div class="q num">${p.paid}</div></div>
+        <button class="li-del" onclick="rosterRelease(${p.id})" aria-label="Togli ${esc(p.name)} dalla rosa">✕</button>
       </div>`).join("");
     return;
   }
@@ -2192,6 +2152,7 @@ function renderRoster(){
       <div class="li" style="--rc:var(--r-${r})">
         <div class="li-main"><div class="li-n">${esc(p.name)}</div><div class="li-t">${esc(p.team)}</div></div>
         <div class="li-v"><div class="q num">${p.paid}</div></div>
+        <button class="li-del" onclick="rosterRelease(${p.id})" aria-label="Togli ${esc(p.name)} dalla rosa">✕</button>
       </div>`).join("");
     if(s.slotsLeft>0) out += `<div class="slots-free">${Array.from({length:s.slotsLeft},()=>"<span>libero</span>").join("")}</div>`;
     return out;
@@ -2695,7 +2656,6 @@ function renderRoster0(){
 }
 
 $("search").addEventListener("input", renderList);
-$("browseSearch").addEventListener("input", renderBrowseList);
 
 
 /* ================== QUOTE LIVE (fantacalcio.it) ================== */
@@ -2783,7 +2743,6 @@ async function refreshQuotes(manual){
     try{ localStorage.setItem(QKEY, JSON.stringify(d)); }catch(e){}
     const upd = applyQuotesToListone();
     renderAll();
-    if(!$("browseOverlay").classList.contains("hidden")) renderBrowseList();
     if(manual) toast(`Quote del ${fmtTime(Date.parse(d.updated))} · ${d.players.length} giocatori · ${upd} quotazioni riviste`, "good");
   }catch(e){
     if(manual) toast("Aggiornamento non riuscito (serve la connessione)", "bad");
@@ -2862,7 +2821,7 @@ function freePlayer(id){
 let rivalSort = "credit";
 let rivalOpen = {};
 function openRivals(){
-  closeBrowse(); closeRoster();
+  closeRoster();
   if(!teams().length) teamsEditOpen = true;      // resta aperto anche dopo il primo nome
   $("rivalsOverlay").classList.remove("hidden");
   renderRivals(); updateNav();
@@ -2970,7 +2929,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "20/08 · 20:35";
+const BUILD = "21/08 · 10:45";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
