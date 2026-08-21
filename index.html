@@ -1054,8 +1054,7 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
   <div class="full-body" id="rosterBody"></div>
 </div>
 
-<label id="hapticLab" for="hapticSw" aria-hidden="true" style="position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;"></label>
-<input id="hapticSw" type="checkbox" switch aria-hidden="true" tabindex="-1" style="position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;">
+<label id="hapticLab" aria-hidden="true" style="display:none"><input id="hapticSw" type="checkbox" switch tabindex="-1"></label>
 
 <div id="undoPop" class="hidden">
   <button id="upBack" onclick="undo()" aria-label="Indietro">
@@ -1163,6 +1162,12 @@ function buzz(ms){
     const lab = $("hapticLab");
     if(lab) lab.click();
   }catch(e){}
+}
+function testHaptic(){
+  buzz(20);
+  setTimeout(()=>{ _lastHap = 0; buzz(20); }, 180);
+  setTimeout(()=>{ _lastHap = 0; buzz(20); }, 360);
+  toast("Se non hai sentito 3 colpetti: iPhone con iOS 17.4+, e in Impostazioni → Suoni, \"Feedback aptico di sistema\" attivo");
 }
 
 let toastTimer;
@@ -2193,6 +2198,7 @@ function openMenu(){
     <div class="sub">Tutto quello che non serve durante l'asta.</div>
     <div class="menu-list">
       <button onclick="closeSheet();refreshQuotes(true)"><i>⟳</i><div>Aggiorna quote<small>${QDATA?`ultimo aggiornamento ${fmtTime(Date.parse(QDATA.updated))}`:"quote e statistiche da fantacalcio.it"}</small></div></button>
+      <button onclick="testHaptic()"><i>〰️</i><div>Prova vibrazione<small>tre colpetti di prova, se il telefono li supporta</small></div></button>
       <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">copie automatiche e recupero</small></div></button>
       <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
       <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
@@ -2929,7 +2935,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "21/08 · 10:45";
+const BUILD = "21/08 · 11:20";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
