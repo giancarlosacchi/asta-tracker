@@ -515,6 +515,10 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 .tpct.s{font-size:10px;font-weight:600;}
 .tpct.up{color:var(--accent);}
 .tpct.dn{color:var(--danger);}
+.stat-cell.better{border-color:rgba(48,209,88,.6);background:rgba(48,209,88,.07);}
+.stat-cell.better .v{color:var(--accent)!important;}
+.stat-cell.worse{border-color:rgba(255,95,87,.6);background:rgba(255,95,87,.07);}
+.stat-cell.worse .v{color:var(--danger)!important;}
 .sim-fav{
   width:30px;height:30px;margin:-4px 0 -4px -6px;flex-shrink:0;display:grid;place-items:center;
   font-size:17px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;
@@ -1353,9 +1357,10 @@ function openSimPlayer(name, role, team, price){
   const cur = bidPlayerId;
   const p = addQuick(name, role, team, price);
   renderAll(); save();
-  if(cur != null && cur !== p.id){
-    sheetStack.push(cur);
-    if(sheetStack.length > 6) sheetStack.shift();
+  if(sheetStack.length && sheetStack[0] === p.id){
+    sheetStack.length = 0;                    // sto riaprendo proprio il giocatore chiamato
+  } else if(cur != null && cur !== p.id && sheetStack.length === 0){
+    sheetStack.push(cur);                     // ricordo SOLO il giocatore chiamato all'asta
   }
   buzz(5);
   openBid(p.id);
@@ -1680,30 +1685,40 @@ function fairRec(p, msIn){
           alts:alts.slice(0,3).map(a=>a.n), altCount:alts.length, rich};
 }
 
-function statsHtml(p){
+function statNum(x){ const v = parseFloat(String(x??"").replace(",",".")); return isNaN(v) ? null : v; }
+function statsHtml(p, ref){
   const q = qinfo(p);
   if(!q) return "";
   const st = q.st;
+  const rf = ref && ref.st ? ref.st : null;    // statistiche del giocatore chiamato: base del confronto
   const isP = p.role === "P";
+  // cmp: verde se meglio del chiamato, rosso se peggio (higherBetter=false per amm/esp e gol subiti)
+  const cmp = (mine, theirs, higherBetter=true)=>{
+    if(!rf) return "";
+    const a = statNum(mine), b = statNum(theirs);
+    if(a==null || b==null || a===b) return "";
+    return (a>b)===higherBetter ? " better" : " worse";
+  };
   let cells = `
     <div class="stat-cell"><div class="k">Quota</div><div class="v" style="color:var(--gold)">${q.qa||"–"}</div></div>
     ${q.fvm?`<div class="stat-cell"><div class="k">FVM su ${CFG.budget}</div><div class="v">${fvmScaled(q.fvm)}</div></div>`:""}`;
   if(st){
     cells += `
-    <div class="stat-cell"><div class="k">Presenze</div><div class="v">${st.pg}</div></div>
-    <div class="stat-cell"><div class="k">Fantamedia</div><div class="v" style="color:var(--accent)">${st.fm}</div></div>
-    <div class="stat-cell"><div class="k">Media voto</div><div class="v">${st.mv}</div></div>
+    <div class="stat-cell${cmp(st.pg, rf&&rf.pg)}"><div class="k">Presenze</div><div class="v">${st.pg}</div></div>
+    <div class="stat-cell${cmp(st.fm, rf&&rf.fm)}"><div class="k">Fantamedia</div><div class="v" style="color:var(--accent)">${st.fm}</div></div>
+    <div class="stat-cell${cmp(st.mv, rf&&rf.mv)}"><div class="k">Media voto</div><div class="v">${st.mv}</div></div>
     ${isP
-      ? `<div class="stat-cell"><div class="k">Gol subiti</div><div class="v">${st.gs}</div></div>
-         <div class="stat-cell"><div class="k">Rig. parati</div><div class="v">${st.rp}</div></div>`
-      : `<div class="stat-cell"><div class="k">Gol</div><div class="v">${st.gol}</div></div>
-         <div class="stat-cell"><div class="k">Assist</div><div class="v">${st.ass}</div></div>`}
-    <div class="stat-cell"><div class="k">Amm / Esp</div><div class="v">${st.amm} / ${st.esp}</div></div>`;
+      ? `<div class="stat-cell${cmp(st.gs, rf&&rf.gs, false)}"><div class="k">Gol subiti</div><div class="v">${st.gs}</div></div>
+         <div class="stat-cell${cmp(st.rp, rf&&rf.rp)}"><div class="k">Rig. parati</div><div class="v">${st.rp}</div></div>`
+      : `<div class="stat-cell${cmp(st.gol, rf&&rf.gol)}"><div class="k">Gol</div><div class="v">${st.gol}</div></div>
+         <div class="stat-cell${cmp(st.ass, rf&&rf.ass)}"><div class="k">Assist</div><div class="v">${st.ass}</div></div>`}
+    <div class="stat-cell${cmp(st.amm, rf&&rf.amm, false)}"><div class="k">Amm / Esp</div><div class="v">${st.amm} / ${st.esp}</div></div>`;
     if(!isP && st.rr && st.rr !== "0 / 0") cells += `<div class="stat-cell"><div class="k">Rigori</div><div class="v">${st.rr}</div></div>`;
   }
   const flags = (q.rig?" · rigorista":"") + (q.cp?" · calci piazzati":"");
+  const vs = (rf && ref && ref.n) ? ` · verde/rosso rispetto a ${esc(ref.n)}` : "";
   const nota = st
-    ? `Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · listone Gazzetta${flags}`
+    ? `Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · listone Gazzetta${flags}${vs}`
     : `Statistiche della scorsa stagione non disponibili per questo giocatore · listone Gazzetta${flags}`;
   return `<div class="stat-grid">${cells}</div>
     <div class="stat-note">${nota}</div>`;
@@ -1811,7 +1826,7 @@ function openBid(id, ev){
       <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
       <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.mine.length}/${s.totalSlots}</div></div>
     </div>
-    ${statsHtml(p)}
+    ${statsHtml(p, sheetStack.length ? qinfo(PLAYERS.find(x=>x.id===sheetStack[0]) || {name:"",role:p.role}) : null)}
 
     <div class="field" style="margin-top:14px;">
       <label>Crediti pagati</label>
@@ -3033,7 +3048,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "24/08 · 16:30";
+const BUILD = "24/08 · 17:20";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
