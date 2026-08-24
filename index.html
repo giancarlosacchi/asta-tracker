@@ -1753,9 +1753,8 @@ function similarPlayers(p, R, ms){
     const rec = fairRec({name:c.n, team:c.t, role:p.role, price:c.q, status:"free"}, ms).rec;
     return {...c, rec, d:Math.abs(rec - R.rec), fav:favKeys.has(siteKey(c.n, c.t, p.role))};
   }).sort((a,b)=>a.d-b.d || b.rec-a.rec).slice(0, 10);
-  const band = Math.max(4, Math.round(R.rec*0.3));   // un obiettivo passa davanti solo se di valore davvero simile
-  const boost = c => (c.fav && c.d<=band) ? 0 : 1;
-  scored.sort((a,b)=>boost(a)-boost(b) || a.d-b.d || b.rec-a.rec);
+  // sempre ordinati dal valore piu' alto al piu' basso
+  scored.sort((a,b)=> b.rec - a.rec || (a.fav?0:1)-(b.fav?0:1) || String(a.n).localeCompare(String(b.n)));
   return scored;
 }
 function simRowsHtml(p, sims){
@@ -3048,7 +3047,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "24/08 · 17:20";
+const BUILD = "24/08 · 17:40";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
