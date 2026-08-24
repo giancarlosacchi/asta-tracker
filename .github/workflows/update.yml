@@ -10,10 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: pip install pdfplumber
       - run: python3 scrape.py
       - run: |
           git config user.name quote-bot
           git config user.email quote-bot@users.noreply.github.com
           git add quotes.json
-          git diff --cached --quiet || git commit -m "Aggiorna quote"
+          git diff --cached --quiet || git commit -m "Aggiorna listone Gazzetta"
           git push
