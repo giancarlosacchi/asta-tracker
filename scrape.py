@@ -62,15 +62,22 @@ if len(gaz) < 450 or rejected > 30:
     print(f'ERRORE: parse PDF sospetto ({len(gaz)} giocatori, {rejected} righe scartate)', file=sys.stderr); sys.exit(1)
 
 # ---------- 2) rigoristi/CP e statistiche da fantacalcio.it (facoltativi) ----------
-rig_names, cp_names, smap = set(), set(), {}
+rig_names, cp_names = set(), set()
 try:
     righ = get('https://www.fantacalcio.it/rigoristi-serie-a')
     cards = re.findall(r'class="card team-card"[\s\S]*?(?=class="card team-card"|<footer)', righ)
     for card in cards:
         lists = re.findall(r'<ol[^>]*pill-list[\s\S]*?</ol>', card)
         names = [[clean(a) for a in re.findall(r'<a[^>]*>([\s\S]*?)</a>', o)] for o in lists]
-        if len(names) > 0: rig_names.update(norm(n) for n in names[0])
-        if len(names) > 1: cp_names.update(norm(n) for n in names[1])
+        def _keys(lst):
+            out = set()
+            for n in lst:
+                out.add(norm(n))
+                k2 = norm(' '.join(t for t in n.split() if not re.fullmatch(r'[A-Z][a-z]?\.(?:[A-Z]\.)?', t)) or n)
+                out.add(k2)
+            return out
+        if len(names) > 0: rig_names.update(_keys(names[0]))
+        if len(names) > 1: cp_names.update(_keys(names[1]))
 except Exception as e:
     print('avviso: rigoristi non disponibili:', e, file=sys.stderr)
 
@@ -90,40 +97,53 @@ def num(x):
     try: return int(x)
     except: return 0
 
+def strip_init(name):
+    keep = [t for t in name.split() if not re.fullmatch(r'[A-Z][a-z]?\.(?:[A-Z]\.)?', t)]
+    return ' '.join(keep) if keep else name
+
+srows = []
 try:
     for c in parse_rows(get('https://www.fantacalcio.it/statistiche-serie-a/2025-26')):
         n = cell(c, 'player-name')
         if not n: continue
         sc = c.get('player-scoreds', ['0','0','0 / 0','0'])
-        smap[norm(n)] = {
+        srows.append((n, cell(c, 'player-team'), {
             'pg': num(cell(c, 'player-match-playeds')), 'mv': cell(c, 'player-grade-avg', 0, '0'),
             'fm': cell(c, 'player-fanta-grade-avg', 0, '0'),
             'gol': num(sc[0] if len(sc) > 0 else 0), 'gs': num(sc[1] if len(sc) > 1 else 0),
             'rr': sc[2] if len(sc) > 2 else '0 / 0', 'rp': num(sc[3] if len(sc) > 3 else 0),
             'ass': num(cell(c, 'player-assists')), 'amm': num(cell(c, 'player-yellows')),
             'esp': num(cell(c, 'player-reds')),
-        }
+        }))
 except Exception as e:
     print('avviso: statistiche non disponibili:', e, file=sys.stderr)
 
-# aggancio per nome (le iniziali tipo "N." di fantacalcio vengono ignorate nel confronto)
-def keys_of(name):
-    base = norm(name)
-    no_init = norm(' '.join(t for t in name.split() if not re.fullmatch(r'[A-Z][a-z]{0,1}\.(?:[A-Z]\.)?', t)))
-    return {base, no_init}
+smap_full, smap_strip = {}, {}
+for n, tm, st in srows:
+    smap_full.setdefault(norm(n), []).append((tm, st))
+    k2 = norm(strip_init(n))
+    if k2 != norm(n): smap_strip.setdefault(k2, []).append((tm, st))
 
-stat_idx = {}
-for k, v in smap.items(): stat_idx[k] = v
+def find_stat(gk, gteam):
+    gt = norm(gteam)
+    for m in (smap_full, smap_strip):
+        c = m.get(gk)
+        if c:
+            if len(c) == 1: return c[0][1]
+            hit = [x for x in c if norm(x[0]) and (gt.startswith(norm(x[0])[:3]) or norm(x[0]).startswith(gt[:3]))]
+            return (hit or c)[0][1]
+    if len(gk) >= 5:
+        for k, c in smap_full.items():
+            if k.startswith(gk) or gk.startswith(k): return c[0][1]
+    return None
 
 players = []
 for g in gaz:
     e = {'n': g['n'], 't': g['t'], 'r': g['r'], 'qi': g['q'], 'qa': g['q']}
     gk = norm(g['n'])
-    if gk in rig_names or any(rn.startswith(gk) or gk.startswith(rn) for rn in rig_names if len(gk) >= 5): e['rig'] = 1
-    if gk in cp_names or any(cn.startswith(gk) or gk.startswith(cn) for cn in cp_names if len(gk) >= 5): e['cp'] = 1
-    st = stat_idx.get(gk)
-    if not st and len(gk) >= 5:
-        st = next((v for k, v in stat_idx.items() if k.startswith(gk) or gk.startswith(k)), None)
+    if gk in rig_names: e['rig'] = 1
+    if gk in cp_names: e['cp'] = 1
+    st = find_stat(gk, g['t'])
     if st: e['st'] = st
     players.append(e)
 
