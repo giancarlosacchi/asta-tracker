@@ -1534,7 +1534,8 @@ function renderList(){
   const s = stats[currentRole];
 
   const mineKeys = new Set(items.map(p=>siteKey(p.name, p.team, p.role)));
-  const others = LISTONE.filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)));
+  const mineNames = new Set(items.map(p=>qnorm(p.name)));
+  const others = LISTONE.filter(L=>L.r===currentRole && !mineKeys.has(siteKey(L.n, L.t, L.r)) && !mineNames.has(qnorm(L.n)));
   const uni = [
     ...free.map(p=>({m:p, prio:(p.fixed||p.fav)?0:1, q:fairRec(p, MS).rec, n:p.name, t:p.team})),
     ...others.map(L=>({o:L, prio:1, q:fairRec({name:L.n,team:L.t,role:L.r,price:L.q,status:"free"}, MS).rec, n:L.n, t:L.t}))
@@ -1582,10 +1583,11 @@ function tapPlayer(id){
 
 function freePoolByRole(){
   const stByKey = {};
-  PLAYERS.forEach(p=>{ if(p.status!=="free") stByKey[siteKey(p.name,p.team,p.role)] = p.status; });
+  const stByName = {};
+  PLAYERS.forEach(p=>{ if(p.status!=="free"){ stByKey[siteKey(p.name,p.team,p.role)] = p.status; stByName[qnorm(p.name)+"|"+p.role] = p.status; } });
   const pool = {P:[],D:[],C:[],A:[]};
   LISTONE.forEach(L=>{
-    if(stByKey[siteKey(L.n,L.t,L.r)]) return;
+    if(stByKey[siteKey(L.n,L.t,L.r)] || stByName[qnorm(L.n)+"|"+L.r]) return;
     const v = fvmScaled(L.f) || L.q || 1;
     if(pool[L.r]) pool[L.r].push({n:L.n, t:L.t, v, q:L.q});
   });
@@ -2935,7 +2937,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "21/08 · 11:20";
+const BUILD = "21/08 · 12:00";
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
