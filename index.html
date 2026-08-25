@@ -88,7 +88,7 @@
 [hidden]{display:none!important;}
 html{-webkit-text-size-adjust:100%;}
 html,body{margin:0;padding:0;}
-html{height:100%;background:var(--bg-0);}
+html{height:100%;background:#12234f;}
 body{
   background:var(--bg-0);
   height:100%;height:var(--app-h,100%);
@@ -3239,13 +3239,23 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 12:45";
+const BUILD = "25/08 · 13:05";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
+const IS_STANDALONE = (navigator.standalone === true) ||
+  (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
 function fixAppH(){
   try{
     const vv = window.visualViewport;
-    const h = Math.round(vv ? vv.height + vv.offsetTop : window.innerHeight);
+    let h = Math.round(vv ? vv.height + vv.offsetTop : window.innerHeight);
+    if(IS_STANDALONE && window.screen){
+      // salvata sulla Home la finestra copre tutto lo schermo: uso l'altezza fisica,
+      // che iOS a volte dichiara piu' corta lasciando una banda vuota
+      const scr = matchMedia("(orientation: portrait)").matches
+        ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+      const kb = vv ? Math.max(0, Math.round((window.innerHeight||scr) - vv.height)) : 0;
+      if(kb < 60 && scr > h) h = scr;   // (se c'e' la tastiera aperta non forzo)
+    }
     if(h > 0) document.documentElement.style.setProperty("--app-h", h + "px");
   }catch(e){}
 }
