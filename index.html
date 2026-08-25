@@ -88,9 +88,10 @@
 [hidden]{display:none!important;}
 html{-webkit-text-size-adjust:100%;}
 html,body{margin:0;padding:0;}
+html{height:100%;background:var(--bg-0);}
 body{
   background:var(--bg-0);
-  height:100vh;height:100dvh;
+  height:100%;
   overflow:hidden;display:flex;flex-direction:column;
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
@@ -337,12 +338,13 @@ main{
 
 /* ============ TAB BAR FLOTTANTE ============ */
 .bottom-nav{
-  position:fixed;left:12px;right:12px;bottom:calc(var(--safe-b) + var(--nav-gap));z-index:75;
-  display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h);
-  max-width:520px;margin:0 auto;
+  position:fixed;left:0;right:0;bottom:0;z-index:75;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
   background:var(--chrome-nav);
-  border:.5px solid var(--stroke-2);border-radius:24px;
-  box-shadow:0 14px 40px -14px rgba(0,0,0,.75), var(--inner-hi);
+  border-top:.5px solid var(--stroke-2);border-radius:22px 22px 0 0;
+  box-shadow:0 -10px 34px -14px rgba(0,0,0,.5), var(--inner-hi);
   overflow:hidden;
 }
 .bottom-nav button{
@@ -3237,7 +3239,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 12:00";
+const BUILD = "25/08 · 12:20";
 
 /* ================== TUTORIAL PRIMO AVVIO ================== */
 const TOUR_KEY = "asta-tour-v1";
