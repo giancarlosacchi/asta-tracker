@@ -1824,7 +1824,7 @@ function openBid(id, ev){
     <div class="sheet-hrow">
       <button type="button" class="sheet-fav ${(p.fixed||p.fav)?"on":""}" aria-label="Segna come obiettivo" onclick="sheetFav(${id},this)">★</button>
       <h3>${esc(p.name)}${qbadges(qi)}</h3>
-      ${qi&&qi.fid?`<img class="sheet-pic" loading="lazy" alt="" src="https://content.fantacalcio.it/web/campioncini/20/medium/${qi.fid}.png" onerror="this.remove()">`:""}
+      ${qi&&qi.fid?`<img class="sheet-pic" alt="" src="https://content.fantacalcio.it/web/campioncini/20/medium/${qi.fid}.png" onerror="this.remove()">`:""}
       <button type="button" class="sheet-x" aria-label="Chiudi" onclick="closeSheet()">✕</button>
     </div>
     <div class="sub">${ROLES[p.role]} · ${esc(p.team)}${(qinfo(p)&&qinfo(p).qa)?` · quota ${qinfo(p).qa}`:""}</div>
@@ -3085,7 +3085,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 09:55";
+const BUILD = "25/08 · 10:10";
 
 /* ================== TUTORIAL PRIMO AVVIO ================== */
 const TOUR_KEY = "asta-tour-v1";
