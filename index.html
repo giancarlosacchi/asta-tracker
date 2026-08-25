@@ -418,6 +418,13 @@ html[data-theme="light"] .morph{background:rgba(247,252,248,.97);}
 .sheet .sub{font-size:12.5px;color:var(--dim);margin-bottom:15px;}
 .field{margin-bottom:13px;}
 .field label{display:block;font-size:11.5px;color:var(--dim-2);margin-bottom:7px;font-weight:500;}
+/* macro-finestre della scheda giocatore */
+.blk{
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:26px;
+  padding:14px 14px 16px;margin:12px 0 0;box-shadow:var(--inner-hi);
+}
+.blk > label{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.02em;text-transform:uppercase;margin-bottom:9px;}
+.field.blk{margin-bottom:0;}
 .field input,.field select,.field textarea{
   width:100%;padding:13px 14px;border-radius:18px;border:.5px solid var(--stroke);
   background:var(--input-bg);color:var(--text);font-size:16px;box-shadow:var(--inner-hi);
@@ -744,14 +751,14 @@ html[data-theme="light"] #rosterOverlay, html[data-theme="light"] #rivalsOverlay
 html[data-lite="1"] #tourTip{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg-2);}
 
 /* ============ VETRO SATINATO (texture visibile) ============ */
-.card,.money,.rb,.li,.search,.sort-btn,.icon-btn,.stat-cell,.act,.sheet,.bottom-nav,.toast,.sim-row,.bid-info>div,.menu-list button,.wheel,.field input,.btn-cancel{
+.card,.money,.rb,.li,.search,.sort-btn,.icon-btn,.stat-cell,.act,.sheet,.bottom-nav,.toast,.sim-row,.bid-info>div,.menu-list button,.wheel,.field input,.btn-cancel,.blk{
   background-image:var(--glass-tex),var(--glass-sheen);
   background-size:140px 140px,100% 100%;
 }
 html[data-lite="1"] .card,html[data-lite="1"] .money,html[data-lite="1"] .rb,html[data-lite="1"] .li,
 html[data-lite="1"] .search,html[data-lite="1"] .sort-btn,html[data-lite="1"] .icon-btn,
 html[data-lite="1"] .stat-cell,html[data-lite="1"] .act,html[data-lite="1"] .sheet,
-html[data-lite="1"] .bottom-nav,html[data-lite="1"] .toast,html[data-lite="1"] .sim-row,html[data-lite="1"] .bid-info>div,html[data-lite="1"] .menu-list button,html[data-lite="1"] .wheel,html[data-lite="1"] .field input,html[data-lite="1"] .btn-cancel{background-image:none!important;}
+html[data-lite="1"] .bottom-nav,html[data-lite="1"] .toast,html[data-lite="1"] .blk,html[data-lite="1"] .sim-row,html[data-lite="1"] .bid-info>div,html[data-lite="1"] .menu-list button,html[data-lite="1"] .wheel,html[data-lite="1"] .field input,html[data-lite="1"] .btn-cancel{background-image:none!important;}
 
 /* ============ TEMA GIORNO ============ */
 html[data-theme="light"]{
@@ -1900,13 +1907,16 @@ function openBid(id, ev){
     <div class="sub">${ROLES[p.role]} · ${esc(p.team)}${(qinfo(p)&&qinfo(p).qa)?` · quota ${qinfo(p).qa}`:""}</div>
     ${(t=>t?`<div class="trend-row">${sparkHtml(t,72,22)}<b class="tpct ${t.pct>0?"up":t.pct<0?"dn":""}">${t.pct>0?"+":""}${t.pct}%</b><small>quota, ultime 2 settimane</small></div>`:"")(trendOf(qinfo(p)))}
 
-    <div class="bid-info">
-      <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
-      <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.mine.length}/${s.totalSlots}</div></div>
+    <div class="blk">
+      <label>In asta</label>
+      <div class="bid-info" style="margin-top:0">
+        <div><div class="k">Residuo</div><div class="v num">${creditsLeft() + bonus}</div></div>
+        <div><div class="k">Slot ${ROLE_SHORT[p.role]}</div><div class="v num">${s.mine.length}/${s.totalSlots}</div></div>
+      </div>
+      ${statsHtml(p, sheetStack.length ? qinfo(PLAYERS.find(x=>x.id===sheetStack[0]) || {name:"",role:p.role}) : null)}
     </div>
-    ${statsHtml(p, sheetStack.length ? qinfo(PLAYERS.find(x=>x.id===sheetStack[0]) || {name:"",role:p.role}) : null)}
 
-    <div class="field" style="margin-top:14px;">
+    <div class="field blk" style="margin-top:12px;">
       <label>Crediti pagati</label>
       <div class="wheel-wrap">
         <div class="wheel">
@@ -1922,13 +1932,13 @@ function openBid(id, ev){
       </div>
     </div>
 
-    ${sims.length?`<div class="field" style="margin-top:12px;">
+    ${sims.length?`<div class="field blk" style="margin-top:12px;">
       <label>Giocatori simili</label>
       <div id="simList">${simRowsHtml(p, sims)}</div>
       ${sims.length>5?`<button type="button" class="btn-wide sim-more" id="simMore" onclick="expandSim()">Mostra altri ${sims.length-5}</button>`:""}
     </div>`:""}
 
-    <div class="field" style="margin-top:12px;">
+    <div class="field blk" style="margin-top:12px;">
       <label>Chi lo prende</label>
       <div class="chips" id="buyerChips">
         <button type="button" class="chip" data-b="me" onclick="pickBuyer('me')">Io</button>
@@ -3245,7 +3255,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 13:20";
+const BUILD = "25/08 · 13:40";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
