@@ -339,7 +339,7 @@ main{
 /* ============ TAB BAR FLOTTANTE ============ */
 .bottom-nav{
   position:fixed;left:0;right:0;top:calc(var(--app-h,100vh) - var(--nav-h) - var(--safe-b));z-index:75;
-  display:grid;grid-template-columns:repeat(3,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
   height:calc(var(--nav-h) + var(--safe-b));
   padding-bottom:var(--safe-b);
   background:var(--chrome-nav);
@@ -1059,6 +1059,9 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
 </main>
 
 <nav class="bottom-nav">
+  <button id="navHome" onclick="navGo('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>
+    <span>Home</span></button>
   <button id="undoBtn" onclick="toggleUndoPop()" disabled>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h11a5 5 0 0 1 0 10h-3"/><path d="M8 5 4 9l4 4"/></svg>
     <span>Annulla</span></button>
@@ -1077,7 +1080,6 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
         <h3>Avversari</h3>
         <div class="fh-sub" id="rivalsSub">—</div>
       </div>
-      <button class="full-close" onclick="closeRivals()" aria-label="Chiudi">✕</button>
     </div>
     <div class="seg" id="rivalsSort">
       <button data-s="credit" onclick="setRivalSort('credit')">Crediti</button>
@@ -1097,7 +1099,6 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
         <h3>La mia rosa</h3>
         <div class="fh-sub" id="rosterSub">0 giocatori</div>
       </div>
-      <button class="full-close" onclick="closeRoster()" aria-label="Chiudi">✕</button>
     </div>
     <div class="ros-stats">
       <div class="ros-stat"><div class="k">Speso</div><div class="v num" id="rosSpent">0</div></div>
@@ -2221,6 +2222,7 @@ function doDelete(id){
 const NAV_MAP = { roster:"rosterOverlay", rivals:"rivalsOverlay" };
 function navGo(which){
   buzz(5);
+  if(which === "home"){ closeRoster(); closeRivals(); updateNav(); return; }
   const wasOpen = !$(NAV_MAP[which]).classList.contains("hidden");
   closeRoster(); closeRivals();
   if(!wasOpen){
@@ -2231,10 +2233,14 @@ function navGo(which){
 }
 function updateNav(){
   const ids = { navRoster:"rosterOverlay", navRivals:"rivalsOverlay" };
+  let any = false;
   for(const k in ids){
     const b = $(k); if(!b) continue;
-    b.classList.toggle("on", !$(ids[k]).classList.contains("hidden"));
+    const on = !$(ids[k]).classList.contains("hidden");
+    if(on) any = true;
+    b.classList.toggle("on", on);
   }
+  const h = $("navHome"); if(h) h.classList.toggle("on", !any);
 }
 function addFromListone(name, role, team, price){
   if(PLAYERS.some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast("Già in lista"); return; }
@@ -3239,7 +3245,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 13:05";
+const BUILD = "25/08 · 13:20";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
@@ -3269,6 +3275,7 @@ if(window.visualViewport){
 }
 document.addEventListener("focusout", ()=>setTimeout(()=>{ window.scrollTo(0,0); fixAppH(); }, 80));
 setTimeout(fixAppH, 300); setTimeout(fixAppH, 1200);
+try{ updateNav(); }catch(e){}
 
 /* ================== TUTORIAL PRIMO AVVIO ================== */
 const TOUR_KEY = "asta-tour-v1";
