@@ -67,13 +67,17 @@
   --chrome-fullhdr:#0b2015;
   --scrim:rgba(0,0,0,.45);
   --tint-gold:rgba(255,209,96,.055);   --tint-gold-b:rgba(255,209,96,.22);
+  --star:#ffdf00;
+  /* texture del vetro satinato: puntinatura fine + riflesso morbido */
+  --glass-tex:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.22' intercept='0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --glass-sheen:linear-gradient(115deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,.05) 38%, rgba(255,255,255,.02) 62%, rgba(255,255,255,.18) 100%);
   --tint-mine:rgba(48,209,88,.11);     --tint-mine-b:rgba(48,209,88,.32);
   --al-d-bg:rgba(255,95,87,.13);  --al-d-br:rgba(255,95,87,.32);  --al-d-fg:#ffb4ae;
   --al-o-bg:rgba(48,209,88,.12);  --al-o-br:rgba(48,209,88,.3);   --al-o-fg:#96eeb2;
   --al-w-bg:rgba(255,159,10,.13); --al-w-br:rgba(255,159,10,.32); --al-w-fg:#ffd49a;
 
-  --radius:20px;
-  --radius-lg:26px;
+  --radius:32px;
+  --radius-lg:36px;
   --tap:44px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --nav-h:60px;
@@ -86,12 +90,12 @@ html{-webkit-text-size-adjust:100%;}
 html,body{margin:0;padding:0;}
 body{
   background:var(--bg-0);
-  min-height:100svh;
+  height:100vh;height:100dvh;
+  overflow:hidden;display:flex;flex-direction:column;
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
   font-size:15px;line-height:1.35;letter-spacing:-.01em;
   overscroll-behavior-y:none;
-  padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--nav-gap) + 26px);
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;-webkit-appearance:none;appearance:none;border-radius:0;}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -102,89 +106,34 @@ button{cursor:pointer;border:none;background:none;}
 :focus-visible{outline:2px solid rgba(48,209,88,.55);outline-offset:2px;}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
 
-/* ============ SFONDI SELEZIONABILI ============ */
-.pitch-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-.pitch-bg svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120%;height:100%;opacity:.62;display:none;color:var(--pitch-line);}
-
-/* 1 · Campo (predefinito) */
-html[data-bg="campo"] .pitch-bg, .sw[data-bg="campo"]{
+/* ============ SFONDO (sfumatura mesh con grana) ============ */
+.pitch-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
   background:
-    radial-gradient(120% 80% at 50% -10%, var(--glow-a), transparent 60%),
-    radial-gradient(100% 60% at 50% 110%, var(--glow-b), transparent 65%),
-    repeating-linear-gradient(97deg, var(--mow) 0 46px, rgba(0,0,0,0) 46px 92px),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, var(--bg-deep) 100%);
+    radial-gradient(58% 52% at 10% 8%, #ffd84f 0%, rgba(255,216,79,0) 62%),
+    radial-gradient(50% 46% at 42% 4%, #ff7a4d 0%, rgba(255,122,77,0) 60%),
+    radial-gradient(46% 42% at 60% 12%, #ff2e7a 0%, rgba(255,46,122,0) 58%),
+    radial-gradient(44% 44% at 66% 40%, #d024d6 0%, rgba(208,36,214,0) 58%),
+    radial-gradient(50% 46% at 96% 26%, #00b3ff 0%, rgba(0,179,255,0) 62%),
+    radial-gradient(46% 42% at 22% 72%, #0a8ad0 0%, rgba(10,138,208,0) 58%),
+    radial-gradient(64% 55% at 60% 105%, #12336e 0%, rgba(18,51,110,0) 72%),
+    linear-gradient(158deg, #f5bb3e 0%, #e8447f 34%, #4b46cf 62%, #12234f 100%);
 }
-html[data-bg="campo"] .pitch-bg::after{
-  content:"";position:absolute;left:50%;top:28%;
-  width:min(78vw,420px);aspect-ratio:1;transform:translate(-50%,-50%);
-  border:1px solid var(--pitch-line);border-radius:50%;
+.pitch-bg svg{display:none;}
+/* grana pellicola */
+.pitch-bg::after{
+  content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");background-size:220px 220px;
 }
-html[data-bg="campo"] .pitch-bg::before{
-  content:"";position:absolute;left:0;right:0;top:28%;height:1px;background:var(--pitch-line);
-}
-
-/* 2 · Dall'alto */
-html[data-bg="alto"] .pitch-bg, .sw[data-bg="alto"]{
-  background:
-    radial-gradient(130% 70% at 50% 0%, var(--glow-a), transparent 58%),
-    linear-gradient(175deg, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%);
-}
-html[data-bg="alto"] .pitch-bg svg{display:block;}
-
-/* 3 · Notturna */
-html[data-bg="notturna"] .pitch-bg, .sw[data-bg="notturna"]{
-  background:
-    radial-gradient(55% 42% at 10% -8%, var(--flood), transparent 62%),
-    radial-gradient(55% 42% at 90% -8%, var(--flood), transparent 62%),
-    radial-gradient(130% 100% at 50% 55%, rgba(0,0,0,0) 30%, var(--vig) 100%),
-    repeating-linear-gradient(97deg, var(--mow) 0 60px, rgba(0,0,0,0) 60px 120px),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-deep) 100%);
-}
-
-/* 4 · Erba */
-html[data-bg="erba"] .pitch-bg, .sw[data-bg="erba"]{
-  background:
-    repeating-linear-gradient(118deg, var(--grass-a) 0 14px, rgba(0,0,0,0) 14px 28px),
-    repeating-linear-gradient(118deg, var(--grass-b) 0 56px, rgba(0,0,0,0) 56px 112px),
-    radial-gradient(110% 70% at 50% 0%, var(--glow-a), transparent 62%),
-    linear-gradient(165deg, var(--bg-2), var(--bg-0));
-}
-
-/* 5 · Pulito */
-html[data-bg="pulito"] .pitch-bg, .sw[data-bg="pulito"]{
-  background:
-    radial-gradient(90% 55% at 50% 8%, var(--glow-a), transparent 70%),
-    linear-gradient(180deg, var(--bg-1), var(--bg-0) 70%, var(--bg-deep));
-}
-
-/* miniature nelle impostazioni */
-.sw-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px;}
-.sw-cell{display:flex;flex-direction:column;align-items:center;gap:5px;}
-.sw{
-  width:100%;aspect-ratio:9/16;border-radius:12px;border:1.5px solid var(--stroke);
-  background-size:cover;position:relative;overflow:hidden;box-shadow:var(--inner-hi);
-  transition:border-color .2s,transform .14s;
-}
-.sw:active{transform:scale(.94);}
-.sw-cell.on .sw{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent);}
-.sw[data-bg="campo"]::before{content:"";position:absolute;left:0;right:0;top:38%;height:1px;background:var(--sw-line);}
-.sw[data-bg="campo"]::after{content:"";position:absolute;left:50%;top:38%;width:62%;aspect-ratio:1;transform:translate(-50%,-50%);border:1px solid var(--sw-line);border-radius:50%;}
-.sw[data-bg="alto"]::before{content:"";position:absolute;inset:9% 12%;border:1px solid var(--sw-line);}
-.sw[data-bg="alto"]::after{
-  content:"";position:absolute;left:50%;top:50%;width:38%;aspect-ratio:1;transform:translate(-50%,-50%);
-  border:1px solid var(--sw-line);border-radius:50%;
-  box-shadow:0 -1px 0 0 var(--sw-line), 0 0 0 0 transparent;
-}
-.sw[data-bg="alto"] .mid{position:absolute;left:12%;right:12%;top:50%;height:1px;background:var(--sw-line);}
-.sw-cell .lbl{font-size:9.5px;color:var(--dim-2);white-space:nowrap;}
-.sw-cell.on .lbl{color:var(--accent);font-weight:700;}
+/* velo leggero per tenere leggibili le carte */
+.pitch-bg::before{content:"";position:absolute;inset:0;background:rgba(5,12,10,.22);}
+html[data-theme="light"] .pitch-bg::before{background:rgba(255,255,255,.16);}
 
 /* ============ HEADER ============ */
 header{
-  position:sticky;top:0;z-index:30;
-  padding:calc(8px + env(safe-area-inset-top,0px)) 14px 0;
-  background:linear-gradient(180deg, var(--chrome-a), var(--chrome-b));
-  border-bottom:.5px solid var(--stroke);
+  flex-shrink:0;z-index:30;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 14px 10px;
+  background:transparent;
 }
 .hdr-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:36px;}
 .hdr-right{display:flex;align-items:center;gap:7px;}
@@ -198,6 +147,7 @@ header{
   width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
   background:var(--g-1);border:.5px solid var(--stroke);color:var(--dim);font-size:16px;
   box-shadow:var(--inner-hi);
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
 }
 .icon-btn:active{background:var(--g-3);}
 .icon-btn svg{width:17px;height:17px;}
@@ -208,9 +158,10 @@ html[data-theme="light"] #themeBtn .ic-moon{display:none;}
 /* --- crediti --- */
 .money{
   display:grid;grid-template-columns:1fr 1fr;
-  margin-top:6px;padding:12px 6px 11px;
+  margin-top:6px;padding:12px 12px 11px;
   background:var(--g-1);border:.5px solid var(--stroke);border-radius:var(--radius);
   box-shadow:var(--inner-hi);
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
 }
 .money-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;position:relative;}
 .money-cell+.money-cell::before{content:"";position:absolute;left:0;top:12%;bottom:12%;width:.5px;background:var(--stroke);}
@@ -228,11 +179,12 @@ html[data-theme="light"] #themeBtn .ic-moon{display:none;}
 
 .role-budgets{
   display:grid;grid-template-columns:repeat(4,1fr);gap:7px;
-  margin:8px 0 10px;
+  margin:8px 0 0;
 }
 .rb{
-  background:var(--g-1);border:.5px solid var(--stroke);border-radius:15px;padding:9px 6px;text-align:center;
+  background:var(--g-1);border:.5px solid var(--stroke);border-radius:22px;padding:9px 6px;text-align:center;
   box-shadow:var(--inner-hi);cursor:pointer;
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
   transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,opacity .22s ease;
 }
 .rb.active{background:var(--g-3);border-color:var(--rc);box-shadow:0 2px 10px -3px rgba(0,0,0,.5), var(--inner-hi);}
@@ -266,29 +218,35 @@ html[data-theme="light"] #themeBtn .ic-moon{display:none;}
 .tab.is-done{opacity:.5;}
 
 /* ============ MAIN ============ */
-main{position:relative;z-index:1;padding:12px 12px 0;max-width:640px;margin:0 auto;}
+main{
+  position:relative;z-index:1;flex:1;min-height:0;
+  display:flex;flex-direction:column;
+  width:100%;max-width:640px;margin:0 auto;padding:0 12px;
+}
 .tools{
-  display:flex;gap:8px;
-  position:sticky;top:calc(var(--hdr-h,150px) - 2px);z-index:20;
-  margin:-2px -12px 12px;padding:10px 12px 10px;
-  background:var(--chrome-b);
-  border-bottom:.5px solid var(--stroke);
+  display:flex;gap:8px;flex-shrink:0;
+  margin:0 0 0;padding:10px 0 10px;
+  background:transparent;
 }
-@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  .tools{background:var(--chrome-b);}
+#list{
+  flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  margin:0 -12px;padding:4px 12px calc(var(--nav-h) + var(--nav-gap) + var(--safe-b) + 26px);
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 12px);
+  mask-image:linear-gradient(to bottom, transparent 0, #000 12px);
 }
-html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--chrome-b);}
 .search{
-  flex:1;min-width:0;padding:12px 14px;border-radius:15px;font-size:16px;
+  flex:1;min-width:0;padding:12px 18px;border-radius:24px;font-size:16px;
   border:.5px solid var(--stroke);background:var(--g-1);color:var(--text);
   box-shadow:var(--inner-hi);
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
 }
 .search::placeholder{color:var(--dim-2);}
 .search:focus{border-color:rgba(48,209,88,.5);background:var(--g-2);}
 .sort-btn{
-  flex-shrink:0;padding:0 14px;border-radius:15px;border:.5px solid var(--stroke);
+  flex-shrink:0;padding:0 14px;border-radius:24px;border:.5px solid var(--stroke);
   background:var(--g-1);color:var(--dim);font-size:12px;font-weight:600;white-space:nowrap;
   box-shadow:var(--inner-hi);
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
 }
 
 .warn-bar{
@@ -309,18 +267,18 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
   position:relative;display:flex;align-items:stretch;gap:6px;
   background:var(--g-1);border:.5px solid var(--stroke);border-radius:var(--radius);
   margin-bottom:8px;overflow:hidden;box-shadow:var(--inner-hi);
+  backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);
   transition:background .2s,border-color .2s,opacity .2s,transform .14s;
 }
 .card:active{transform:scale(.985);}
-.card.fixed{background:var(--tint-gold);border-color:var(--tint-gold-b);}
 .card.mine{background:var(--tint-mine);border-color:var(--tint-mine-b);}
 .card.taken{opacity:.4;}
 .card.taken .p-name{text-decoration:line-through;text-decoration-color:var(--dim-2);}
 
-.c-fav{width:40px;flex-shrink:0;display:grid;place-items:center;font-size:21px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;}
+.c-fav{width:48px;flex-shrink:0;display:grid;place-items:center;font-size:21px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;}
 .c-fav:active{transform:scale(1.25);}
 .card{cursor:pointer;}
-.c-fav.on{color:var(--gold);}
+.c-fav.on{color:var(--star);text-shadow:0 1px 10px rgba(255,223,0,.55), 0 0 1px rgba(140,100,0,.5);}
 .c-body{flex:1;min-width:0;padding:12px 2px 12px 0;text-align:left;display:flex;flex-direction:column;gap:4px;}
 .p-name{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .p-meta{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -349,7 +307,7 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 .hint b{color:var(--gold);font-weight:600;}
 .hint.warn,.hint.warn b{color:var(--warn);font-weight:500;}
 
-.c-right{display:flex;align-items:center;gap:7px;padding:7px 9px 7px 0;flex-shrink:0;}
+.c-right{display:flex;align-items:center;gap:7px;padding:7px 28px 7px 0;flex-shrink:0;}
 .pricebox{min-width:46px;text-align:right;}
 .price{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:-.03em;line-height:1.05;}
 .price small{display:block;font-size:9px;font-weight:500;color:var(--dim-2);letter-spacing:.02em;}
@@ -524,15 +482,22 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
   font-size:17px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;
 }
 .sim-fav:active{transform:scale(1.25);}
-.sim-fav.on{color:var(--gold);}
+.sim-fav.on{color:var(--star);text-shadow:0 1px 8px rgba(255,223,0,.55), 0 0 1px rgba(140,100,0,.5);}
 .sheet-hrow{display:flex;align-items:center;gap:2px;}
 .sheet-hrow h3{margin:0;min-width:0;}
+.sheet-pic{
+  height:58px;width:auto;flex-shrink:0;margin-left:auto;margin-right:2px;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));
+  animation:picIn .35s cubic-bezier(.22,1,.32,1);
+}
+@keyframes picIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.sheet-pic + .sheet-x{margin-left:8px;}
 .sheet-fav{
   width:36px;height:36px;margin-left:-8px;flex-shrink:0;display:grid;place-items:center;
   font-size:21px;line-height:1;color:var(--dim-3);transition:transform .16s,color .2s;
 }
 .sheet-fav:active{transform:scale(1.22);}
-.sheet-fav.on{color:var(--gold);}
+.sheet-fav.on{color:var(--star);text-shadow:0 1px 10px rgba(255,223,0,.55), 0 0 1px rgba(140,100,0,.5);}
 .sheet-x{
   margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:50%;
   background:var(--g-2);border:.5px solid var(--stroke);color:var(--dim);
@@ -613,9 +578,11 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 #browseOverlay, #rosterOverlay, #rivalsOverlay{
   position:fixed;inset:0;height:100svh;z-index:70;display:flex;flex-direction:column;
   overscroll-behavior:contain;
-  background:linear-gradient(175deg, var(--chrome-full-a), var(--chrome-full-b));
+  background:rgba(6,14,11,.46);
+  backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);
   animation:fullIn .3s cubic-bezier(.22,1,.32,1);
 }
+html[data-theme="light"] #rosterOverlay, html[data-theme="light"] #rivalsOverlay{background:rgba(250,253,250,.42);}
 @keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
 #browseOverlay::before, #rosterOverlay::before, #rivalsOverlay::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
@@ -624,8 +591,7 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 #browseOverlay>*, #rosterOverlay>*, #rivalsOverlay>*{position:relative;z-index:1;}
 .full-hdr{
   padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;
-  border-bottom:.5px solid var(--stroke);
-  background:var(--chrome-fullhdr);
+  background:transparent;
 }
 .full-hdr .fh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .full-hdr h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.035em;}
@@ -641,8 +607,8 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 .seg.roles button.active{color:var(--tc);}
 
 .li{
-  display:flex;align-items:center;gap:8px;padding:12px 13px 12px 6px;margin-bottom:7px;
-  border-radius:18px;border:.5px solid var(--stroke);background:var(--g-1);box-shadow:var(--inner-hi);
+  display:flex;align-items:center;gap:8px;padding:12px 17px 12px 10px;margin-bottom:7px;
+  border-radius:26px;border:.5px solid var(--stroke);background:var(--g-1);box-shadow:var(--inner-hi);
 }
 .li .li-main{flex:1;min-width:0;}
 .li .li-n{font-size:15px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -719,12 +685,49 @@ html[data-lite="1"] .tools{backdrop-filter:none;-webkit-backdrop-filter:none;bac
 .toast.bad{border-color:rgba(255,95,87,.4);}
 
 
+/* ============ TUTORIAL PRIMO AVVIO ============ */
+#tour{position:fixed;inset:0;z-index:120;pointer-events:none;}
+#tourHole{
+  position:fixed;border-radius:28px;
+  box-shadow:0 0 0 4000px rgba(3,9,7,.62), 0 0 0 2.5px rgba(255,255,255,.9), 0 0 26px rgba(255,255,255,.4);
+  transition:left .4s cubic-bezier(.22,1,.32,1), top .4s cubic-bezier(.22,1,.32,1),
+             width .4s cubic-bezier(.22,1,.32,1), height .4s cubic-bezier(.22,1,.32,1);
+}
+#tourTip{
+  position:fixed;pointer-events:auto;
+  background:var(--chrome-toast);color:var(--text);
+  backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);
+  border:.5px solid var(--stroke-2);border-radius:22px;padding:14px 16px 12px;
+  box-shadow:0 18px 50px -14px rgba(0,0,0,.7), var(--inner-hi);
+  font-size:14px;line-height:1.5;
+  animation:tipIn .35s cubic-bezier(.22,1,.32,1);
+}
+@keyframes tipIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#tourTip .tt-x{font-size:10.5px;font-weight:700;color:var(--dim-2);letter-spacing:.04em;margin-bottom:4px;}
+#tourTip .tt-t b{font-weight:700;}
+#tourTip .tt-btns{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;}
+#tourTip .tt-skip{color:var(--dim-2);font-size:12.5px;font-weight:600;padding:6px 2px;}
+#tourTip .tt-go{background:var(--accent);color:var(--on-accent);font-weight:700;font-size:13.5px;padding:9px 20px;border-radius:999px;}
+#tourTip .tt-go:active{transform:scale(.95);}
+#tourTip .tt-hint{font-size:11.5px;color:var(--dim);font-weight:600;}
+html[data-lite="1"] #tourTip{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg-2);}
+
+/* ============ VETRO SATINATO (texture visibile) ============ */
+.card,.money,.rb,.li,.search,.sort-btn,.icon-btn,.stat-cell,.act,.sheet,.bottom-nav,.toast{
+  background-image:var(--glass-tex),var(--glass-sheen);
+  background-size:140px 140px,100% 100%;
+}
+html[data-lite="1"] .card,html[data-lite="1"] .money,html[data-lite="1"] .rb,html[data-lite="1"] .li,
+html[data-lite="1"] .search,html[data-lite="1"] .sort-btn,html[data-lite="1"] .icon-btn,
+html[data-lite="1"] .stat-cell,html[data-lite="1"] .act,html[data-lite="1"] .sheet,
+html[data-lite="1"] .bottom-nav,html[data-lite="1"] .toast{background-image:none!important;}
+
 /* ============ TEMA GIORNO ============ */
 html[data-theme="light"]{
   --bg-0:#f2f7f2; --bg-1:#e6f0e7; --bg-2:#dcebde;
 
-  --g-1:rgba(255,255,255,.66);
-  --g-2:rgba(255,255,255,.85);
+  --g-1:rgba(255,255,255,.74);
+  --g-2:rgba(255,255,255,.88);
   --g-3:rgba(255,255,255,1);
   --stroke:rgba(12,40,25,.11);
   --stroke-2:rgba(12,40,25,.2);
@@ -783,7 +786,6 @@ html[data-theme="light"] .toast{box-shadow:0 12px 34px -14px rgba(12,40,25,.5), 
 html[data-theme="light"] #rosterOverlay .full-hdr h3{color:#0d7ea8;}
 html[data-theme="light"] .card.taken{opacity:.5;}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  html[data-theme="light"] #browseOverlay, html[data-theme="light"] #rosterOverlay, html[data-theme="light"] #rivalsOverlay{background:linear-gradient(175deg,#eef7ef,#e4f0e6);}
   html[data-theme="light"] .bottom-nav,
   html[data-theme="light"] header,
   html[data-theme="light"] .full-hdr{background:rgba(250,253,250,.97);}
@@ -865,7 +867,7 @@ html[data-lite="1"] .tab.active,
 html[data-lite="1"] .seg button.active{box-shadow:none!important;}
 html[data-lite="1"] .wheel-scroll{perspective:none!important;}
 html[data-lite="1"] .wheel-item{transform:none!important;}
-html[data-lite="1"] .pitch-bg{background:linear-gradient(180deg,var(--bg-1),var(--bg-0))!important;}
+html[data-lite="1"] .pitch-bg{background:linear-gradient(158deg,#d9a83c 0%,#cf3f74 34%,#4442b5 62%,#122148 100%)!important;}
 html[data-lite="1"] .pitch-bg svg{display:none!important;}
 html[data-lite="1"] .pitch-bg::before,
 html[data-lite="1"] .pitch-bg::after{display:none!important;}
@@ -1079,6 +1081,11 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
 </div>
 
 <label id="hapticLab" aria-hidden="true" style="display:none"><input id="hapticSw" type="checkbox" switch tabindex="-1"></label>
+
+<div id="tour" hidden>
+  <div id="tourHole"></div>
+  <div id="tourTip"></div>
+</div>
 
 <div id="undoPop" class="hidden">
   <button id="upBack" onclick="undo()" aria-label="Indietro">
@@ -1434,7 +1441,7 @@ function renderTabs(){
     el.setAttribute("aria-selected", on ? "true" : "false");
   });
 }
-function setRole(r){ currentRole = r; buzz(6); renderTabs(); renderList(); }
+function setRole(r){ currentRole = r; buzz(6); renderTabs(); renderList(); const L=$("list"); if(L) L.scrollTop=0; }
 function cycleSort(){
   buzz(5);
   const ks = Object.keys(SORTS);
@@ -1810,12 +1817,14 @@ function openBid(id, ev){
   const top = Math.max(1, CFG.budget, isTaken ? (p.paid||0) : 0);  // la rotella copre anche i prezzi degli avversari; per me vale comunque il controllo crediti
   const start = isEdit ? p.paid : (isTaken ? (p.paid || sug) : Math.min(sug, top));
   bidBuyer = isTaken ? "other" : "me";
+  const qi = qinfo(p);
 
   openSheet(`
     ${sheetStack.length?(bk=>bk?`<button type="button" class="back-pill" onclick="sheetGoBack()">‹ Torna a ${esc(bk.name)}</button>`:"")(PLAYERS.find(x=>x.id===sheetStack[sheetStack.length-1])):""}
     <div class="sheet-hrow">
       <button type="button" class="sheet-fav ${(p.fixed||p.fav)?"on":""}" aria-label="Segna come obiettivo" onclick="sheetFav(${id},this)">★</button>
-      <h3>${esc(p.name)}${qbadges(qinfo(p))}</h3>
+      <h3>${esc(p.name)}${qbadges(qi)}</h3>
+      ${qi&&qi.fid?`<img class="sheet-pic" loading="lazy" alt="" src="https://content.fantacalcio.it/web/campioncini/20/medium/${qi.fid}.png" onerror="this.remove()">`:""}
       <button type="button" class="sheet-x" aria-label="Chiudi" onclick="closeSheet()">✕</button>
     </div>
     <div class="sub">${ROLES[p.role]} · ${esc(p.team)}${(qinfo(p)&&qinfo(p).qa)?` · quota ${qinfo(p).qa}`:""}</div>
@@ -2260,12 +2269,9 @@ function openMenu(){
     <div class="sub">Tutto quello che non serve durante l'asta.</div>
     <div class="menu-list">
       <button onclick="closeSheet();refreshQuotes(true)"><i>⟳</i><div>Aggiorna quote<small>${QDATA?`ultimo aggiornamento ${fmtTime(Date.parse(QDATA.updated))}`:"listone Gazzetta Fantacampionato"}</small></div></button>
-      <button onclick="testHaptic()"><i>〰️</i><div>Prova vibrazione<small>tre colpetti di prova, se il telefono li supporta</small></div></button>
-      <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">copie automatiche e recupero</small></div></button>
-      <button onclick="openBackup()"><i>⧉</i><div>Salva / Ripristina<small>codice di backup da incollare altrove</small></div></button>
-      <button onclick="exportFile()"><i>↧</i><div>Esporta file<small>scarica un .json con tutto lo stato</small></div></button>
-      <button onclick="importFile()"><i>↥</i><div>Importa file<small>ricarica un backup salvato</small></div></button>
+      <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">salvataggi, backup e recupero</small></div></button>
       <button onclick="openSettings()"><i>⚙</i><div>Impostazioni<small>budget ${CFG.budget} · ${totalSlots()} slot · riserva ${CFG.reserve}</small></div></button>
+      <button onclick="closeSheet();setTimeout(()=>startTour(true),350)"><i>🎓</i><div>Tutorial<small>rivedi la guida rapida passo passo</small></div></button>
       <button onclick="toggleWake()"><i>☀</i><div>Schermo sempre acceso<small>utile durante l'asta</small></div><span class="switch ${wakeOn?"on":""}">${wakeOn?"ON":"OFF"}</span></button>
       <button class="danger" onclick="askReset()"><i>⟲</i><div>Azzera l'asta<small>rimette tutti i giocatori liberi</small></div></button>
     </div>
@@ -2296,6 +2302,7 @@ function openSafety(){
     <div class="bid-info">
       <div><div class="k">Memoria telefono</div><div class="v" style="font-size:15px;color:${storageOK?'var(--accent)':'var(--danger)'}">${storageOK?'attiva':'BLOCCATA'}</div></div>
       <div><div class="k">Database browser</div><div class="v" style="font-size:15px;color:${idbOK?'var(--accent)':'var(--dim-2)'}">${idbOK?'attivo':'—'}</div></div>
+      <div><div class="k">Anti-pulizia</div><div class="v" style="font-size:15px;color:${persistOK?'var(--accent)':'var(--dim-2)'}">${persistOK?'attiva':'—'}</div></div>
     </div>
     <div class="note" style="margin-top:10px">
       Versione app: <b>${BUILD}</b>${lite?' · grafica leggera':''}<br>
@@ -2305,6 +2312,10 @@ function openSafety(){
 
     <button class="btn-wide btn-confirm" style="margin-top:14px" onclick="exportFile()">⬇︎ Scarica il file di backup</button>
     <div class="note" style="margin-top:8px;font-size:11.5px">Fallo una volta prima dell'asta e una a metà: è la copia che sopravvive anche se perdi il telefono.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="btn-wide btn-cancel" style="margin:0" onclick="importFile()">↥ Importa file</button>
+      <button class="btn-wide btn-cancel" style="margin:0" onclick="openBackup()">⧉ Codice di backup</button>
+    </div>
 
     <div style="font-size:11.5px;color:var(--dim-2);font-weight:600;margin:16px 0 8px">ISTANTANEE AUTOMATICHE (ultime ${MAX_SNAPS})</div>
     ${rows}
@@ -2418,19 +2429,12 @@ function openSettings(){
   const f = (k,l,v,extra="") => `<div class="field"><label>${l}</label><input type="number" inputmode="numeric" id="${k}" value="${v}" ${extra}></div>`;
   openSheet(`
     <h3>Impostazioni</h3>
-    <div class="sub">Aspetto dell'app e regole della tua asta.</div>
-
-    <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:2px 0 9px">Sfondo</div>
-    ${bgPickerHtml()}
-    <div class="note" style="font-size:11px;margin-bottom:14px">Ogni sfondo ha la sua versione giorno e notte: cambia da solo quando premi sole/luna.</div>
+    <div class="sub">Le regole della tua asta. Gli avversari si gestiscono dalla loro pagina, in basso.</div>
 
     <div class="menu-list" style="margin-bottom:16px">
       <button onclick="toggleLite()"><i>⚡</i><div>Grafica leggera<small>toglie sfocature e ombre: usala se l'app rallenta o sbianca</small></div><span class="switch ${lite?"on":""}" id="liteSwitch">${lite?"ON":"OFF"}</span></button>
+      <button onclick="testHaptic()"><i>〰️</i><div>Prova vibrazione<small>tre colpetti di prova, se il telefono li supporta</small></div></button>
     </div>
-
-    <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Avversari</div>
-    <div id="teamsBox">${teamsBoxHtml()}</div>
-    <div class="note" style="font-size:11px;margin:6px 0 18px">Usano le stesse regole tue: ${CFG.budget} crediti e ${totalSlots()} slot a testa. Con almeno un nome qui, la ✕ su un giocatore ti chiede chi l'ha preso e a quanto.</div>
 
     <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim-2);font-weight:700;margin:0 0 9px">Regole della lega</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
@@ -2528,28 +2532,39 @@ function idb(){
     }catch(e){ res(null); }
   });
 }
-async function idbPut(json){
+async function idbPutK(k, v){
   const db = await idb(); if(!db) return false;
   return new Promise(res=>{
     try{
       const tx = db.transaction("kv","readwrite");
-      tx.objectStore("kv").put(json, KEY);
+      tx.objectStore("kv").put(v, k);
       tx.oncomplete = () => res(true);
       tx.onerror = () => res(false);
     }catch(e){ res(false); }
   });
 }
-async function idbGet(){
+async function idbGetK(k){
   const db = await idb(); if(!db) return null;
   return new Promise(res=>{
     try{
       const tx = db.transaction("kv","readonly");
-      const q = tx.objectStore("kv").get(KEY);
+      const q = tx.objectStore("kv").get(k);
       q.onsuccess = () => res(q.result || null);
       q.onerror = () => res(null);
     }catch(e){ res(null); }
   });
 }
+const idbPut = json => idbPutK(KEY, json);
+const idbGet = () => idbGetK(KEY);
+
+/* chiedo al browser di NON cancellare mai questi dati per fare spazio */
+let persistOK = false;
+try{
+  if(navigator.storage && navigator.storage.persist){
+    navigator.storage.persisted().then(p=>{ persistOK = p; if(!p) return navigator.storage.persist(); })
+      .then(g=>{ if(g) persistOK = true; }).catch(()=>{});
+  }
+}catch(e){}
 
 /* ---------- istantanee a rotazione ---------- */
 function readSnaps(){
@@ -2561,7 +2576,9 @@ function pushSnap(json){
     if(list.length && list[0].j === json) return;      // niente doppioni
     list.unshift({t: nowMs(), j: json});
     while(list.length > MAX_SNAPS) list.pop();
-    localStorage.setItem(SNAP_KEY, JSON.stringify(list));
+    const packed = JSON.stringify(list);
+    try{ localStorage.setItem(SNAP_KEY, packed); }catch(e){}
+    idbPutK(SNAP_KEY, packed);                          // stesse istantanee anche nel database
   }catch(e){ /* spazio finito: le istantanee sono un extra, non blocco il salvataggio */ }
 }
 
@@ -2571,18 +2588,35 @@ function save(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(persistNow, 120);
 }
+let lastJson = null;
 function persistNow(){
   clearTimeout(saveTimer); saveTimer = null;
   let json;
   try{ json = JSON.stringify(stateObject()); }catch(e){ return flagSave(false); }
+  lastJson = json;
   let ok = false;
   try{ localStorage.setItem(KEY, json); ok = true; }catch(e){}
   pushSnap(json);
-  idbPut(json).then(r=>{ if(r) idbOK = true; });
+  idbPut(json).then(r=>{ if(r) idbOK = true; else idbOK = false; });
   try{ if(window.storage) window.storage.set(KEY, json, false); }catch(e){}
   if(ok) lastSaveTs = nowMs();
   flagSave(ok);
 }
+/* se una delle due copie era fallita (memoria piena, ecc.) riprovo da solo ogni 20s */
+setInterval(()=>{
+  if(!lastJson) return;
+  if(!storageOK){ try{ localStorage.setItem(KEY, lastJson); storageOK = true; flagSave(true); }catch(e){} }
+  if(!idbOK) idbPut(lastJson).then(r=>{ if(r){ idbOK = true; flagSave(storageOK); } });
+}, 20000);
+/* avviso se l'app viene usata contemporaneamente in un'altra scheda */
+let _tabWarnTs = 0;
+window.addEventListener("storage", e=>{
+  if(e.key !== KEY || e.newValue == null) return;
+  const now = nowMs();
+  if(now - _tabWarnTs < 60000) return;
+  _tabWarnTs = now;
+  toast("⚠ L'app è aperta anche in un'altra scheda: usane una sola, o rischi di perdere le mosse", "bad");
+});
 function flagSave(ok){
   storageOK = ok || idbOK;
   const w = $("storageWarn"); if(w) w.hidden = storageOK;
@@ -2685,6 +2719,10 @@ async function load(){
   }catch(e){}
   try{ add("database del browser", await idbGet()); }catch(e){}
   readSnaps().forEach(sn => add("backup del " + fmtTime(sn.t), sn.j));
+  try{
+    const sj = await idbGetK(SNAP_KEY);
+    if(sj) JSON.parse(sj).forEach(sn => add("backup (db) del " + fmtTime(sn.t), sn.j));
+  }catch(e){}
 
   let found = 0, best = null;
   cands.forEach(c=>{
@@ -3047,7 +3085,87 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "24/08 · 17:40";
+const BUILD = "25/08 · 09:55";
+
+/* ================== TUTORIAL PRIMO AVVIO ================== */
+const TOUR_KEY = "asta-tour-v1";
+const TOUR = [
+  {sel:"#roleBudgets", waitSel:"#roleBudgets .rb", delay:420,
+   txt:"<b>I reparti.</b> Qui vedi quanto hai speso e quanto puoi spendere per portieri, difesa, centrocampo e attacco.<br>👆 <b>Tocca un reparto</b> per aprire la sua lista."},
+  {sel:"#list .card", waitSel:"#list .card", delay:600,
+   txt:"<b>I giocatori.</b> Quando all'asta chiamano un nome, cercalo con la barra in alto o scorrendo.<br>👆 <b>Tocca una scheda</b> per aprirla."},
+  {sel:"#sheet .wheel-wrap", btn:"Avanti", scroll:1,
+   txt:"<b>Il prezzo.</b> Gira la rotella per scegliere i crediti: accanto vedi la percentuale del budget, sotto il consiglio sul buon prezzo."},
+  {sel:"#buyerChips", btn:"Avanti", scroll:1,
+   txt:"<b>Chi lo prende.</b> Se è tuo lascia \"Io\" e conferma in basso. Se lo vince un altro, tocca \"Un altro\" e poi il suo nome: va nella sua rosa alla cifra della rotella."},
+  {sel:".bottom-nav", btn:"Fine", pre:"closeSheet",
+   txt:"<b>Ultima cosa.</b> Qui sotto trovi Annulla per tornare indietro, la tua Rosa e le rose degli Avversari.<br>Buona asta! 🍀"}
+];
+let tourStep = -1;
+function startTour(force){
+  try{ if(!force && localStorage.getItem(TOUR_KEY)) return; }catch(e){}
+  tourStep = 0; $("tour").hidden = false; tourShow();
+}
+function endTour(){
+  tourStep = -1; $("tour").hidden = true;
+  try{ localStorage.setItem(TOUR_KEY, "1"); }catch(e){}
+}
+function tourNext(){
+  tourStep++;
+  if(tourStep >= TOUR.length){ endTour(); toast("Tutorial finito: sei pronto 💪","good"); return; }
+  const st = TOUR[tourStep];
+  if(st.pre === "closeSheet"){ try{ closeSheet(); }catch(e){} setTimeout(tourShow, 340); }
+  else tourShow();
+}
+function tourShow(){
+  if(tourStep < 0) return;
+  const st = TOUR[tourStep];
+  let el = document.querySelector(st.sel);
+  if(!el){ tourNext(); return; }
+  if(st.scroll){ try{ el.scrollIntoView({block:"center"}); }catch(e){} }
+  buzz(6);
+  setTimeout(()=>{
+    el = document.querySelector(st.sel);
+    if(!el){ tourNext(); return; }
+    const r = el.getBoundingClientRect();
+    const hole = $("tourHole");
+    hole.style.left = (r.left-7)+"px"; hole.style.top = (r.top-7)+"px";
+    hole.style.width = (r.width+14)+"px"; hole.style.height = (r.height+14)+"px";
+    const tip = $("tourTip");
+    const tw = Math.min(innerWidth-24, 340);
+    tip.style.width = tw+"px"; tip.style.visibility = "hidden";
+    tip.innerHTML = `<div class="tt-x">${tourStep+1} di ${TOUR.length}</div><div class="tt-t">${st.txt}</div>
+      <div class="tt-btns"><button class="tt-skip" onclick="endTour()">Salta</button>
+      ${st.btn ? `<button class="tt-go" onclick="tourNext()">${st.btn}</button>` : `<span class="tt-hint">tocca l'area illuminata ✨</span>`}</div>`;
+    requestAnimationFrame(()=>{
+      const th = tip.offsetHeight;
+      let left = Math.max(12, Math.min(innerWidth-12-tw, r.left + r.width/2 - tw/2));
+      let top = (r.bottom + 14 + th < innerHeight - 16) ? r.bottom + 14 : r.top - th - 14;
+      if(top < 10) top = 10;
+      tip.style.left = left+"px"; tip.style.top = top+"px"; tip.style.visibility = "visible";
+    });
+  }, st.scroll ? 280 : 40);
+}
+document.addEventListener("click", e=>{
+  if(tourStep < 0) return;
+  const st = TOUR[tourStep];
+  if(!st || st.btn) return;
+  if(e.target.closest && e.target.closest(st.waitSel)) setTimeout(tourNext, st.delay || 400);
+}, true);
+/* durante il tutorial si puo' toccare SOLO l'area illuminata (e i pulsanti della guida) */
+function tourBlock(e){
+  if(tourStep < 0) return;
+  const st = TOUR[tourStep];
+  if(!st || !e.target || !e.target.closest) return;
+  if(e.target.closest("#tourTip")) return;
+  const allowed = st.btn ? st.sel : (st.waitSel || st.sel);
+  if(e.target.closest(allowed)) return;
+  e.preventDefault(); e.stopPropagation();
+}
+["click","pointerdown","touchstart","touchmove"].forEach(ev=>
+  document.addEventListener(ev, tourBlock, {capture:true, passive:false}));
+window.addEventListener("resize", ()=>{ if(tourStep >= 0) setTimeout(tourShow, 90); });
+setTimeout(()=>{ try{ startTour(false); }catch(e){} }, 900);
 const LITE_KEY = "asta-lite";
 let lite = false;
 function applyLite(v, save){
@@ -3058,32 +3176,6 @@ function applyLite(v, save){
 }
 function toggleLite(){ applyLite(!lite, true); buzz(6); toast(lite?"Grafica leggera attiva":"Grafica completa"); }
 (function(){ let v=null; try{ v = localStorage.getItem(LITE_KEY); }catch(e){} applyLite(v==="1", false); })();
-
-/* ================== SFONDI ================== */
-const BGS = [
-  {k:"campo",    n:"Campo"},
-  {k:"alto",     n:"Dall'alto"},
-  {k:"notturna", n:"Notturna"},
-  {k:"erba",     n:"Erba"},
-  {k:"pulito",   n:"Pulito"}
-];
-const BG_KEY = "asta-bg";
-let bg = "campo";
-function applyBg(k, save){
-  bg = BGS.some(b=>b.k===k) ? k : "campo";
-  document.documentElement.setAttribute("data-bg", bg);
-  if(save){ try{ localStorage.setItem(BG_KEY, bg); }catch(e){} }
-  document.querySelectorAll(".sw-cell").forEach(c=>c.classList.toggle("on", c.dataset.bg===bg));
-}
-function pickBg(k){ applyBg(k, true); buzz(6); }
-function bgPickerHtml(){
-  return `<div class="sw-grid">` + BGS.map(b=>`
-    <div class="sw-cell ${b.k===bg?"on":""}" data-bg="${b.k}" onclick="pickBg('${b.k}')">
-      <div class="sw" data-bg="${b.k}">${b.k==="alto"?'<span class="mid"></span>':""}</div>
-      <span class="lbl">${b.n}</span>
-    </div>`).join("") + `</div>`;
-}
-(function(){ let k=null; try{ k = localStorage.getItem(BG_KEY); }catch(e){} applyBg(k||"campo", false); })();
 
 /* ================== TEMA CHIARO / SCURO ================== */
 const THEME_KEY = "asta-theme";

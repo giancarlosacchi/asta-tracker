@@ -137,6 +137,35 @@ def find_stat(gk, gteam):
             if k.startswith(gk) or gk.startswith(k): return c[0][1]
     return None
 
+# ---------- 2b) id delle card (foto) dalle rose di fantacalcio.it ----------
+fmap = {}
+try:
+    idx = get('https://www.fantacalcio.it/serie-a/squadre')
+    slugs = sorted(set(re.findall(r'/serie-a/squadre/([a-z0-9-]+)"', idx)))
+    for ts in slugs:
+        try:
+            th = get('https://www.fantacalcio.it/serie-a/squadre/' + ts)
+        except Exception:
+            continue
+        for m in re.finditer(r'/serie-a/squadre/' + re.escape(ts) + r'/([a-z0-9-]+)/(\d+)', th):
+            fmap.setdefault(norm(m.group(1)), set()).add((ts, int(m.group(2))))
+    print(f'foto: {len(slugs)} squadre, {len(fmap)} nomi indicizzati', file=sys.stderr)
+except Exception as e:
+    print('avviso: foto non disponibili:', e, file=sys.stderr)
+
+def find_fid(gk, gteam):
+    gt = norm(gteam)
+    c = fmap.get(gk)
+    if not c and len(gk) >= 5:
+        for k, v in fmap.items():
+            if k.startswith(gk) or gk.startswith(k): c = v; break
+    if not c: return None
+    lst = list(c)
+    if len(lst) > 1:
+        hit = [x for x in lst if gt and (gt in norm(x[0]) or norm(x[0]) in gt)]
+        if hit: lst = hit
+    return lst[0][1]
+
 players = []
 for g in gaz:
     e = {'n': g['n'], 't': g['t'], 'r': g['r'], 'qi': g['q'], 'qa': g['q']}
@@ -145,6 +174,8 @@ for g in gaz:
     if gk in cp_names: e['cp'] = 1
     st = find_stat(gk, g['t'])
     if st: e['st'] = st
+    fid = find_fid(gk, g['t'])
+    if fid: e['fid'] = fid
     players.append(e)
 
 # ---------- 3) storico quote: aggiungo il punto di oggi a quello gia' salvato ----------
@@ -168,4 +199,5 @@ out = {'updated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%
        'season_stats': '2025-26', 'source': 'gazzetta fantacampionato (pdf 26-27)', 'players': players}
 json.dump(out, open('quotes.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print(f'ok: {len(players)} giocatori Gazzetta, {sum(1 for p in players if p.get("rig"))} rigoristi, '
-      f'{sum(1 for p in players if p.get("cp"))} CP, {sum(1 for p in players if "st" in p)} con statistiche')
+      f'{sum(1 for p in players if p.get("cp"))} CP, {sum(1 for p in players if "st" in p)} con statistiche, '
+      f'{sum(1 for p in players if p.get("fid"))} con foto')
