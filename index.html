@@ -60,7 +60,7 @@
   --chrome-a:rgb(9,26,17);
   --chrome-b:rgb(10,27,18);
   --chrome-nav:rgba(13,34,23,.96);
-  --chrome-sheet:rgba(16,40,28,.72);
+  --chrome-sheet:rgba(10,22,16,.52);
   --chrome-toast:rgba(16,40,28,.85);
   --chrome-full-a:#0d281c;
   --chrome-full-b:#061a11;
@@ -297,7 +297,7 @@ main{
 .bdg.r{background:rgba(255,159,10,.16);color:var(--warn);border:.5px solid rgba(255,159,10,.35);}
 .bdg.cp{background:rgba(100,210,255,.13);color:var(--r-D);border:.5px solid rgba(100,210,255,.3);}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;}
-.stat-cell{background:var(--g-1);border:.5px solid var(--stroke);border-radius:11px;padding:7px 4px;text-align:center;box-shadow:var(--inner-hi);}
+.stat-cell{background:var(--g-1);border:.5px solid var(--stroke);border-radius:16px;padding:7px 4px;text-align:center;box-shadow:var(--inner-hi);}
 .stat-cell .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim-2);}
 .stat-cell .v{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;}
 .stat-note{font-size:10px;color:var(--dim-2);margin-top:7px;text-align:center;}
@@ -366,10 +366,39 @@ main{
 
 /* ============ SHEET ============ */
 .overlay{
-  position:fixed;inset:0;z-index:80;background:var(--scrim);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  position:fixed;inset:0;z-index:80;
+  /* stessa sfumatura della home, ma virata al verde */
+  background:
+    radial-gradient(58% 52% at 10% 8%, #d9f351 0%, rgba(217,243,81,0) 62%),
+    radial-gradient(50% 46% at 42% 4%, #7ee24f 0%, rgba(126,226,79,0) 60%),
+    radial-gradient(46% 42% at 60% 12%, #2ee08a 0%, rgba(46,224,138,0) 58%),
+    radial-gradient(44% 44% at 66% 40%, #17c9a0 0%, rgba(23,201,160,0) 58%),
+    radial-gradient(50% 46% at 96% 26%, #0fd9a6 0%, rgba(15,217,166,0) 62%),
+    radial-gradient(46% 42% at 22% 72%, #0a9d6b 0%, rgba(10,157,107,0) 58%),
+    radial-gradient(64% 55% at 60% 105%, #0e4a33 0%, rgba(14,74,51,0) 72%),
+    linear-gradient(158deg, #c9e84a 0%, #35c273 34%, #16916b 62%, #0b3526 100%);
   display:flex;align-items:flex-end;justify-content:center;
   overscroll-behavior:contain;padding:0 8px calc(var(--kb,0px) + 8px);transition:padding-bottom .2s;
+  animation:ovIn .32s ease;
+}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.overlay::before{
+  content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:overlay;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");background-size:220px 220px;
+}
+.sheet{position:relative;z-index:1;}
+/* pannello del morphing: card -> scheda */
+.morph{
+  position:fixed;z-index:90;overflow:hidden;pointer-events:none;
+  background:rgba(13,28,20,.97);border:.5px solid var(--stroke-2);
+  box-shadow:0 -18px 60px -18px rgba(0,0,0,.55), var(--inner-hi);
+  will-change:left,top,width,height,opacity;
+}
+html[data-theme="light"] .morph{background:rgba(247,252,248,.97);}
+.morph-card{
+  position:absolute;top:0;left:0;margin:0;
+  background:transparent!important;border:none!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
 }
 .overlay.hidden,#browseOverlay.hidden, #rosterOverlay.hidden, #rivalsOverlay.hidden{display:none;}
 .sheet{
@@ -388,7 +417,7 @@ main{
 .field{margin-bottom:13px;}
 .field label{display:block;font-size:11.5px;color:var(--dim-2);margin-bottom:7px;font-weight:500;}
 .field input,.field select,.field textarea{
-  width:100%;padding:13px 14px;border-radius:15px;border:.5px solid var(--stroke);
+  width:100%;padding:13px 14px;border-radius:18px;border:.5px solid var(--stroke);
   background:var(--input-bg);color:var(--text);font-size:16px;box-shadow:var(--inner-hi);
 }
 .field input:focus{border-color:rgba(48,209,88,.45);outline:none;}
@@ -406,7 +435,7 @@ main{
 
 /* rotella numerica stile sveglia iOS */
 .wheel{
-  position:relative;height:200px;overflow:hidden;border-radius:18px;
+  position:relative;height:200px;overflow:hidden;border-radius:24px;
   background:var(--input-bg);border:.5px solid var(--stroke);box-shadow:var(--inner-hi);
 }
 .wheel-band{
@@ -453,7 +482,7 @@ main{
 /* --- giocatori simili nel foglio --- */
 .sim-row{
   display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;margin-top:6px;
-  border-radius:13px;border:.5px solid var(--stroke);background:var(--g-1);
+  border-radius:18px;border:.5px solid var(--stroke);background:var(--g-1);
   box-shadow:var(--inner-hi);text-align:left;color:var(--text);
 }
 .sim-row:active{background:var(--g-2);}
@@ -486,7 +515,7 @@ main{
 .sheet-hrow{display:flex;align-items:center;gap:2px;}
 .sheet-hrow h3{margin:0;min-width:0;}
 .sheet-pic{
-  height:58px;width:auto;flex-shrink:0;margin-left:auto;margin-right:2px;
+  height:58px;width:44px;object-fit:contain;flex-shrink:0;margin-left:auto;margin-right:2px;
   filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));
   animation:picIn .35s cubic-bezier(.22,1,.32,1);
 }
@@ -542,28 +571,28 @@ main{
 }
 .chip.gold{color:var(--gold);border-color:rgba(255,209,96,.35);background:rgba(255,209,96,.1);}
 .bid-info{display:flex;gap:8px;margin:12px 0 2px;}
-.bid-info>div{flex:1;background:var(--g-1);border:.5px solid var(--stroke);border-radius:15px;padding:10px 6px;text-align:center;box-shadow:var(--inner-hi);}
+.bid-info>div{flex:1;background:var(--g-1);border:.5px solid var(--stroke);border-radius:19px;padding:10px 6px;text-align:center;box-shadow:var(--inner-hi);}
 .bid-info>div .k{font-size:10px;color:var(--dim-2);}
 .bid-info>div .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px;letter-spacing:-.02em;}
 .alertbox{
-  font-size:12.5px;font-weight:500;border-radius:14px;padding:11px 13px;margin-top:12px;line-height:1.45;
+  font-size:12.5px;font-weight:500;border-radius:18px;padding:11px 13px;margin-top:12px;line-height:1.45;
   background:var(--al-d-bg);border:.5px solid var(--al-d-br);color:var(--al-d-fg);
 }
 .alertbox.ok{background:var(--al-o-bg);border-color:var(--al-o-br);color:var(--al-o-fg);}
 .alertbox.warn{background:var(--al-w-bg);border-color:var(--al-w-br);color:var(--al-w-fg);}
 
 .sheet-actions{display:flex;gap:10px;margin-top:18px;}
-.sheet-actions button{flex:1;padding:15px 0;border-radius:16px;font-size:15px;font-weight:600;letter-spacing:-.01em;}
+.sheet-actions button{flex:1;padding:15px 0;border-radius:20px;font-size:15px;font-weight:600;letter-spacing:-.01em;}
 .btn-cancel{background:var(--g-2);color:var(--text);border:.5px solid var(--stroke);box-shadow:var(--inner-hi);}
 .btn-confirm{background:var(--accent);color:var(--on-accent);}
 .btn-confirm:active{background:#28b84c;}
 .btn-danger{background:var(--danger);color:#fff;}
-.btn-wide{width:100%;padding:15px 0;border-radius:16px;font-weight:600;font-size:14.5px;}
+.btn-wide{width:100%;padding:15px 0;border-radius:20px;font-weight:600;font-size:14.5px;}
 
 .menu-list{display:flex;flex-direction:column;gap:8px;}
 .menu-list button{
   display:flex;align-items:center;gap:13px;text-align:left;
-  padding:15px 15px;border-radius:17px;background:var(--g-1);border:.5px solid var(--stroke);
+  padding:15px 15px;border-radius:20px;background:var(--g-1);border:.5px solid var(--stroke);
   font-size:15px;font-weight:500;box-shadow:var(--inner-hi);
 }
 .menu-list button:active{background:var(--g-2);}
@@ -713,14 +742,14 @@ html[data-theme="light"] #rosterOverlay, html[data-theme="light"] #rivalsOverlay
 html[data-lite="1"] #tourTip{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg-2);}
 
 /* ============ VETRO SATINATO (texture visibile) ============ */
-.card,.money,.rb,.li,.search,.sort-btn,.icon-btn,.stat-cell,.act,.sheet,.bottom-nav,.toast{
+.card,.money,.rb,.li,.search,.sort-btn,.icon-btn,.stat-cell,.act,.sheet,.bottom-nav,.toast,.sim-row,.bid-info>div,.menu-list button,.wheel,.field input,.btn-cancel{
   background-image:var(--glass-tex),var(--glass-sheen);
   background-size:140px 140px,100% 100%;
 }
 html[data-lite="1"] .card,html[data-lite="1"] .money,html[data-lite="1"] .rb,html[data-lite="1"] .li,
 html[data-lite="1"] .search,html[data-lite="1"] .sort-btn,html[data-lite="1"] .icon-btn,
 html[data-lite="1"] .stat-cell,html[data-lite="1"] .act,html[data-lite="1"] .sheet,
-html[data-lite="1"] .bottom-nav,html[data-lite="1"] .toast{background-image:none!important;}
+html[data-lite="1"] .bottom-nav,html[data-lite="1"] .toast,html[data-lite="1"] .sim-row,html[data-lite="1"] .bid-info>div,html[data-lite="1"] .menu-list button,html[data-lite="1"] .wheel,html[data-lite="1"] .field input,html[data-lite="1"] .btn-cancel{background-image:none!important;}
 
 /* ============ TEMA GIORNO ============ */
 html[data-theme="light"]{
@@ -764,7 +793,7 @@ html[data-theme="light"]{
   --chrome-a:rgb(244,250,244);
   --chrome-b:rgb(243,249,243);
   --chrome-nav:rgba(252,254,252,.96);
-  --chrome-sheet:rgba(250,253,250,.82);
+  --chrome-sheet:rgba(252,254,252,.55);
   --chrome-toast:rgba(250,253,250,.92);
   --chrome-full-a:#f0f8f1;
   --chrome-full-b:#e9f4eb;
@@ -846,7 +875,8 @@ html[data-lite="1"] *{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   animation:none!important;
 }
-html[data-lite="1"] .overlay{background:rgba(0,0,0,.66)!important;}
+html[data-lite="1"] .overlay{background:linear-gradient(158deg,#9fd23c 0%,#1d8f5f 50%,#0b3526 100%)!important;}
+html[data-lite="1"] .overlay::before{display:none!important;}
 html[data-lite="1"] .sheet{background:var(--bg-1)!important;}
 html[data-lite="1"] .toast{background:var(--bg-2)!important;}
 html[data-lite="1"] .card,
@@ -1081,6 +1111,7 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
 </div>
 
 <label id="hapticLab" aria-hidden="true" style="display:none"><input id="hapticSw" type="checkbox" switch tabindex="-1"></label>
+<input type="file" id="pdfIn" accept="application/pdf,.pdf" hidden onchange="if(this.files[0]) importGazPdf(this.files[0]); this.value='';">
 
 <div id="tour" hidden>
   <div id="tourHole"></div>
@@ -1477,7 +1508,7 @@ function cardHtml(p, stats, ms){
     const t = teamById(p.by);
     takenInfo = `<span class="hint">${t?`<b style="color:${teamColor(p.by)}">${esc(t.name)}</b>`:"preso da altri"}</span>`;
   }
-  return `<article class="card ${cls}" style="--rc:var(--r-${p.role})" onclick="tapPlayer(${p.id})">
+  return `<article class="card ${cls}" style="--rc:var(--r-${p.role})" onclick="tapPlayer(${p.id},event)">
     <button class="c-fav ${(p.fixed||p.fav)?"on":""}" onclick="toggleFav(${p.id},event)"
       aria-label="Segna come obiettivo">★</button>
     <button class="c-body">
@@ -1625,10 +1656,46 @@ function toggleFav(id, ev){
   if(p.fixed){ p.fixed=false; p.fav=false; } else { p.fav = !p.fav; }
   buzz(8); renderList(); save();
 }
-function tapPlayer(id){
+function tapPlayer(id, ev){
   const p = PLAYERS.find(x=>x.id===id); if(!p) return;
   sheetStack.length = 0;
+  const cardEl = ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget : null;
   openBid(id);
+  if(cardEl) morphFrom(cardEl);
+}
+
+/* morphing: la card toccata diventa un pannello che cresce fino alla scheda */
+function morphFrom(cardEl){
+  if(lite || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const sh = $("sheet"); if(!sh || !sh.animate) return;
+  const r1 = cardEl.getBoundingClientRect();
+  const r2 = sh.getBoundingClientRect();
+  if(!r1.width || !r2.width) return;
+
+  const m = document.createElement("div");
+  m.className = "morph";
+  m.style.left = r1.left+"px"; m.style.top = r1.top+"px";
+  m.style.width = r1.width+"px"; m.style.height = r1.height+"px";
+  const clone = cardEl.cloneNode(true);
+  clone.className = cardEl.className + " morph-card";
+  clone.style.width = r1.width + "px";
+  m.appendChild(clone);
+  document.body.appendChild(m);
+
+  sh.style.opacity = "0";           // il foglio vero appare a fine morphing
+  sh.style.animation = "none";
+
+  m.animate([
+    {left: r1.left+"px", top: r1.top+"px", width: r1.width+"px", height: r1.height+"px", borderRadius: "32px"},
+    {left: r2.left+"px", top: r2.top+"px", width: r2.width+"px", height: r2.height+"px", borderRadius: "36px"}
+  ], {duration: 460, easing: "cubic-bezier(.32,.72,0,1)", fill: "forwards"});
+  clone.animate([{opacity: 1}, {opacity: 0}], {duration: 210, easing: "ease-out", fill: "forwards"});
+
+  setTimeout(()=>{
+    sh.style.transition = "opacity .16s ease"; sh.style.opacity = "1";
+    m.style.transition = "opacity .2s ease";   m.style.opacity = "0";
+    setTimeout(()=>{ m.remove(); sh.style.transition=""; sh.style.opacity=""; sh.style.animation=""; }, 220);
+  }, 420);
 }
 
 /* --- foglio offerta --- */
@@ -2268,7 +2335,7 @@ function openMenu(){
     <h3>Menu</h3>
     <div class="sub">Tutto quello che non serve durante l'asta.</div>
     <div class="menu-list">
-      <button onclick="closeSheet();refreshQuotes(true)"><i>⟳</i><div>Aggiorna quote<small>${QDATA?`ultimo aggiornamento ${fmtTime(Date.parse(QDATA.updated))}`:"listone Gazzetta Fantacampionato"}</small></div></button>
+      <button onclick="openQuotes()"><i>⟳</i><div>Aggiorna quote<small>${QDATA?`ultimo aggiornamento ${fmtTime(Date.parse(QDATA.updated))}`:"listone Gazzetta Fantacampionato"}</small></div></button>
       <button onclick="openSafety()"><i>🛡</i><div>Sicurezza dati<small id="safetySub">salvataggi, backup e recupero</small></div></button>
       <button onclick="openSettings()"><i>⚙</i><div>Impostazioni<small>budget ${CFG.budget} · ${totalSlots()} slot · riserva ${CFG.reserve}</small></div></button>
       <button onclick="closeSheet();setTimeout(()=>startTour(true),350)"><i>🎓</i><div>Tutorial<small>rivedi la guida rapida passo passo</small></div></button>
@@ -2904,6 +2971,91 @@ async function refreshQuotes(manual){
     if(manual) toast("Aggiornamento non riuscito (serve la connessione)", "bad");
   }
 }
+/* ---- aggiornamento manuale: carichi il PDF Gazzetta scaricato sul telefono ---- */
+function openQuotes(){
+  openSheet(`
+    <h3>Aggiorna quote</h3>
+    <div class="sub">${QDATA?`Valori del ${fmtTime(Date.parse(QDATA.updated))}${QDATA.source&&/mano/.test(QDATA.source)?" · caricati a mano":""}`:"Listone Gazzetta Fantacampionato"}</div>
+    <div class="note" style="margin-top:6px">Ogni mattina alle 6 i valori si aggiornano da soli, e l'app li scarica quando la apri. Qui puoi forzare il controllo — oppure caricare a mano il PDF della Gazzetta, se l'automatico non fosse disponibile.</div>
+    <button class="btn-wide btn-confirm" style="margin-top:14px" onclick="closeSheet();refreshQuotes(true)">⟳ Scarica gli ultimi valori</button>
+    <button class="btn-wide btn-cancel" style="margin-top:9px" onclick="$('pdfIn').click()">📄 Carica il PDF della Gazzetta</button>
+    <div class="note" style="margin-top:8px;font-size:11.5px">È il PDF di fantacampionato.gazzetta.it (listone 26-27): scaricalo sul telefono e selezionalo qui. Si aggiornano le quote; statistiche e foto restano quelle dell'ultimo giro automatico.</div>
+    <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
+}
+const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+async function ensurePdfJs(){
+  if(window.pdfjsLib) return;
+  await new Promise((res, rej)=>{
+    const s = document.createElement("script");
+    s.src = PDFJS_URL; s.onload = res; s.onerror = ()=>rej(new Error("libreria PDF non scaricabile"));
+    document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+}
+const GAZ_ROLES = {Portieri:"P", Difensori:"D", Centrocampisti:"C", Attaccanti:"A", Allenatori:"ALL"};
+const GAZ_TEAMS = new Set(["Atalanta","Bologna","Cagliari","Como","Fiorentina","Frosinone","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Monza","Napoli","Parma","Roma","Sassuolo","Torino","Udinese","Venezia","Empoli","Verona","Cremonese","Pisa","Spezia","Palermo","Bari","Sampdoria","Salernitana","Padova"]);
+async function parseGazPdf(buf){
+  await ensurePdfJs();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const out = []; let role = null, rejected = 0;
+  for(let pn = 1; pn <= pdf.numPages; pn++){
+    const page = await pdf.getPage(pn);
+    const W = page.view[2] - page.view[0];
+    const tc = await page.getTextContent();
+    const words = tc.items.filter(it=>it.str && it.str.trim())
+                          .map(it=>({s: it.str.trim(), x: it.transform[4], y: it.transform[5]}));
+    for(const col of [words.filter(w=>w.x < W/2), words.filter(w=>w.x >= W/2)]){
+      const rows = [];
+      for(const w of col.slice().sort((a,b)=> b.y - a.y || a.x - b.x)){
+        const r = rows.length ? rows[rows.length-1] : null;
+        if(r && Math.abs(w.y - r.y) <= 3.5) r.w.push(w);
+        else rows.push({y: w.y, w: [w]});
+      }
+      for(const r of rows){
+        const text = r.w.sort((a,b)=>a.x-b.x).map(w=>w.s).join(" ").replace(/\s+/g," ").trim();
+        if(!text) continue;
+        const hit = Object.keys(GAZ_ROLES).find(h=>text.startsWith(h));
+        if(hit){ role = GAZ_ROLES[hit]; continue; }
+        if(/^(Nome|IL LISTONE|fantacampionato|Costo)/.test(text)) continue;
+        const toks = text.split(" ");
+        if(!role || role === "ALL") continue;
+        if(toks.length >= 3 && /^\d{1,3}$/.test(toks[toks.length-1]) && GAZ_TEAMS.has(toks[toks.length-2])){
+          out.push({n: toks.slice(0,-2).join(" "), t: toks[toks.length-2], r: role, q: parseInt(toks[toks.length-1],10)});
+        } else if(toks.length >= 2) rejected++;
+      }
+    }
+  }
+  return {list: out, rejected};
+}
+async function importGazPdf(file){
+  toast("Leggo il PDF…");
+  try{
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const {list, rejected} = await parseGazPdf(buf);
+    if(list.length < 450 || rejected > 30) throw new Error(`non sembra il listone Gazzetta (${list.length} giocatori letti)`);
+    if(!QDATA || !Array.isArray(QDATA.players)) QDATA = {players: []};
+    const idx = {};
+    QDATA.players.forEach(q=>{ idx[qnorm(q.n)+"|"+q.r+"|"+qnorm(q.t)] = q; });
+    let updated = 0, added = 0;
+    list.forEach(g=>{
+      const q = idx[qnorm(g.n)+"|"+g.r+"|"+qnorm(g.t)];
+      if(q){ if(q.qa !== g.q){ q.qa = g.q; updated++; } }
+      else { QDATA.players.push({n: g.n, t: g.t, r: g.r, qi: g.q, qa: g.q}); added++; }
+    });
+    QDATA.updated = new Date().toISOString();
+    QDATA.source = "PDF Gazzetta caricato a mano";
+    try{ localStorage.setItem(QKEY, JSON.stringify(QDATA)); }catch(e){}
+    buildQIdx();
+    applyQuotesToListone();
+    if(alignToListone()) save();
+    renderAll(); closeSheet(); buzz(14);
+    toast(`PDF letto: ${list.length} giocatori · ${updated} quote aggiornate${added?` · ${added} nuovi`:""}`, "good");
+  }catch(e){
+    toast("Non sono riuscito a leggere il PDF: " + ((e && e.message) || "errore"), "bad");
+  }
+}
+
 function loadQuotesCache(){
   try{
     const raw = localStorage.getItem(QKEY);
@@ -3085,7 +3237,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 10:10";
+const BUILD = "25/08 · 12:00";
 
 /* ================== TUTORIAL PRIMO AVVIO ================== */
 const TOUR_KEY = "asta-tour-v1";
