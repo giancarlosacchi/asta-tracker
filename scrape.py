@@ -214,6 +214,69 @@ def find_fid(gk, gteam):
         if hit: lst = hit
     return lst[0][1]
 
+
+# ---------- 2c) prezzi medi delle aste reali + infortunati (fantacalcio-online) ----------
+pm_sur, pm_full, inj_sur = {}, {}, {}
+try:
+    hp = get('https://www.fantacalcio-online.com/it/i-piu-comprati')
+    for row in re.findall(r'<tr>[\s\S]*?</tr>', hp):
+        tds = re.findall(r'<td[^>]*>([\s\S]*?)</td>', row)
+        if len(tds) < 7: continue
+        ruolo = clean(tds[0]); team = clean(tds[1]); nome = clean(tds[2])
+        own = clean(tds[4]).replace('%', '').replace(',', '.')
+        p500 = clean(tds[6]).replace(',', '.')
+        msur = re.search(r'text-bold"[^>]*>([^<]+)', row)
+        sur = clean(msur.group(1)) if msur else (nome.split(' ')[0] if nome else '')
+        if not nome or not p500: continue
+        try: pmv = round(float(p500))
+        except Exception: continue
+        try: ownv = round(float(own))
+        except Exception: ownv = 0
+        ent = (team, ruolo, pmv, ownv)
+        pm_sur.setdefault((norm(sur), ruolo), []).append(ent)
+        pm_full.setdefault((norm(nome), ruolo), []).append(ent)
+    print(f'prezzi medi asta: {len(pm_full)} nomi', file=sys.stderr)
+except Exception as e:
+    print('avviso: prezzi medi non disponibili:', e, file=sys.stderr)
+
+try:
+    hi = get('https://www.fantacalcio-online.com/it/infortunati-serie-a')
+    for row in re.findall(r'<tr>[\s\S]*?</tr>', hi):
+        tds = re.findall(r'<td[^>]*>([\s\S]*?)</td>', row)
+        if len(tds) < 4: continue
+        team = clean(tds[0]); back = clean(tds[3])
+        msur = re.search(r'<strong>([^<]+)</strong>', row)
+        sur = clean(msur.group(1)) if msur else ''
+        if not sur or not re.fullmatch(r'\d{2}/\d{2}/\d{4}', back): continue
+        inj_sur.setdefault(norm(sur), []).append((team, back))
+    print(f'infortunati: {len(inj_sur)} nomi', file=sys.stderr)
+except Exception as e:
+    print('avviso: infortunati non disponibili:', e, file=sys.stderr)
+
+def _pick_team(cands, team):
+    if not cands: return None
+    if len(cands) == 1: return cands[0]
+    t = [c for c in cands if norm(c[0]) == norm(team)]
+    return (t or cands)[0]
+
+def find_pm(gk, gteam, grole):
+    hit = _pick_team(pm_full.get((gk, grole)), gteam) or _pick_team(pm_sur.get((gk, grole)), gteam)
+    if not hit and len(gk) >= 5:
+        for (nm, rr), v in pm_full.items():
+            if rr == grole and (nm.startswith(gk) or gk.startswith(nm)):
+                hit = _pick_team(v, gteam)
+                if hit: break
+    return hit
+
+def find_inj(gk, gteam):
+    c = inj_sur.get(gk)
+    if not c and len(gk) >= 5:
+        for kk, v in inj_sur.items():
+            if kk.startswith(gk) or gk.startswith(kk): c = v; break
+    if not c: return None
+    hit = [x for x in c if norm(x[0]) == norm(gteam)]
+    return hit[0][1] if hit else None
+
 players = []
 for g in gaz:
     e = {'n': g['n'], 't': g['t'], 'r': g['r'], 'qi': g['q'], 'qa': g['q']}
@@ -224,6 +287,12 @@ for g in gaz:
     if st: e['st'] = st
     fid = find_fid(gk, g['t'])
     if fid: e['fid'] = fid
+    hpm = find_pm(gk, g['t'], g['r'])
+    if hpm:
+        e['pm'] = hpm[2]
+        if hpm[3]: e['own'] = hpm[3]
+    binj = find_inj(gk, g['t'])
+    if binj: e['inj'] = binj
     players.append(e)
 
 # ---------- 3) storico quote: aggiungo il punto di oggi a quello gia' salvato ----------
@@ -248,4 +317,5 @@ out = {'updated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%
 json.dump(out, open('quotes.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print(f'ok: {len(players)} giocatori, {sum(1 for p in players if p.get("rig"))} rigoristi, '
       f'{sum(1 for p in players if p.get("cp"))} CP, {sum(1 for p in players if "st" in p)} con statistiche, '
-      f'{sum(1 for p in players if p.get("fid"))} con foto')
+      f'{sum(1 for p in players if p.get("fid"))} con foto, {sum(1 for p in players if p.get("pm"))} con prezzo asta, '
+      f'{sum(1 for p in players if p.get("inj"))} infortunati')
