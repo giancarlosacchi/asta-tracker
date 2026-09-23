@@ -2982,6 +2982,7 @@ async function refreshQuotes(manual){
     QDATA = d; buildQIdx();
     try{ localStorage.setItem(QKEY, JSON.stringify(d)); }catch(e){}
     const upd = applyQuotesToListone();
+    syncListoneFromQuotes();
     if(alignToListone()) save();
     renderAll();
     if(manual) toast(`Quote del ${fmtTime(Date.parse(d.updated))} · ${d.players.length} giocatori · ${upd} quotazioni riviste`, "good");
@@ -3016,42 +3017,74 @@ const GAZ_TEAMS = new Set(["Atalanta","Bologna","Cagliari","Como","Fiorentina","
 async function parseGazPdf(buf){
   await ensurePdfJs();
   const pdf = await pdfjsLib.getDocument({data: buf}).promise;
-  const out = []; let role = null, rejected = 0;
+  const pages = [];
   for(let pn = 1; pn <= pdf.numPages; pn++){
     const page = await pdf.getPage(pn);
     const W = page.view[2] - page.view[0];
     const tc = await page.getTextContent();
     const words = tc.items.filter(it=>it.str && it.str.trim())
                           .map(it=>({s: it.str.trim(), x: it.transform[4], y: it.transform[5]}));
-    for(const col of [words.filter(w=>w.x < W/2), words.filter(w=>w.x >= W/2)]){
-      const rows = [];
-      for(const w of col.slice().sort((a,b)=> b.y - a.y || a.x - b.x)){
-        const r = rows.length ? rows[rows.length-1] : null;
-        if(r && Math.abs(w.y - r.y) <= 3.5) r.w.push(w);
-        else rows.push({y: w.y, w: [w]});
-      }
-      for(const r of rows){
-        const text = r.w.sort((a,b)=>a.x-b.x).map(w=>w.s).join(" ").replace(/\s+/g," ").trim();
-        if(!text) continue;
-        const hit = Object.keys(GAZ_ROLES).find(h=>text.startsWith(h));
-        if(hit){ role = GAZ_ROLES[hit]; continue; }
-        if(/^(Nome|IL LISTONE|fantacampionato|Costo)/.test(text)) continue;
+    pages.push({W, words});
+  }
+  const rowsOf = col => {
+    const rows = [];
+    for(const w of col.slice().sort((a,b)=> b.y - a.y || a.x - b.x)){
+      const r = rows.length ? rows[rows.length-1] : null;
+      if(r && Math.abs(w.y - r.y) <= 3.5) r.w.push(w);
+      else rows.push({y: w.y, w: [w]});
+    }
+    return rows.map(r => r.w.sort((a,b)=>a.x-b.x).map(w=>w.s).join(" ").replace(/\s+/g," ").trim()).filter(Boolean);
+  };
+
+  /* formato nuovo (fantacalcio-online): 3 colonne, "Q NOME SIGLA ETA'" */
+  const SIG = {ATA:"Atalanta",BOL:"Bologna",CAG:"Cagliari",COM:"Como",FIO:"Fiorentina",FRO:"Frosinone",GEN:"Genoa",INT:"Inter",JUV:"Juventus",LAZ:"Lazio",LEC:"Lecce",MIL:"Milan",MON:"Monza",NAP:"Napoli",PAR:"Parma",ROM:"Roma",SAS:"Sassuolo",TOR:"Torino",UDI:"Udinese",VEN:"Venezia",VER:"Verona",PIS:"Pisa",CRE:"Cremonese",EMP:"Empoli",SPE:"Spezia",PAL:"Palermo",BAR:"Bari",SAM:"Sampdoria",SAL:"Salernitana",PAD:"Padova"};
+  const RUP = {PORTIERI:"P",DIFENSORI:"D",CENTROCAMPISTI:"C",ATTACCANTI:"A",ALLENATORI:"ALL"};
+  const tcase = n => n.split(" ").map(t => t.toLowerCase().replace(/(^|['\u2019`-])([a-z])/g, (m,a,b)=>a+b.toUpperCase())).join(" ");
+  const outNew = []; let rejNew = 0, roleN = null;
+  for(const {W, words} of pages){
+    for(const col of [words.filter(w=>w.x < W/3), words.filter(w=>w.x >= W/3 && w.x < 2*W/3), words.filter(w=>w.x >= 2*W/3)]){
+      for(const text of rowsOf(col)){
+        const up = text.toUpperCase();
+        const hit = Object.keys(RUP).find(k=>up.startsWith(k));
+        if(hit){ roleN = RUP[hit]; continue; }
+        if(/^(Q |Listone|FANTACALCIO|ONLINE|SQUADRA|CALCIATORE|In$|verde |stampato|il \d|\d+ calciatori|\d{1,3}$|fantacalcio)/i.test(text)) continue;
         const toks = text.split(" ");
-        if(!role || role === "ALL") continue;
-        if(toks.length >= 3 && /^\d{1,3}$/.test(toks[toks.length-1]) && GAZ_TEAMS.has(toks[toks.length-2])){
-          out.push({n: toks.slice(0,-2).join(" "), t: toks[toks.length-2], r: role, q: parseInt(toks[toks.length-1],10)});
-        } else if(toks.length >= 2) rejected++;
+        if(!roleN || roleN === "ALL") continue;
+        if(toks.length >= 4 && /^\d{1,3}$/.test(toks[0]) && /^[A-Z]{3}$/.test(toks[toks.length-2]) && /^\d{1,2}$/.test(toks[toks.length-1])){
+          const team = SIG[toks[toks.length-2]] || toks[toks.length-2];
+          outNew.push({n: tcase(toks.slice(1,-2).join(" ")), t: team, r: roleN, q: parseInt(toks[0],10)});
+        } else if(toks.length >= 2) rejNew++;
       }
     }
   }
-  return {list: out, rejected};
+  if(outNew.length >= 400) return {list: outNew, rejected: rejNew};
+
+  /* formato vecchio (Gazzetta): 2 colonne, "NOME Squadra COSTO" */
+  const GAZ_TEAMS2 = new Set(["Atalanta","Bologna","Cagliari","Como","Fiorentina","Frosinone","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Monza","Napoli","Parma","Roma","Sassuolo","Torino","Udinese","Venezia","Empoli","Verona","Cremonese","Pisa","Spezia","Palermo","Bari","Sampdoria","Salernitana","Padova"]);
+  const ROLD = {Portieri:"P",Difensori:"D",Centrocampisti:"C",Attaccanti:"A",Allenatori:"ALL"};
+  const outOld = []; let rejOld = 0, roleO = null;
+  for(const {W, words} of pages){
+    for(const col of [words.filter(w=>w.x < W/2), words.filter(w=>w.x >= W/2)]){
+      for(const text of rowsOf(col)){
+        const hit = Object.keys(ROLD).find(h=>text.startsWith(h));
+        if(hit){ roleO = ROLD[hit]; continue; }
+        if(/^(Nome|IL LISTONE|fantacampionato|Costo)/.test(text)) continue;
+        const toks = text.split(" ");
+        if(!roleO || roleO === "ALL") continue;
+        if(toks.length >= 3 && /^\d{1,3}$/.test(toks[toks.length-1]) && GAZ_TEAMS2.has(toks[toks.length-2])){
+          outOld.push({n: toks.slice(0,-2).join(" "), t: toks[toks.length-2], r: roleO, q: parseInt(toks[toks.length-1],10)});
+        } else if(toks.length >= 2) rejOld++;
+      }
+    }
+  }
+  return {list: outOld, rejected: rejOld};
 }
 async function importGazPdf(file){
   toast("Leggo il PDF…");
   try{
     const buf = new Uint8Array(await file.arrayBuffer());
     const {list, rejected} = await parseGazPdf(buf);
-    if(list.length < 450 || rejected > 30) throw new Error(`non sembra il listone Gazzetta (${list.length} giocatori letti)`);
+    if(list.length < 400 || rejected > 60) throw new Error(`non sembra il listone Gazzetta (${list.length} giocatori letti)`);
     if(!QDATA || !Array.isArray(QDATA.players)) QDATA = {players: []};
     const idx = {};
     QDATA.players.forEach(q=>{ idx[qnorm(q.n)+"|"+q.r+"|"+qnorm(q.t)] = q; });
@@ -3061,8 +3094,13 @@ async function importGazPdf(file){
       if(q){ if(q.qa !== g.q){ q.qa = g.q; updated++; } }
       else { QDATA.players.push({n: g.n, t: g.t, r: g.r, qi: g.q, qa: g.q}); added++; }
     });
+    list.forEach(g=>{
+      const L = LISTONE.find(x=>qnorm(x.n)===qnorm(g.n) && x.r===g.r);
+      if(L){ L.t = g.t; L.q = g.q; }
+      else LISTONE.push({n:g.n, r:g.r, t:g.t, q:g.q});
+    });
     QDATA.updated = new Date().toISOString();
-    QDATA.source = "PDF Gazzetta caricato a mano";
+    QDATA.source = "PDF caricato a mano";
     try{ localStorage.setItem(QKEY, JSON.stringify(QDATA)); }catch(e){}
     buildQIdx();
     applyQuotesToListone();
@@ -3074,6 +3112,22 @@ async function importGazPdf(file){
   }
 }
 
+function syncListoneFromQuotes(){
+  if(!QDATA || !Array.isArray(QDATA.players) || QDATA.players.length < 400) return;
+  const have = new Set(QDATA.players.map(q=>qnorm(q.n)+"|"+q.r));
+  QDATA.players.forEach(q=>{
+    const L = LISTONE.find(x=>qnorm(x.n)===qnorm(q.n) && x.r===q.r);
+    if(L){ L.t = q.t; L.q = q.qa; }
+    else LISTONE.push({n:q.n, r:q.r, t:q.t, q:q.qa});
+  });
+  for(let i=LISTONE.length-1;i>=0;i--){
+    const x=LISTONE[i];
+    if(!have.has(qnorm(x.n)+"|"+x.r)){
+      const p=PLAYERS.find(pp=>pp.name===x.n && pp.role===x.r);
+      if(!p || p.status==="free") LISTONE.splice(i,1);
+    }
+  }
+}
 function loadQuotesCache(){
   try{
     const raw = localStorage.getItem(QKEY);
@@ -3086,7 +3140,7 @@ function loadQuotesCache(){
       if(el) QDATA = JSON.parse(el.textContent);
     }catch(e){}
   }
-  if(QDATA){ buildQIdx(); applyQuotesToListone(); }
+  if(QDATA){ buildQIdx(); applyQuotesToListone(); syncListoneFromQuotes(); }
 }
 
 /* ================== AVVERSARI ================== */
@@ -3255,7 +3309,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "25/08 · 13:40";
+const BUILD = "23/09 · 19:00";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
