@@ -1,8 +1,7 @@
-# Listone: PDF Gazzetta Fantacampionato (fonte unica per giocatori e quote).
-# In piu': rigoristi/calci piazzati e statistiche 2025-26 da fantacalcio.it (solo come info nelle schede).
+# Listone: PDF fantacalcio-online (riserva: Gazzetta). Giocatori e quote.
+# In piu': rigoristi/calci piazzati e statistiche da fantacalcio.it (solo come info nelle schede).
 import re, json, sys, io, urllib.request, datetime, unicodedata
 
-PDF_URL = 'https://www.gazzetta.it/static_images/infografiche/FREEMIUM/fantacampionato_listone_26-27.pdf'
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36',
       'Accept': '*/*', 'Referer': 'https://www.gazzetta.it/'}
 
@@ -20,12 +19,25 @@ def norm(s):
     s = ''.join(ch for ch in s if not unicodedata.combining(ch))
     return re.sub(r'[^a-z0-9]', '', s.lower())
 
-# ---------- 1) listone dal PDF Gazzetta ----------
+# ---------- 1) listone dal PDF (fantacalcio-online, con riserva Gazzetta) ----------
 import pdfplumber
-ROLES = {'Portieri':'P', 'Difensori':'D', 'Centrocampisti':'C', 'Attaccanti':'A', 'Allenatori':'ALL'}
-TEAMS = {'Atalanta','Bologna','Cagliari','Como','Fiorentina','Frosinone','Genoa','Inter','Juventus','Lazio',
-         'Lecce','Milan','Monza','Napoli','Parma','Roma','Sassuolo','Torino','Udinese','Venezia',
-         'Empoli','Verona','Cremonese','Pisa','Spezia','Palermo','Bari','Sampdoria','Salernitana','Padova'}
+PDF_URL = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/quotazioni/pdf'
+PDF_URL_RISERVA = 'https://www.gazzetta.it/static_images/infografiche/FREEMIUM/fantacampionato_listone_26-27.pdf'
+
+SIG = {'ATA':'Atalanta','BOL':'Bologna','CAG':'Cagliari','COM':'Como','FIO':'Fiorentina','FRO':'Frosinone',
+       'GEN':'Genoa','INT':'Inter','JUV':'Juventus','LAZ':'Lazio','LEC':'Lecce','MIL':'Milan','MON':'Monza',
+       'NAP':'Napoli','PAR':'Parma','ROM':'Roma','SAS':'Sassuolo','TOR':'Torino','UDI':'Udinese','VEN':'Venezia',
+       'VER':'Verona','PIS':'Pisa','CRE':'Cremonese','EMP':'Empoli','SPE':'Spezia','PAL':'Palermo','BAR':'Bari',
+       'SAM':'Sampdoria','SAL':'Salernitana','PAD':'Padova'}
+TEAMS = set(SIG.values())
+ROLES_UP = {'PORTIERI':'P','DIFENSORI':'D','CENTROCAMPISTI':'C','ATTACCANTI':'A','ALLENATORI':'ALL'}
+ROLES_OLD = {'Portieri':'P','Difensori':'D','Centrocampisti':'C','Attaccanti':'A','Allenatori':'ALL'}
+
+def titlecase(n):
+    def cap(tok):
+        parts = re.split(r"([`'\u2019-])", tok.lower())
+        return ''.join(p.capitalize() if p and p not in "`'\u2019-" else p for p in parts)
+    return ' '.join(cap(t) for t in n.split())
 
 def cluster_rows(words, tol=3.5):
     ws = sorted(words, key=lambda w: (w['top'], w['x0']))
@@ -35,31 +47,67 @@ def cluster_rows(words, tol=3.5):
         else: rows.append([w])
     return [sorted(r, key=lambda w: w['x0']) for r in rows]
 
-pdf_bytes = get(PDF_URL, binary=True)
-if len(pdf_bytes) < 50000 or not pdf_bytes.startswith(b'%PDF'):
-    print('ERRORE: il PDF Gazzetta non e\' scaricabile o non e\' un PDF', file=sys.stderr); sys.exit(1)
-
-gaz = []; role = None; rejected = 0
-with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-    for page in pdf.pages:
-        W = page.width
-        words = page.extract_words(x_tolerance=1.5)
+def parse_pdf(pdf_bytes):
+    """Riconosce sia il formato a 3 colonne (Q NOME SIGLA ETA') sia il vecchio a 2 (NOME Squadra COSTO)."""
+    pages = []
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages:
+            pages.append((page.width, page.extract_words(x_tolerance=1.5)))
+    # formato nuovo
+    out, rej, role = [], 0, None
+    for W, words in pages:
+        cols = ([w for w in words if w['x0'] < W/3],
+                [w for w in words if W/3 <= w['x0'] < 2*W/3],
+                [w for w in words if w['x0'] >= 2*W/3])
+        for col in cols:
+            for ws in cluster_rows(col):
+                text = ' '.join(w['text'] for w in ws).strip()
+                if not text: continue
+                hit = next((ROLES_UP[k] for k in ROLES_UP if text.upper().startswith(k)), None)
+                if hit: role = hit; continue
+                if re.match(r'^(Q |Listone|FANTACALCIO|ONLINE|SQUADRA|CALCIATORE|In$|verde |stampato|il \d|\d+ calciatori|\d{1,3}$|fantacalcio)', text, re.I): continue
+                toks = text.split()
+                if role in (None, 'ALL'): continue
+                if len(toks) >= 4 and toks[0].isdigit() and re.fullmatch(r'[A-Z]{3}', toks[-2]) and re.fullmatch(r'\d{1,2}', toks[-1]):
+                    team = SIG.get(toks[-2], toks[-2])
+                    out.append({'n': titlecase(' '.join(toks[1:-2])), 't': team, 'r': role, 'q': int(toks[0])})
+                elif len(toks) >= 2: rej += 1
+    if len(out) >= 400: return out, rej, 'colonne triple'
+    # formato vecchio
+    out, rej, role = [], 0, None
+    for W, words in pages:
         for col in ([w for w in words if w['x0'] < W/2], [w for w in words if w['x0'] >= W/2]):
             for ws in cluster_rows(col):
                 text = ' '.join(w['text'] for w in ws).strip()
                 if not text: continue
-                hit = next((ROLES[h] for h in ROLES if text.startswith(h)), None)
+                hit = next((ROLES_OLD[h] for h in ROLES_OLD if text.startswith(h)), None)
                 if hit: role = hit; continue
                 if text.startswith(('Nome', 'IL LISTONE', 'fantacampionato', 'Costo')): continue
                 toks = text.split()
                 if role in (None, 'ALL'): continue
                 if len(toks) >= 3 and re.fullmatch(r'\d{1,3}', toks[-1]) and toks[-2] in TEAMS:
-                    gaz.append({'n': ' '.join(toks[:-2]), 't': toks[-2], 'r': role, 'q': int(toks[-1])})
-                elif len(toks) >= 2:
-                    rejected += 1
+                    out.append({'n': ' '.join(toks[:-2]), 't': toks[-2], 'r': role, 'q': int(toks[-1])})
+                elif len(toks) >= 2: rej += 1
+    return out, rej, 'colonne doppie'
 
-if len(gaz) < 450 or rejected > 30:
-    print(f'ERRORE: parse PDF sospetto ({len(gaz)} giocatori, {rejected} righe scartate)', file=sys.stderr); sys.exit(1)
+gaz = []
+for url in (PDF_URL, PDF_URL_RISERVA):
+    try:
+        pdf_bytes = get(url, binary=True)
+        if len(pdf_bytes) < 50000 or not pdf_bytes.startswith(b'%PDF'):
+            raise ValueError('non e\' un PDF')
+        lst, rejected, fmt = parse_pdf(pdf_bytes)
+        if len(lst) >= 450 and rejected <= 60:
+            gaz = lst
+            print(f'listone da {url} ({fmt}): {len(lst)} giocatori, {rejected} righe scartate', file=sys.stderr)
+            break
+        print(f'avviso: {url} sospetto ({len(lst)} giocatori, {rejected} scartate)', file=sys.stderr)
+        for _r in lst[:5]: print('  esempio:', _r, file=sys.stderr)
+    except Exception as e:
+        print(f'avviso: {url} non leggibile: {e}', file=sys.stderr)
+
+if len(gaz) < 450:
+    print('ERRORE: nessuna fonte del listone leggibile', file=sys.stderr); sys.exit(1)
 
 # ---------- 2) rigoristi/CP e statistiche da fantacalcio.it (facoltativi) ----------
 rig_names, cp_names = set(), set()
@@ -103,7 +151,7 @@ def strip_init(name):
 
 srows = []
 try:
-    for c in parse_rows(get('https://www.fantacalcio.it/statistiche-serie-a/2025-26')):
+    for c in parse_rows(get('https://www.fantacalcio.it/statistiche-serie-a/2026-27')):
         n = cell(c, 'player-name')
         if not n: continue
         sc = c.get('player-scoreds', ['0','0','0 / 0','0'])
@@ -196,8 +244,8 @@ for p in players:
     p['h'] = [pt for pt in h if today - pt[0] <= 21][-15:]   # max 3 settimane / 15 punti
 
 out = {'updated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-       'season_stats': '2025-26', 'source': 'gazzetta fantacampionato (pdf 26-27)', 'players': players}
+       'season_stats': '2026-27', 'source': 'fantacalcio-online.com (listone 26-27)', 'players': players}
 json.dump(out, open('quotes.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-print(f'ok: {len(players)} giocatori Gazzetta, {sum(1 for p in players if p.get("rig"))} rigoristi, '
+print(f'ok: {len(players)} giocatori, {sum(1 for p in players if p.get("rig"))} rigoristi, '
       f'{sum(1 for p in players if p.get("cp"))} CP, {sum(1 for p in players if "st" in p)} con statistiche, '
       f'{sum(1 for p in players if p.get("fid"))} con foto')
