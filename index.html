@@ -297,6 +297,7 @@ main{
 }
 .bdg.r{background:rgba(255,159,10,.16);color:var(--warn);border:.5px solid rgba(255,159,10,.35);}
 .bdg.cp{background:rgba(100,210,255,.13);color:var(--r-D);border:.5px solid rgba(100,210,255,.3);}
+.bdg.inj{background:rgba(255,95,87,.13);color:var(--danger);border:.5px solid rgba(255,95,87,.35);}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;}
 .stat-cell{background:var(--g-1);border:.5px solid var(--stroke);border-radius:16px;padding:7px 4px;text-align:center;box-shadow:var(--inner-hi);}
 .stat-cell .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim-2);}
@@ -1752,8 +1753,9 @@ function marketState(){
 function fairRec(p, msIn){
   const ms = msIn || marketState();
   const q = qinfo(p);
-  const base = (q && (fvmScaled(q.fvm) || q.qa)) || p.price || 1;
-  let fair = base * ms.infl;
+  const pmS = (q && q.pm) ? Math.max(1, Math.round(q.pm * (CFG.budget/500))) : 0;
+  const base = pmS || (q && (fvmScaled(q.fvm) || q.qa)) || p.price || 1;
+  let fair = pmS ? pmS * Math.min(1.25, Math.max(0.85, ms.infl)) : base * ms.infl;
   // scarsita': quante alternative di livello simile restano libere nel ruolo
   const myKey = qnorm((q && q.n) || p.name);
   const alts = ms.pool[p.role].filter(x=>qnorm(x.n)!==myKey && x.v >= base*0.75);
@@ -1761,11 +1763,12 @@ function fairRec(p, msIn){
   else if(alts.length>=8) fair *= 0.9;
   const plan = suggested(p);
   const bonus = p.status==="mine" ? p.paid : 0;
-  let rec = Math.round(ms.tracked ? 0.6*fair + 0.4*plan : 0.5*fair + 0.5*plan);
+  const wf = pmS ? 0.85 : (ms.tracked ? 0.6 : 0.5);
+  let rec = Math.round(wf*fair + (1-wf)*plan);
   rec = Math.max(1, Math.min(rec, Math.max(1, maxBid() + bonus)));
   const rich = ms.ts.map(t=>({n:t.name, left:squadStats(t.id).left}))
                     .sort((a,b)=>b.left-a.left).slice(0,2);
-  return {rec, fair:Math.round(fair), plan, infl:ms.infl, tracked:ms.tracked,
+  return {rec, fair:Math.round(fair), plan, pm:pmS, infl:ms.infl, tracked:ms.tracked,
           alts:alts.slice(0,3).map(a=>a.n), altCount:alts.length, rich};
 }
 
@@ -1785,6 +1788,7 @@ function statsHtml(p, ref){
   };
   let cells = `
     <div class="stat-cell"><div class="k">Quota</div><div class="v" style="color:var(--gold)">${q.qa||"–"}</div></div>
+    ${q.own?`<div class="stat-cell"><div class="k">Comprato</div><div class="v">${q.own}%</div></div>`:``}
     ${q.fvm?`<div class="stat-cell"><div class="k">FVM su ${CFG.budget}</div><div class="v">${fvmScaled(q.fvm)}</div></div>`:""}`;
   if(st){
     cells += `
@@ -1802,8 +1806,8 @@ function statsHtml(p, ref){
   const flags = (q.rig?" · rigorista":"") + (q.cp?" · calci piazzati":"");
   const vs = (rf && ref && ref.n) ? ` · verde/rosso rispetto a ${esc(ref.n)}` : "";
   const nota = st
-    ? `Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · listone Gazzetta${flags}${vs}`
-    : `Statistiche della scorsa stagione non disponibili per questo giocatore · listone Gazzetta${flags}`;
+    ? `Stagione ${QDATA && QDATA.season_stats ? QDATA.season_stats : "scorsa"} · dati fantacalcio-online${flags}${vs}`
+    : `Statistiche della scorsa stagione non disponibili per questo giocatore · dati fantacalcio-online${flags}`;
   return `<div class="stat-grid">${cells}</div>
     <div class="stat-note">${nota}</div>`;
 }
@@ -1905,6 +1909,7 @@ function openBid(id, ev){
       <button type="button" class="sheet-x" aria-label="Chiudi" onclick="closeSheet()">✕</button>
     </div>
     <div class="sub">${ROLES[p.role]} · ${esc(p.team)}${(qinfo(p)&&qinfo(p).qa)?` · quota ${qinfo(p).qa}`:""}</div>
+    ${qi&&qi.inj&&injOn(qi.inj)?`<div class="sub" style="color:var(--danger);margin-top:-9px">✚ Infortunato · rientro previsto ${esc(qi.inj)}</div>`:``}
     ${(t=>t?`<div class="trend-row">${sparkHtml(t,72,22)}<b class="tpct ${t.pct>0?"up":t.pct<0?"dn":""}">${t.pct>0?"+":""}${t.pct}%</b><small>quota, ultime 2 settimane</small></div>`:"")(trendOf(qinfo(p)))}
 
     <div class="blk">
@@ -1925,7 +1930,7 @@ function openBid(id, ev){
         </div>
         <div class="wheel-pct" id="wheelPct"></div>
       </div>
-      <div class="rec-note" id="recNote"><b>buon prezzo</b> fino a ~${R.rec}${R.tracked?` · mercato ${R.infl>=1?"+":""}${Math.round((R.infl-1)*100)}%`:""}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}${sims.length?"":`<br><b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}
+      <div class="rec-note" id="recNote"><b>buon prezzo</b> fino a ~${R.rec}${R.pm?` · nelle aste reali gira sui ${R.pm}`:``}${R.tracked?` · mercato ${R.infl>=1?"+":""}${Math.round((R.infl-1)*100)}%`:""}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}${sims.length?"":`<br><b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}
       </div>
       <div class="chips" style="justify-content:center">
         <button type="button" class="chip gold" onclick="setBid(${sug})">valore ${sug}</button>
@@ -2904,11 +2909,15 @@ function fvmScaled(v){
   if(!v) return null;
   return Math.max(1, Math.round(v * CFG.budget / 1000));
 }
+function injOn(d){
+  try{ const t = String(d).split("/").map(Number); return new Date(t[2], t[1]-1, t[0], 23, 59) >= new Date(); }catch(e){ return false; }
+}
 function qbadges(q){
   if(!q) return "";
   let h = "";
   if(q.rig) h += '<span class="bdg r" title="Rigorista">R</span>';
   if(q.cp)  h += '<span class="bdg cp" title="Calci piazzati">CP</span>';
+  if(q.inj && injOn(q.inj)) h += '<span class="bdg inj" title="Infortunato, rientro previsto">✚ ' + esc(String(q.inj).slice(0,5)) + '</span>';
   return h;
 }
 /* andamento quota stile borsa: punti [giorno, valore], finestra 2 settimane */
@@ -3309,7 +3318,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "23/09 · 19:00";
+const BUILD = "23/09 · 20:00";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
