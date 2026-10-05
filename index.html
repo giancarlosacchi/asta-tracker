@@ -1760,10 +1760,10 @@ function fairRec(p, msIn){
   const myKey = qnorm((q && q.n) || p.name);
   const alts = ms.pool[p.role].filter(x=>qnorm(x.n)!==myKey && x.v >= base*0.75);
   if(alts.length<=1) fair *= 1.15;
-  else if(alts.length>=8) fair *= 0.9;
+  else if(alts.length>=8 && !pmS) fair *= 0.9;
   const plan = suggested(p);
   const bonus = p.status==="mine" ? p.paid : 0;
-  const wf = pmS ? 0.85 : (ms.tracked ? 0.6 : 0.5);
+  const wf = pmS ? 1 : (ms.tracked ? 0.6 : 0.5);
   let rec = Math.round(wf*fair + (1-wf)*plan);
   rec = Math.max(1, Math.min(rec, Math.max(1, maxBid() + bonus)));
   const rich = ms.ts.map(t=>({n:t.name, left:squadStats(t.id).left}))
@@ -1930,7 +1930,7 @@ function openBid(id, ev){
         </div>
         <div class="wheel-pct" id="wheelPct"></div>
       </div>
-      <div class="rec-note" id="recNote"><b>buon prezzo</b> fino a ~${R.rec}${R.pm?` · nelle aste reali gira sui ${R.pm}`:``}${R.tracked?` · mercato ${R.infl>=1?"+":""}${Math.round((R.infl-1)*100)}%`:""}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}${sims.length?"":`<br><b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}
+      <div class="rec-note" id="recNote"><b>buon prezzo</b> fino a ~${R.rec}${R.pm?` · aste reali: media ${R.pm}, punte ~${Math.round(R.pm*1.2)}`:``}${R.tracked?` · mercato ${R.infl>=1?"+":""}${Math.round((R.infl-1)*100)}%`:""}${R.rich.length?` · più crediti: ${esc(R.rich[0].n)} (${R.rich[0].left})`:""}${sims.length?"":`<br><b style="color:var(--warn)">ultima occasione di questo livello nel ruolo</b>`}
       </div>
       <div class="chips" style="justify-content:center">
         <button type="button" class="chip gold" onclick="setBid(${sug})">valore ${sug}</button>
@@ -3383,7 +3383,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "05/10 · 12:30";
+const BUILD = "05/10 · 13:30";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
