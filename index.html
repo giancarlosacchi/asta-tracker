@@ -1122,7 +1122,7 @@ html[data-theme="light"] .cel-sub{color:rgba(12,40,24,.7);}
 </div>
 
 <label id="hapticLab" aria-hidden="true" style="display:none"><input id="hapticSw" type="checkbox" switch tabindex="-1"></label>
-<input type="file" id="pdfIn" accept="application/pdf,.pdf" hidden onchange="if(this.files[0]) importGazPdf(this.files[0]); this.value='';">
+<input type="file" id="pdfIn" accept=".pdf,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="if(this.files[0]) importGazPdf(this.files[0]); this.value='';">
 
 <div id="tour" hidden>
   <div id="tourHole"></div>
@@ -3006,8 +3006,8 @@ function openQuotes(){
     <div class="sub">${QDATA?`Valori del ${fmtTime(Date.parse(QDATA.updated))}${QDATA.source&&/mano/.test(QDATA.source)?" · caricati a mano":""}`:"Listone Gazzetta Fantacampionato"}</div>
     <div class="note" style="margin-top:6px">Ogni mattina alle 6 i valori si aggiornano da soli, e l'app li scarica quando la apri. Qui puoi forzare il controllo — oppure caricare a mano il PDF della Gazzetta, se l'automatico non fosse disponibile.</div>
     <button class="btn-wide btn-confirm" style="margin-top:14px" onclick="closeSheet();refreshQuotes(true)">⟳ Scarica gli ultimi valori</button>
-    <button class="btn-wide btn-cancel" style="margin-top:9px" onclick="$('pdfIn').click()">📄 Carica il PDF della Gazzetta</button>
-    <div class="note" style="margin-top:8px;font-size:11.5px">È il PDF di fantacampionato.gazzetta.it (listone 26-27): scaricalo sul telefono e selezionalo qui. Si aggiornano le quote; statistiche e foto restano quelle dell'ultimo giro automatico.</div>
+    <button class="btn-wide btn-cancel" style="margin-top:9px" onclick="$('pdfIn').click()">📄 Carica il listone (PDF o Excel)</button>
+    <div class="note" style="margin-top:8px;font-size:11.5px">Va bene sia il PDF del listone sia l'Excel ufficiale delle Quotazioni: scaricalo sul telefono e selezionalo qui. Si aggiornano quote e valori; statistiche e foto restano quelle dell'ultimo giro automatico.</div>
     <div class="sheet-actions"><button class="btn-cancel" onclick="closeSheet()">Chiudi</button></div>`);
 }
 const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
@@ -3088,36 +3088,101 @@ async function parseGazPdf(buf){
   }
   return {list: outOld, rejected: rejOld};
 }
+const XLSXJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+async function ensureSheetJs(){
+  if(window.XLSX) return;
+  await new Promise((res, rej)=>{
+    const sc = document.createElement("script");
+    sc.src = XLSXJS_URL; sc.onload = res; sc.onerror = ()=>rej(new Error("libreria Excel non scaricabile"));
+    document.head.appendChild(sc);
+  });
+}
+async function parseQuotXlsx(buf){
+  await ensureSheetJs();
+  const wb = XLSX.read(buf, {type: "array"});
+  const ws = wb.Sheets["Tutti"] || wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+  const hi = rows.findIndex(r => r && r.includes("Nome") && r.includes("Squadra"));
+  if(hi < 0) return {list: [], rejected: 999};
+  const H = rows[hi];
+  const ix = {r: H.indexOf("R"), n: H.indexOf("Nome"), t: H.indexOf("Squadra"), qa: H.indexOf("Qt.A"), qi: H.indexOf("Qt.I"), fvm: H.indexOf("FVM")};
+  const out = []; let rej = 0;
+  for(const row of rows.slice(hi + 1)){
+    if(!row || row[ix.n] == null) continue;
+    const r = String(row[ix.r] || "").trim(), n = String(row[ix.n]).trim(), t = String(row[ix.t] || "").trim();
+    const q = parseInt(row[ix.qa], 10);
+    if(!"PDCA".includes(r) || r.length !== 1 || !n || !t || isNaN(q)){ rej++; continue; }
+    const e = {n, t, r, q};
+    const fv = parseInt(row[ix.fvm], 10); if(fv) e.fvm = fv;
+    const qi0 = parseInt(row[ix.qi], 10); if(!isNaN(qi0)) e.qi = qi0;
+    out.push(e);
+  }
+  return {list: out, rejected: rej};
+}
 async function importGazPdf(file){
-  toast("Leggo il PDF…");
+  const isXlsx = /\.xlsx?$/i.test(file.name || "");
+  toast(isXlsx ? "Leggo l'Excel…" : "Leggo il PDF…");
   try{
     const buf = new Uint8Array(await file.arrayBuffer());
-    const {list, rejected} = await parseGazPdf(buf);
-    if(list.length < 400 || rejected > 60) throw new Error(`non sembra il listone Gazzetta (${list.length} giocatori letti)`);
+    const {list, rejected} = isXlsx ? await parseQuotXlsx(buf) : await parseGazPdf(buf);
+    if(list.length < 400 || rejected > 60) throw new Error(`non sembra un listone valido (${list.length} giocatori letti)`);
     if(!QDATA || !Array.isArray(QDATA.players)) QDATA = {players: []};
-    const idx = {};
-    QDATA.players.forEach(q=>{ idx[qnorm(q.n)+"|"+q.r+"|"+qnorm(q.t)] = q; });
+    const stripIn = n => { const p = String(n).split(" ").filter(t=>!/^[A-Z][a-z]?\.$/.test(t)); return p.length ? p.join(" ") : String(n); };
+    const idx = {}, idxS = {};
+    QDATA.players.forEach(q=>{
+      idx[qnorm(q.n)+"|"+q.r+"|"+qnorm(q.t)] = q;
+      idxS[qnorm(stripIn(q.n))+"|"+q.r+"|"+qnorm(q.t)] = q;
+    });
+    const toks = n => new Set(String(n).split(/[\s.\-']+/).map(qnorm).filter(x=>x.length>=4));
+    const findQ = g => {
+      const kT = "|"+g.r+"|"+qnorm(g.t);
+      let q = idx[qnorm(g.n)+kT] || idxS[qnorm(stripIn(g.n))+kT] || idx[qnorm(stripIn(g.n))+kT];
+      const k = qnorm(stripIn(g.n));
+      const sameT = x => qnorm(x.t)===qnorm(g.t);
+      if(!q && k.length >= 5) q = QDATA.players.find(x=>x.r===g.r && sameT(x) && (qnorm(x.n).startsWith(k) || k.startsWith(qnorm(x.n))));
+      if(!q){ // stesso nome, ruolo diverso tra le fonti: vince il ruolo dell'Excel
+        q = QDATA.players.find(x=>sameT(x) && (qnorm(x.n)===qnorm(g.n) || qnorm(stripIn(x.n))===k ||
+             (k.length>=5 && (qnorm(x.n).startsWith(k) || k.startsWith(qnorm(x.n))))));
+      }
+      if(!q){ // nomi girati o parziali: basta un pezzo di nome in comune (>=4 lettere) nella stessa squadra
+        const tg = toks(g.n);
+        if(tg.size) q = QDATA.players.find(x=>sameT(x) && [...toks(x.n)].some(t=>tg.has(t)));
+      }
+      if(q && q.r !== g.r) q.r = g.r;
+      return q;
+    };
     let updated = 0, added = 0;
     list.forEach(g=>{
-      const q = idx[qnorm(g.n)+"|"+g.r+"|"+qnorm(g.t)];
-      if(q){ if(q.qa !== g.q){ q.qa = g.q; updated++; } }
-      else { QDATA.players.push({n: g.n, t: g.t, r: g.r, qi: g.q, qa: g.q}); added++; }
+      const q = findQ(g);
+      if(q){
+        if(q.qa !== g.q){ q.qa = g.q; updated++; }
+        if(g.fvm) q.fvm = g.fvm;
+        if(g.qi != null) q.qi = g.qi;
+        if(q.t !== g.t) q.t = g.t;
+      }
+      else { const nu = {n: g.n, t: g.t, r: g.r, qi: (g.qi != null ? g.qi : g.q), qa: g.q}; if(g.fvm) nu.fvm = g.fvm; QDATA.players.push(nu); added++; }
     });
     list.forEach(g=>{
-      const L = LISTONE.find(x=>qnorm(x.n)===qnorm(g.n) && x.r===g.r);
-      if(L){ L.t = g.t; L.q = g.q; }
+      const k = qnorm(g.n), ks = qnorm(stripIn(g.n));
+      const tg = toks(g.n);
+      let L = LISTONE.find(x=>x.r===g.r && (qnorm(x.n)===k || qnorm(x.n)===ks ||
+        (ks.length>=5 && (qnorm(x.n).startsWith(ks) || ks.startsWith(qnorm(x.n))))));
+      if(!L) L = LISTONE.find(x=>qnorm(x.t)===qnorm(g.t) && (qnorm(x.n)===k || qnorm(x.n)===ks ||
+        (ks.length>=5 && (qnorm(x.n).startsWith(ks) || ks.startsWith(qnorm(x.n)))) ||
+        (tg.size && [...toks(x.n)].some(t=>tg.has(t)))));
+      if(L){ L.t = g.t; L.q = g.q; L.r = g.r; }
       else LISTONE.push({n:g.n, r:g.r, t:g.t, q:g.q});
     });
     QDATA.updated = new Date().toISOString();
-    QDATA.source = "PDF caricato a mano";
+    QDATA.source = (isXlsx ? "Excel ufficiale caricato a mano" : "PDF caricato a mano");
     try{ localStorage.setItem(QKEY, JSON.stringify(QDATA)); }catch(e){}
     buildQIdx();
     applyQuotesToListone();
     if(alignToListone()) save();
     renderAll(); closeSheet(); buzz(14);
-    toast(`PDF letto: ${list.length} giocatori · ${updated} quote aggiornate${added?` · ${added} nuovi`:""}`, "good");
+    toast(`${isXlsx?"Excel":"PDF"} letto: ${list.length} giocatori · ${updated} quote aggiornate${added?` · ${added} nuovi`:""}`, "good");
   }catch(e){
-    toast("Non sono riuscito a leggere il PDF: " + ((e && e.message) || "errore"), "bad");
+    toast("Non sono riuscito a leggere il file: " + ((e && e.message) || "errore"), "bad");
   }
 }
 
@@ -3318,7 +3383,7 @@ function addTeamFromInput(){
 }
 
 /* ================== VERSIONE E GRAFICA LEGGERA ================== */
-const BUILD = "23/09 · 20:00";
+const BUILD = "05/10 · 12:30";
 
 /* ---- altezza reale dello schermo: fix della banda bianca quando l'app e' salvata sulla Home ---- */
 const IS_STANDALONE = (navigator.standalone === true) ||
