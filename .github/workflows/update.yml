@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install pdfplumber
+      - run: pip install pdfplumber openpyxl
       - run: python3 scrape.py
       - run: |
           git config user.name quote-bot
