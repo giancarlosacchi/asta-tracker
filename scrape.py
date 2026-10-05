@@ -1,4 +1,4 @@
-# Listone: PDF fantacalcio-online (riserva: Gazzetta). Giocatori e quote.
+# Listone: Excel ufficiale Quotazioni (se presente nel repo), altrimenti PDF fantacalcio-online (riserva: Gazzetta).
 # In piu': rigoristi/calci piazzati e statistiche da fantacalcio.it (solo come info nelle schede).
 import re, json, sys, io, urllib.request, datetime, unicodedata
 
@@ -19,7 +19,8 @@ def norm(s):
     s = ''.join(ch for ch in s if not unicodedata.combining(ch))
     return re.sub(r'[^a-z0-9]', '', s.lower())
 
-# ---------- 1) listone dal PDF (fantacalcio-online, con riserva Gazzetta) ----------
+# ---------- 1) listone: Excel ufficiale se nel repo, altrimenti PDF ----------
+import glob
 import pdfplumber
 PDF_URL = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/quotazioni/pdf'
 PDF_URL_RISERVA = 'https://www.gazzetta.it/static_images/infografiche/FREEMIUM/fantacampionato_listone_26-27.pdf'
@@ -91,7 +92,7 @@ def parse_pdf(pdf_bytes):
     return out, rej, 'colonne doppie'
 
 gaz = []
-for url in (PDF_URL, PDF_URL_RISERVA):
+for url in ([] if glob.glob('*.xlsx') else (PDF_URL, PDF_URL_RISERVA)):
     try:
         pdf_bytes = get(url, binary=True)
         if len(pdf_bytes) < 50000 or not pdf_bytes.startswith(b'%PDF'):
@@ -105,6 +106,44 @@ for url in (PDF_URL, PDF_URL_RISERVA):
         for _r in lst[:5]: print('  esempio:', _r, file=sys.stderr)
     except Exception as e:
         print(f'avviso: {url} non leggibile: {e}', file=sys.stderr)
+
+import glob
+def listone_da_excel():
+    """Excel ufficiale Quotazioni (fogli: Tutti/.../Ceduti). Se presente nel repo, e' la fonte delle quote."""
+    files = sorted(glob.glob('*.xlsx'))
+    if not files: return None
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(files[-1], read_only=True, data_only=True)
+        ws = wb['Tutti'] if 'Tutti' in wb.sheetnames else wb[wb.sheetnames[0]]
+        rows = list(ws.iter_rows(values_only=True))
+        hi = next(i for i, r in enumerate(rows) if r and 'Nome' in r and 'Squadra' in r)
+        H = list(rows[hi])
+        ix = {k: H.index(k) for k in ('R', 'Nome', 'Squadra', 'Qt.A', 'Qt.I', 'FVM')}
+        out = []
+        for r in rows[hi+1:]:
+            if not r or not r[ix['Nome']]: continue
+            ruolo = str(r[ix['R']] or '').strip()
+            nome = str(r[ix['Nome']]).strip(); team = str(r[ix['Squadra']] or '').strip()
+            try: qa = int(r[ix['Qt.A']]); qi = int(r[ix['Qt.I']])
+            except Exception: continue
+            if ruolo not in ('P','D','C','A') or not nome or not team: continue
+            e = {'n': nome, 't': team, 'r': ruolo, 'q': qa, 'qi0': qi}
+            try:
+                fv = int(r[ix['FVM']])
+                if fv: e['fvm'] = fv
+            except Exception: pass
+            out.append(e)
+        if len(out) >= 400:
+            print(f'listone da {files[-1]} (Excel ufficiale): {len(out)} giocatori', file=sys.stderr)
+            return out
+        print(f'avviso: Excel {files[-1]} sospetto ({len(out)} giocatori), uso il PDF', file=sys.stderr)
+    except Exception as e:
+        print('avviso: Excel non leggibile:', e, file=sys.stderr)
+    return None
+
+_xl = listone_da_excel()
+if _xl: gaz = _xl
 
 if len(gaz) < 450:
     print('ERRORE: nessuna fonte del listone leggibile', file=sys.stderr); sys.exit(1)
@@ -128,6 +167,9 @@ try:
         if len(names) > 1: cp_names.update(_keys(names[1]))
 except Exception as e:
     print('avviso: rigoristi non disponibili:', e, file=sys.stderr)
+
+def _toks(nm):
+    return set(norm(x) for x in re.split(r"[\s.\-']+", str(nm)) if len(norm(x)) >= 4)
 
 def parse_rows(html):
     out = []
@@ -166,13 +208,15 @@ try:
 except Exception as e:
     print('avviso: statistiche non disponibili:', e, file=sys.stderr)
 
-smap_full, smap_strip = {}, {}
+smap_full, smap_strip, smap_tok = {}, {}, {}
 for n, tm, st in srows:
     smap_full.setdefault(norm(n), []).append((tm, st))
     k2 = norm(strip_init(n))
     if k2 != norm(n): smap_strip.setdefault(k2, []).append((tm, st))
+    for _tk in _toks(n):
+        smap_tok.setdefault(_tk, []).append((tm, st))
 
-def find_stat(gk, gteam):
+def find_stat(gk, gname, gteam):
     gt = norm(gteam)
     for m in (smap_full, smap_strip):
         c = m.get(gk)
@@ -183,10 +227,13 @@ def find_stat(gk, gteam):
     if len(gk) >= 5:
         for k, c in smap_full.items():
             if k.startswith(gk) or gk.startswith(k): return c[0][1]
+    for _tk in _toks(gname):
+        c = [x for x in smap_tok.get(_tk, []) if norm(x[0]) and (gt.startswith(norm(x[0])[:3]) or norm(x[0]).startswith(gt[:3]))]
+        if c: return c[0][1]
     return None
 
 # ---------- 2b) id delle card (foto) dalle rose di fantacalcio.it ----------
-fmap = {}
+fmap, f_tok = {}, {}
 try:
     idx = get('https://www.fantacalcio.it/serie-a/squadre')
     slugs = sorted(set(re.findall(r'/serie-a/squadre/([a-z0-9-]+)"', idx)))
@@ -197,16 +244,22 @@ try:
             continue
         for m in re.finditer(r'/serie-a/squadre/' + re.escape(ts) + r'/([a-z0-9-]+)/(\d+)', th):
             fmap.setdefault(norm(m.group(1)), set()).add((ts, int(m.group(2))))
+            for _tk in set(norm(x) for x in m.group(1).split('-') if len(norm(x)) >= 4):
+                f_tok.setdefault(_tk, set()).add((ts, int(m.group(2))))
     print(f'foto: {len(slugs)} squadre, {len(fmap)} nomi indicizzati', file=sys.stderr)
 except Exception as e:
     print('avviso: foto non disponibili:', e, file=sys.stderr)
 
-def find_fid(gk, gteam):
+def find_fid(gk, gname, gteam):
     gt = norm(gteam)
     c = fmap.get(gk)
     if not c and len(gk) >= 5:
         for k, v in fmap.items():
             if k.startswith(gk) or gk.startswith(k): c = v; break
+    if not c:
+        for _tk in _toks(gname):
+            cand = [x for x in f_tok.get(_tk, set()) if gt and (gt in norm(x[0]) or norm(x[0]) in gt)]
+            if cand: c = set(cand); break
     if not c: return None
     lst = list(c)
     if len(lst) > 1:
@@ -217,6 +270,7 @@ def find_fid(gk, gteam):
 
 # ---------- 2c) prezzi medi delle aste reali + infortunati (fantacalcio-online) ----------
 pm_sur, pm_full, inj_sur = {}, {}, {}
+pm_tok, inj_tok = {}, {}
 try:
     hp = get('https://www.fantacalcio-online.com/it/i-piu-comprati')
     for row in re.findall(r'<tr>[\s\S]*?</tr>', hp):
@@ -235,6 +289,8 @@ try:
         ent = (team, ruolo, pmv, ownv)
         pm_sur.setdefault((norm(sur), ruolo), []).append(ent)
         pm_full.setdefault((norm(nome), ruolo), []).append(ent)
+        for _tk in set(norm(x) for x in re.split(r"[\s.\-']+", nome) if len(norm(x)) >= 4):
+            pm_tok.setdefault(_tk, []).append(ent)
     print(f'prezzi medi asta: {len(pm_full)} nomi', file=sys.stderr)
 except Exception as e:
     print('avviso: prezzi medi non disponibili:', e, file=sys.stderr)
@@ -244,11 +300,13 @@ try:
     for row in re.findall(r'<tr>[\s\S]*?</tr>', hi):
         tds = re.findall(r'<td[^>]*>([\s\S]*?)</td>', row)
         if len(tds) < 4: continue
-        team = clean(tds[0]); back = clean(tds[3])
+        team = clean(tds[0]); back = clean(tds[3]); nomein = clean(tds[1])
         msur = re.search(r'<strong>([^<]+)</strong>', row)
         sur = clean(msur.group(1)) if msur else ''
         if not sur or not re.fullmatch(r'\d{2}/\d{2}/\d{4}', back): continue
         inj_sur.setdefault(norm(sur), []).append((team, back))
+        for _tk in set(norm(x) for x in re.split(r"[\s.\-']+", nomein) if len(norm(x)) >= 4):
+            inj_tok.setdefault(_tk, []).append((team, back))
     print(f'infortunati: {len(inj_sur)} nomi', file=sys.stderr)
 except Exception as e:
     print('avviso: infortunati non disponibili:', e, file=sys.stderr)
@@ -259,39 +317,52 @@ def _pick_team(cands, team):
     t = [c for c in cands if norm(c[0]) == norm(team)]
     return (t or cands)[0]
 
-def find_pm(gk, gteam, grole):
+def find_pm(gk, gname, gteam, grole):
     hit = _pick_team(pm_full.get((gk, grole)), gteam) or _pick_team(pm_sur.get((gk, grole)), gteam)
     if not hit and len(gk) >= 5:
         for (nm, rr), v in pm_full.items():
             if rr == grole and (nm.startswith(gk) or gk.startswith(nm)):
                 hit = _pick_team(v, gteam)
                 if hit: break
+    if not hit:   # ruolo diverso tra le fonti
+        for (nm, rr), v in list(pm_full.items()) + list(pm_sur.items()):
+            if nm == gk or (len(gk) >= 5 and (nm.startswith(gk) or gk.startswith(nm))):
+                hit = _pick_team(v, gteam)
+                if hit: break
+    if not hit:   # pezzi di nome in comune, stessa squadra
+        for _tk in _toks(gname):
+            c = [x for x in pm_tok.get(_tk, []) if norm(x[0]) == norm(gteam)]
+            if c: hit = c[0]; break
     return hit
 
-def find_inj(gk, gteam):
+def find_inj(gk, gname, gteam):
     c = inj_sur.get(gk)
     if not c and len(gk) >= 5:
         for kk, v in inj_sur.items():
             if kk.startswith(gk) or gk.startswith(kk): c = v; break
-    if not c: return None
-    hit = [x for x in c if norm(x[0]) == norm(gteam)]
+    hit = [x for x in (c or []) if norm(x[0]) == norm(gteam)]
+    if not hit:
+        for _tk in _toks(gname):
+            hit = [x for x in inj_tok.get(_tk, []) if norm(x[0]) == norm(gteam)]
+            if hit: break
     return hit[0][1] if hit else None
 
 players = []
 for g in gaz:
-    e = {'n': g['n'], 't': g['t'], 'r': g['r'], 'qi': g['q'], 'qa': g['q']}
+    e = {'n': g['n'], 't': g['t'], 'r': g['r'], 'qi': g.get('qi0', g['q']), 'qa': g['q']}
+    if g.get('fvm'): e['fvm'] = g['fvm']
     gk = norm(g['n'])
     if gk in rig_names: e['rig'] = 1
     if gk in cp_names: e['cp'] = 1
-    st = find_stat(gk, g['t'])
+    st = find_stat(gk, g['n'], g['t'])
     if st: e['st'] = st
-    fid = find_fid(gk, g['t'])
+    fid = find_fid(gk, g['n'], g['t'])
     if fid: e['fid'] = fid
-    hpm = find_pm(gk, g['t'], g['r'])
+    hpm = find_pm(gk, g['n'], g['t'], g['r'])
     if hpm:
         e['pm'] = hpm[2]
         if hpm[3]: e['own'] = hpm[3]
-    binj = find_inj(gk, g['t'])
+    binj = find_inj(gk, g['n'], g['t'])
     if binj: e['inj'] = binj
     players.append(e)
 
@@ -306,6 +377,8 @@ except Exception:
     pass
 for p in players:
     h = old_h.get((norm(p['n']), p['t'], p['r']), [])
+    if h and abs(h[-1][1] - p['qa']) > max(3, 0.35 * max(h[-1][1], 1)):
+        h = []   # fonte/scala cambiata: lo storico riparte da oggi
     if not h or h[-1][0] != today:
         h = h + [[today, p['qa']]]
     else:
@@ -313,7 +386,7 @@ for p in players:
     p['h'] = [pt for pt in h if today - pt[0] <= 21][-15:]   # max 3 settimane / 15 punti
 
 out = {'updated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-       'season_stats': '2026-27', 'source': 'fantacalcio-online.com (listone 26-27)', 'players': players}
+       'season_stats': '2026-27', 'source': ('quotazioni ufficiali (Excel)' if _xl else 'fantacalcio-online.com (listone 26-27)'), 'players': players}
 json.dump(out, open('quotes.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print(f'ok: {len(players)} giocatori, {sum(1 for p in players if p.get("rig"))} rigoristi, '
       f'{sum(1 for p in players if p.get("cp"))} CP, {sum(1 for p in players if "st" in p)} con statistiche, '
